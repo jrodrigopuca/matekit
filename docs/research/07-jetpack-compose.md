@@ -122,8 +122,45 @@ paleta de Compose: `on-primary-container` `#4f378a` frente a `#4f378b`,
 (`#633b48`), y `on-error-container` `#852221` frente a `#8c1d18`, que es la única
 diferencia visible.
 
+## Switch
+
+Leído el 2026-11-24: `SwitchTokens.kt` (versión de tokens `v0_210`, último cambio en el commit
+`160825094a` del 2026-08-05).
+
+### Lo que confirma
+
+Pista 52 × 32 con radio completo y borde de 2; capa de estado de 40; handle de 16
+desactivado, 24 activado o con icono y 28 al presionar; iconos de 16. Colores de los estados
+que trae el kit: pista y handle activados, hover, foco y presionado activados
+(`primary-container`), presionado desactivado (`on-surface-variant`) y handles deshabilitados
+(`surface` activado; `on-surface` al 38 % desactivado).
+
+### Datos nuevos (el kit no los trae)
+
+| Dato | Compose |
+|---|---|
+| Handle desactivado con hover y con foco | `on-surface-variant` (`UnselectedHoverHandleColor`, `UnselectedFocusHandleColor`); pista y borde sin cambios |
+| Icono activado (todos los estados) | `on-primary-container` (`Selected*IconColor`) |
+| Icono desactivado (todos los estados) | `surface-container-highest` (`Unselected*IconColor`) |
+| Icono deshabilitado | activado `on-surface` al 38 %; desactivado `surface-container-highest` al 38 % |
+| Anillo de foco | `secondary` (`FocusIndicatorColor`), igual que el átomo `FocusRing` |
+
+La capa de estado de los estados desactivados (hover y foco) usa `on-surface`, por analogía
+con el presionado del kit; Compose no la define en `SwitchTokens.kt`.
+
+### Conflictos con el kit
+
+| Tema | Kit | Compose | Decisión |
+|---|---|---|---|
+| Pista deshabilitada: opacidad | 10 % (activada y desactivada, y el borde) | 12 % (`DisabledTrackOpacity`) | **Kit** (ADR-0004): coincide con `--md-sys-state-disabled-container-opacity` (0.1), que ya usa el botón. |
+| Pista deshabilitada desactivada: rol | `surface-variant` | `surface-container-highest` | **Kit**. En claro difieren en un punto (`#e7e0ec` y `#e6e0e9`) y al 10 % no se distinguen. |
+| Colores deshabilitados semitransparentes | Opacidad sobre el fondo que haya | Compose los compone sobre `surface` (`compositeOver` en `Switch.kt`, según conocimiento previo; no verificado en el código) | **Kit**: semitransparentes. Sobre un fondo distinto de `surface` el aspecto cambia levemente. |
+
+No se buscó una tercera fuente: las diferencias son de uno o dos puntos de opacidad o de tono
+y no se ven a simple vista, así que no justifican apartarse del kit.
+
 ## No revisado
 
-Los tokens de Switch, Dialog, Navigation rail y los de color de la barra de navegación
+Los tokens de Dialog, Navigation rail y los de color de la barra de navegación
 (los nombres de las variables de etiqueta activa no coincidieron con la búsqueda), y la
 tipografía (`TypeScaleTokens.kt`, descargado pero sin comparar).

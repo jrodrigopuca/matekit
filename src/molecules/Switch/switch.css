@@ -1,0 +1,244 @@
+/* Switch de Material 3.
+   Medidas y colores del kit (docs/research/05-medidas.md § Switch): pista de 52 × 32 con radio
+   completo y borde de 2, área táctil de 48, capa de estado circular de 40 centrada en el
+   handle, handle de 16 (desactivado), 24 (activado o con icono) y 28 (presionado).
+   Lo que el kit no trae sale de Jetpack Compose, SwitchTokens.kt
+   (androidx/androidx, compose/material3/material3/src/commonMain/kotlin/androidx/compose/
+   material3/tokens/SwitchTokens.kt, commit 160825094a del 2026-08-05): handle desactivado con
+   hover y con foco (`on-surface-variant`), color de los iconos (`on-primary-container`
+   activado, `surface-container-highest` desactivado) e iconos deshabilitados al 38 %.
+   Conflictos kit/Compose (opacidad 10 % frente a 12 % de la pista deshabilitada, rol de la
+   pista deshabilitada): docs/research/07-jetpack-compose.md § Switch.
+
+   El centro del handle no se mueve al cambiar de tamaño: 16 px desde el borde izquierdo
+   desactivado y 36 activado (el kit lo consigue con rellenos 8, 4 y 2 según el tamaño). */
+
+@layer matekit.components {
+  .mk-switch {
+    display: inline-flex;
+    align-items: center;
+    vertical-align: middle;
+    color: var(--md-sys-color-on-surface);
+    font-family: var(--md-sys-typescale-body-medium-font);
+    font-size: var(--md-sys-typescale-body-medium-size);
+    line-height: var(--md-sys-typescale-body-medium-line-height);
+    font-weight: var(--md-sys-typescale-body-medium-weight);
+    letter-spacing: var(--md-sys-typescale-body-medium-tracking);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* 52 × 48: la pista de 32 con el área táctil de 48, como minimumInteractiveComponentSize
+     de Compose. El margen lateral de 4 deja lugar a la capa de 40, que sobresale 4 px de la
+     pista en cada extremo. */
+  .mk-switch-control {
+    /* Desactivado. */
+    --_x: 16px;
+    --_size: 16px;
+    --_track: var(--md-sys-color-surface-container-highest);
+    --_outline: var(--md-sys-color-outline);
+    --_handle: var(--md-sys-color-outline);
+    --_icon: var(--md-sys-color-surface-container-highest);
+    --mk-state-layer-color: var(--md-sys-color-on-surface);
+    --mk-ripple-color: var(--md-sys-color-on-surface);
+
+    display: inline-block;
+    flex-shrink: 0;
+    width: 52px;
+    height: 48px;
+    margin-inline: 4px;
+  }
+
+  /* El input nativo, invisible, cubre el área de 52 × 48 y recibe clics, teclado y foco. */
+  .mk-switch-input {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: inherit;
+  }
+
+  /* Orden de apilado dentro del control (aislado por los átomos): pista, capa y onda, handle. */
+  .mk-switch-track {
+    position: absolute;
+    top: 8px;
+    left: 0;
+    z-index: -2;
+    width: 52px;
+    height: 32px;
+    box-sizing: border-box;
+    border-radius: var(--md-sys-shape-corner-full);
+    background-color: var(--_track);
+    /* Borde interior de 2 px sin cambiar el tamaño de la pista. */
+    box-shadow: inset 0 0 0 2px var(--_outline);
+    transition:
+      background-color var(--md-sys-motion-spring-fast-effects-duration)
+        var(--md-sys-motion-spring-fast-effects-easing),
+      box-shadow var(--md-sys-motion-spring-fast-effects-duration)
+        var(--md-sys-motion-spring-fast-effects-easing);
+  }
+
+  /* Capa de estado y onda: círculo de 40 que sigue al handle. */
+  .mk-switch-control > .mk-state-layer,
+  .mk-switch-control > .mk-ripple {
+    inset: auto;
+    top: 4px;
+    left: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--md-sys-shape-corner-full);
+    translate: calc(var(--_x) - 20px) 0;
+  }
+  .mk-switch-control > .mk-ripple {
+    transition: translate var(--md-sys-motion-spring-fast-spatial-duration)
+      var(--md-sys-motion-spring-fast-spatial-easing);
+  }
+  .mk-switch-control > .mk-state-layer {
+    transition:
+      opacity var(--md-sys-motion-spring-fast-effects-duration)
+        var(--md-sys-motion-spring-fast-effects-easing),
+      translate var(--md-sys-motion-spring-fast-spatial-duration)
+        var(--md-sys-motion-spring-fast-spatial-easing);
+  }
+
+  /* El handle se desplaza y cambia de tamaño con el resorte rápido espacial (que con
+     prefers-reduced-motion dura 0, ver tokens/motion.css); los colores, con el de efectos. */
+  .mk-switch-handle {
+    position: absolute;
+    top: 24px;
+    left: 0;
+    display: grid;
+    place-items: center;
+    width: var(--_size);
+    height: var(--_size);
+    border-radius: var(--md-sys-shape-corner-full);
+    background-color: var(--_handle);
+    color: var(--_icon);
+    translate: calc(var(--_x) - 50%) -50%;
+    pointer-events: none;
+    --mk-icon-size: 16px;
+    transition:
+      translate var(--md-sys-motion-spring-fast-spatial-duration)
+        var(--md-sys-motion-spring-fast-spatial-easing),
+      width var(--md-sys-motion-spring-fast-spatial-duration)
+        var(--md-sys-motion-spring-fast-spatial-easing),
+      height var(--md-sys-motion-spring-fast-spatial-duration)
+        var(--md-sys-motion-spring-fast-spatial-easing),
+      background-color var(--md-sys-motion-spring-fast-effects-duration)
+        var(--md-sys-motion-spring-fast-effects-easing),
+      color var(--md-sys-motion-spring-fast-effects-duration)
+        var(--md-sys-motion-spring-fast-effects-easing);
+  }
+
+  /* Los dos iconos ocupan la misma celda; se muestra uno según el estado. */
+  .mk-switch-handle > .mk-icon {
+    grid-area: 1 / 1;
+    opacity: 0;
+    transition: opacity var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects-easing);
+  }
+  .mk-switch-control:has(> .mk-switch-input:not(:checked)) .mk-switch-icon-off,
+  .mk-switch-control:has(> .mk-switch-input:checked) .mk-switch-icon-on {
+    opacity: 1;
+  }
+
+  /* Con iconos, el handle desactivado también mide 24. */
+  .mk-switch[data-icons] .mk-switch-control {
+    --_size: 24px;
+  }
+
+  /* --- Activado --- */
+  .mk-switch .mk-switch-control:has(> .mk-switch-input:checked) {
+    --_x: 36px;
+    --_size: 24px;
+    --_track: var(--md-sys-color-primary);
+    --_outline: transparent;
+    --_handle: var(--md-sys-color-on-primary);
+    --_icon: var(--md-sys-color-on-primary-container);
+    --mk-state-layer-color: var(--md-sys-color-primary);
+    --mk-ripple-color: var(--md-sys-color-primary);
+  }
+
+  /* --- Hover, foco y presionado: el handle se oscurece (desactivado) o pasa a
+     primary-container (activado) --- */
+  @media (hover: hover) {
+    .mk-switch:hover .mk-switch-control:has(> .mk-switch-input:enabled) {
+      --_handle: var(--md-sys-color-on-surface-variant);
+      --mk-state-layer-opacity: var(--md-sys-state-hover-state-layer-opacity);
+    }
+    .mk-switch:hover .mk-switch-control:has(> .mk-switch-input:enabled:checked) {
+      --_handle: var(--md-sys-color-primary-container);
+    }
+  }
+  .mk-switch .mk-switch-control:has(> .mk-switch-input:focus-visible) {
+    --_handle: var(--md-sys-color-on-surface-variant);
+    --mk-state-layer-opacity: var(--md-sys-state-focus-state-layer-opacity);
+    --mk-focus-ring-visible: 1;
+  }
+  .mk-switch .mk-switch-control:has(> .mk-switch-input:focus-visible:checked) {
+    --_handle: var(--md-sys-color-primary-container);
+  }
+  .mk-switch .mk-switch-control:active:has(> .mk-switch-input:enabled) {
+    --_size: 28px;
+    --_handle: var(--md-sys-color-on-surface-variant);
+  }
+  .mk-switch .mk-switch-control:active:has(> .mk-switch-input:enabled:checked) {
+    --_handle: var(--md-sys-color-primary-container);
+  }
+
+  /* --- Deshabilitado (va al final para ganar). La capa de estado y la onda ya se apagan
+     solas: el input deshabilitado es hijo directo del control. --- */
+  .mk-switch:has(> .mk-switch-control > .mk-switch-input:disabled) {
+    cursor: default;
+  }
+  .mk-switch .mk-switch-control:has(> .mk-switch-input:disabled) {
+    /* Kit: pista Surface Variant 10 % con borde On Surface 10 %; handle On Surface 38 %.
+       Compose: icono surface-container-highest al 38 %. */
+    --_track: color-mix(
+      in srgb,
+      var(--md-sys-color-surface-variant) calc(var(--md-sys-state-disabled-container-opacity) * 100%),
+      transparent
+    );
+    --_outline: color-mix(
+      in srgb,
+      var(--md-sys-color-on-surface) calc(var(--md-sys-state-disabled-container-opacity) * 100%),
+      transparent
+    );
+    --_handle: color-mix(
+      in srgb,
+      var(--md-sys-color-on-surface) calc(var(--md-sys-state-disabled-content-opacity) * 100%),
+      transparent
+    );
+    --_icon: color-mix(
+      in srgb,
+      var(--md-sys-color-surface-container-highest)
+        calc(var(--md-sys-state-disabled-content-opacity) * 100%),
+      transparent
+    );
+  }
+  .mk-switch .mk-switch-control:has(> .mk-switch-input:disabled:checked) {
+    /* Kit: pista On Surface 10 %, handle Surface opaco. Compose: icono On Surface 38 %. */
+    --_track: color-mix(
+      in srgb,
+      var(--md-sys-color-on-surface) calc(var(--md-sys-state-disabled-container-opacity) * 100%),
+      transparent
+    );
+    --_outline: transparent;
+    --_handle: var(--md-sys-color-surface);
+    --_icon: color-mix(
+      in srgb,
+      var(--md-sys-color-on-surface) calc(var(--md-sys-state-disabled-content-opacity) * 100%),
+      transparent
+    );
+  }
+  .mk-switch:has(> .mk-switch-control > .mk-switch-input:disabled) .mk-switch-label {
+    opacity: var(--md-sys-state-disabled-content-opacity);
+  }
+
+  .mk-switch-label {
+    padding-inline: 8px;
+  }
+}

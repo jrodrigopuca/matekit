@@ -7,5 +7,7 @@ declare module 'vitest/browser' {
     pressDown(selector: string): Promise<void>
     /** Suelta el botón del mouse. */
     pressUp(): Promise<void>
+    /** Emula `prefers-reduced-motion: reduce` (true) o la quita (false). */
+    reduceMotion(on: boolean): Promise<void>
   }
 }

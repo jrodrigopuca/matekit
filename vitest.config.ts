@@ -12,6 +12,10 @@ const pressDown: BrowserCommand<[selector: string]> = async (ctx, selector) => {
 const pressUp: BrowserCommand<[]> = async (ctx) => {
   await ctx.page.mouse.up()
 }
+// Emular prefers-reduced-motion (true) o volver a la preferencia sin emular (false).
+const reduceMotion: BrowserCommand<[on: boolean]> = async (ctx, on) => {
+  await ctx.page.emulateMedia({ reducedMotion: on ? 'reduce' : null })
+}
 
 // Pruebas de componentes en un navegador real: los estados de los átomos (hover, foco,
 // presionado) son CSS y solo se pueden comprobar con un motor de navegador.
@@ -25,7 +29,7 @@ export default defineConfig({
       headless: true,
       provider: playwright({ launchOptions: { channel: 'chrome' } }),
       instances: [{ browser: 'chromium' }],
-      commands: { pressDown, pressUp },
+      commands: { pressDown, pressUp, reduceMotion },
     },
   },
 })

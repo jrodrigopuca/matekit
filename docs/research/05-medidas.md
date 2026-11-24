@@ -162,7 +162,9 @@ Revisar contra la especificación.
 | Activado, deshabilitado | `On Surface` 10 % | 24, `Surface` | |
 | Desactivado, deshabilitado | `Surface Variant` 10 %, borde `On Surface` 10 % | 16, `On Surface` 38 % | |
 
-El handle crece al presionar (16 o 24 → 28). No se consultó el hover sin activar.
+El handle crece al presionar (16 o 24 → 28). No se consultó el hover sin activar; se tomó de
+Jetpack Compose, junto con el color de los iconos (ver
+[07-jetpack-compose.md § Switch](07-jetpack-compose.md#switch)).
 
 ## Dialog (básico)
 

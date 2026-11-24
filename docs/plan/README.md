@@ -12,6 +12,7 @@ siguiente. Convenciones en [`CLAUDE.md`](../../CLAUDE.md).
 | StateLayer, FocusRing, Ripple, Icon | átomos | ADR-0003, ADR-0006 |
 | Button | molécula | universal; incluye toggle |
 | Checkbox | molécula | interactivo (indeterminado) |
+| Switch | molécula | universal; resuelto por agente y revisado el 2026-11-24 |
 | 32 iconos | icons | ADR-0006 |
 
 ## Orden y motivo
