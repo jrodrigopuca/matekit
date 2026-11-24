@@ -143,6 +143,13 @@ describe('Checkbox: aspecto', () => {
     expect(Number(style(layer(c)).opacity)).toBeCloseTo(0.1)
   })
 
+  test('foco de teclado con el puntero encima: la capa sigue al 10 %', async () => {
+    const c = await render(<Checkbox>Foco y hover</Checkbox>)
+    await userEvent.tab()
+    await userEvent.hover(c.querySelector('.mk-checkbox-control') as HTMLElement)
+    expect(Number(style(layer(c)).opacity)).toBeCloseTo(0.1)
+  })
+
   test('al presionar: onda primary si está sin marcar y on-surface si está marcada', async () => {
     const c = await render(
       <div>

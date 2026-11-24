@@ -76,6 +76,19 @@ describe('StateLayer', () => {
     expect(opacity(native ?? null)).toBe(0)
   })
 
+  test('con hover, una opacidad mayor indicada por variable no queda tapada', async () => {
+    const c = await render(
+      <div style={{ ['--mk-state-layer-opacity' as string]: '0.1' }}>
+        <span className="padre">
+          <StateLayer />
+          Foco en otro elemento
+        </span>
+      </div>,
+    )
+    await userEvent.hover(c.querySelector('.padre') as HTMLElement)
+    expect(opacity(c.querySelector('.mk-state-layer'))).toBeCloseTo(0.1)
+  })
+
   test('usa el color del contenido y admite color y opacidad propios', async () => {
     const c = await render(
       <div>

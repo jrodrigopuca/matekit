@@ -21,24 +21,29 @@
       var(--md-sys-motion-spring-fast-effects-easing);
   }
 
+  /* Cada estado del padre toma el mayor entre su opacidad y la que llega por
+     --mk-state-layer-opacity. Así, si un componente indica un estado más fuerte desde otro
+     elemento (por ejemplo, foco de teclado en un <input> oculto), el hover del padre no lo
+     tapa: foco + hover queda en 10 %, no en 8 %. */
+
   /* Solo en dispositivos con puntero que puede "pasar por encima" (no en pantallas táctiles,
      donde :hover queda pegado después de tocar). */
   @media (hover: hover) {
     :hover > .mk-state-layer {
-      opacity: var(--md-sys-state-hover-state-layer-opacity);
+      opacity: max(var(--mk-state-layer-opacity, 0), var(--md-sys-state-hover-state-layer-opacity));
     }
   }
 
   :focus-visible > .mk-state-layer {
-    opacity: var(--md-sys-state-focus-state-layer-opacity);
+    opacity: max(var(--mk-state-layer-opacity, 0), var(--md-sys-state-focus-state-layer-opacity));
   }
 
   :active > .mk-state-layer {
-    opacity: var(--md-sys-state-pressed-state-layer-opacity);
+    opacity: max(var(--mk-state-layer-opacity, 0), var(--md-sys-state-pressed-state-layer-opacity));
   }
 
   [data-dragged] > .mk-state-layer {
-    opacity: var(--md-sys-state-dragged-state-layer-opacity);
+    opacity: max(var(--mk-state-layer-opacity, 0), var(--md-sys-state-dragged-state-layer-opacity));
   }
 
   /* Deshabilitado: sin capa, aunque haya puntero o foco. Va al final para ganar. */
