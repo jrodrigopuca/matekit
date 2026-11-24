@@ -13,6 +13,7 @@ siguiente. Convenciones en [`CLAUDE.md`](../../CLAUDE.md).
 | Button | molécula | universal; incluye toggle |
 | Checkbox | molécula | interactivo (indeterminado) |
 | Switch | molécula | universal; resuelto por agente y revisado el 2026-11-24 |
+| IconButton | molécula | universal; comparte la base de CSS con el Button; resuelto por agente y revisado el 2026-11-24 |
 | 32 iconos | icons | ADR-0006 |
 
 ## Orden y motivo

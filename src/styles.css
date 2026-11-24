@@ -9,5 +9,7 @@
 @import './atoms/FocusRing/focus-ring.css';
 @import './atoms/Ripple/ripple.css';
 @import './molecules/Button/button.css';
+/* Después de button.css: usa su base común y la sobrescribe por orden. */
+@import './molecules/IconButton/icon-button.css';
 @import './molecules/Checkbox/checkbox.css';
 @import './molecules/Switch/switch.css';

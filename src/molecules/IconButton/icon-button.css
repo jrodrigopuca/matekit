@@ -1,0 +1,110 @@
+/* IconButton de Material 3 Expressive.
+   La base (alto por tamaño, radios cuadrado y presionado, borde del Outlined, cambio de forma,
+   colores de Filled, Tonal y Outlined, estados y deshabilitado) es común con el Button y está
+   en src/molecules/Button/button.css. Acá va solo lo propio del IconButton.
+
+   Fuentes: kit de Figma (docs/research/05-medidas.md: Medium 56 × 56, radio completo, icono 24;
+   Small 40 visible en un área de 48; anchos de la tabla de variantes) y Jetpack Compose, carpeta
+   compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/:
+   - {XSmall,Small,Medium,Large,XLarge}IconButtonTokens.kt: icono, espacios laterales de cada
+     ancho (ancho = icono + 2 × espacio, como en IconButtonDefaults.*ContainerSize) y formas
+     seleccionadas (SelectedContainerShapeRound / SelectedContainerShapeSquare).
+   - IconButtonTokens.kt (StandardIconButtonTokens): colores del estilo Standard.
+   - FilledIconButtonTokens.kt, FilledTonalIconButtonTokens.kt, OutlinedIconButtonTokens.kt:
+     coinciden con los del Button; el outlined seleccionado deshabilitado lleva contenedor
+     on-surface al 10 % (SelectedDisabledContainerColor) y sin borde
+     (IconButtonDefaults.outlinedIconToggleButtonBorder devuelve null si está seleccionado).
+   Ver docs/research/07-jetpack-compose.md § IconButton. */
+
+@layer matekit.components {
+  .mk-icon-button {
+    /* Tamaño sm por defecto (SmallIconButtonTokens.kt): icono 24 y espacios 4 / 8 / 14. */
+    --_icon-size: 24px;
+    --_space-narrow: 4px;
+    --_space-default: 8px;
+    --_space-wide: 14px;
+    --_space: var(--_space-default);
+    --_width: calc(var(--_icon-size) + 2 * var(--_space));
+    /* "Completo" = mitad del lado más corto: en Narrow el ancho es menor que el alto. */
+    --_radius-round: calc(min(var(--_height), var(--_width)) / 2);
+    /* Los icon buttons no se elevan con el puntero (no hay tokens de elevación). */
+    --_elevation-hover: var(--md-sys-elevation-level0);
+
+    width: var(--_width);
+    min-width: 0;
+    padding: 0;
+    gap: 0;
+  }
+
+  /* Área táctil de al menos 48 × 48 en los tamaños chicos, sin cambiar lo visible. */
+  .mk-icon-button::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: max(100%, 48px);
+    height: max(100%, 48px);
+    transform: translate(-50%, -50%);
+  }
+
+  /* --- Tamaños: icono y espacios laterales de Narrow / Default / Wide --- */
+  .mk-icon-button[data-size='xs'] {
+    /* XSmallIconButtonTokens.kt: 28 / 32 / 40 de ancho. */
+    --_icon-size: 20px;
+    --_space-narrow: 4px;
+    --_space-default: 6px;
+    --_space-wide: 10px;
+  }
+  .mk-icon-button[data-size='md'] {
+    /* MediumIconButtonTokens.kt: 48 / 56 / 72, como el kit. */
+    --_icon-size: 24px;
+    --_space-narrow: 12px;
+    --_space-default: 16px;
+    --_space-wide: 24px;
+  }
+  .mk-icon-button[data-size='lg'] {
+    /* LargeIconButtonTokens.kt (Default se llama Uniform): 64 / 96 / 128, como el kit. */
+    --_icon-size: 32px;
+    --_space-narrow: 16px;
+    --_space-default: 32px;
+    --_space-wide: 48px;
+  }
+  .mk-icon-button[data-size='xl'] {
+    /* XLargeIconButtonTokens.kt: 104 / 136 / 184, como el kit. */
+    --_icon-size: 40px;
+    --_space-narrow: 32px;
+    --_space-default: 48px;
+    --_space-wide: 72px;
+  }
+
+  .mk-icon-button[data-width='narrow'] {
+    --_space: var(--_space-narrow);
+  }
+  .mk-icon-button[data-width='wide'] {
+    --_space: var(--_space-wide);
+  }
+
+  /* --- Forma: al seleccionar, la cuadrada pasa a redonda (SelectedContainerShapeSquare =
+     CornerFull); la redonda pasa a cuadrada, como en el Button. --- */
+  .mk-icon-button[data-shape='square'] {
+    --_radius-selected: var(--_radius-round);
+  }
+
+  /* --- Colores del estilo Standard: sin contenedor --- */
+  .mk-icon-button[data-variant='standard'] {
+    --_container: transparent;
+    --_content: var(--md-sys-color-on-surface-variant);
+  }
+  .mk-icon-button[data-variant='standard'][aria-pressed='true'] {
+    --_content: var(--md-sys-color-primary);
+  }
+
+  /* --- Deshabilitado ---
+     La atenuación y el Outlined (con y sin seleccionar) son comunes con el Button, en
+     button.css. Acá solo el Standard: sin fondo, y el contenido se repite porque los colores
+     del Standard (también los de toggle) están en este archivo, que se carga después. */
+  .mk-icon-button[data-variant='standard']:is(:disabled, [aria-disabled='true']) {
+    --_container: transparent;
+    --_content: var(--_disabled-content);
+  }
+}

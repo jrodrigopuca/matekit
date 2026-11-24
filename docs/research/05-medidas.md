@@ -70,6 +70,8 @@ Expressive.
 - Small (usado dentro del campo de texto): 40 visible dentro de un área de 48, icono 24.
 - Anchos Narrow, Default y Wide: ver tabla de variantes en
   [04-componentes.md](04-componentes.md).
+- Tamaños visibles, iconos, espacios laterales y colores de toggle completados con Compose:
+  ver [07-jetpack-compose.md](07-jetpack-compose.md#iconbutton).
 
 ## Text field
 

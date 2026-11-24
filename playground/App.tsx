@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ButtonPage } from './pages/ButtonPage.tsx'
 import { CheckboxPage } from './pages/CheckboxPage.tsx'
+import { IconButtonPage } from './pages/IconButtonPage.tsx'
 import { IconsPage } from './pages/IconsPage.tsx'
 import { SwitchPage } from './pages/SwitchPage.tsx'
 import { TokensPage } from './pages/TokensPage.tsx'
@@ -10,6 +11,7 @@ type Motion = 'expressive' | 'standard'
 
 const PAGES = {
   button: { label: 'Button', Page: ButtonPage },
+  'icon-button': { label: 'IconButton', Page: IconButtonPage },
   checkbox: { label: 'Checkbox', Page: CheckboxPage },
   switch: { label: 'Switch', Page: SwitchPage },
   icons: { label: 'Iconos', Page: IconsPage },

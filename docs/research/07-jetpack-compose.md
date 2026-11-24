@@ -159,6 +159,70 @@ con el presionado del kit; Compose no la define en `SwitchTokens.kt`.
 No se buscó una tercera fuente: las diferencias son de uno o dos puntos de opacidad o de tono
 y no se ven a simple vista, así que no justifican apartarse del kit.
 
+## IconButton
+
+Leído el 2026-11-24 (último cambio en la carpeta de tokens: commit `ac364f3c7f`, del
+2026-11-18): `IconButtonTokens.kt` (el objeto se llama `StandardIconButtonTokens`),
+`{XSmall,Small,Medium,Large,XLarge}IconButtonTokens.kt`, `FilledIconButtonTokens.kt`,
+`FilledTonalIconButtonTokens.kt`, `OutlinedIconButtonTokens.kt` y, fuera de `tokens/`,
+`IconButtonDefaults.kt` (cálculo del ancho y borde del toggle).
+
+### Medidas por tamaño
+
+Ancho = icono + espacio inicial + espacio final (`IconButtonDefaults.*ContainerSize`). En
+Large, el espacio de Default se llama `UniformLeadingSpace`.
+
+| Tamaño | Alto | Icono | Espacio Narrow / Default / Wide | Ancho Narrow / Default / Wide | Radio Square | Al presionar | Borde Outlined |
+|---|---|---|---|---|---|---|---|
+| XSmall | 32 | 20 | 4 / 6 / 10 | 28 / 32 / 40 | 12 (Medium) | 8 (Small) | 1 |
+| Small | 40 | 24 | 4 / 8 / 14 | 32 / 40 / 52 | 12 (Medium) | 8 (Small) | 1 |
+| Medium | 56 | 24 | 12 / 16 / 24 | 48 / 56 / 72 | 16 (Large) | 12 (Medium) | 1 |
+| Large | 96 | 32 | 16 / 32 / 48 | 64 / 96 / 128 | 28 (Extra-large) | 16 (Large) | 2 |
+| XLarge | 136 | 40 | 32 / 48 / 72 | 104 / 136 / 184 | 28 (Extra-large) | 16 (Large) | 3 |
+
+**Lo que confirma del kit:** Medium 56 × 56 con icono 24; Small de 40 visible con icono 24; los
+anchos de Medium, Large y XLarge de la tabla de variantes. En Small y XSmall el kit da 48 en
+los tres anchos porque mide el área táctil: el tamaño visible sale de esta tabla.
+
+Alto, radios y borde coinciden con los del botón (`Button*Tokens.kt`), así que el CSS los
+comparte. El icono también coincide salvo en Small (24 en el icon button, 20 en el botón).
+
+### Forma seleccionada (toggle)
+
+`SelectedContainerShapeRound` es la forma cuadrada del tamaño y
+`SelectedContainerShapeSquare` es `CornerFull`: al seleccionar, el redondo pasa a cuadrado y
+el cuadrado pasa a redondo. En el botón no es así (ver más abajo).
+
+### Colores
+
+| Estilo | Común | Sin seleccionar | Seleccionado | Deshabilitado |
+|---|---|---|---|---|
+| Standard | sin fondo, `on-surface-variant` | igual | sin fondo, `primary` | `on-surface` 38 % |
+| Filled | `primary` / `on-primary` | `surface-container` / `on-surface-variant` | `primary` / `on-primary` | fondo `on-surface` 10 %, contenido 38 % |
+| Tonal | `secondary-container` / `on-secondary-container` | igual | `secondary` / `on-secondary` | fondo `on-surface` 10 %, contenido 38 % |
+| Outlined | sin fondo, `on-surface-variant`, borde `outline-variant` | igual | `inverse-surface` / `inverse-on-surface`, sin borde | sin seleccionar: borde `outline-variant`; seleccionado: fondo `on-surface` 10 % sin borde |
+
+Filled, Tonal y Outlined coinciden con los del botón. El borde del Outlined seleccionado no
+existe: `outlinedIconToggleButtonBorder` devuelve `null` si está seleccionado. Los
+deshabilitados usan los mismos valores en los estados seleccionado y sin seleccionar.
+
+### Conflictos con el kit
+
+Ninguno: el kit no trae lo que Compose define (colores de toggle, Narrow y Wide visibles en
+Small y XSmall, radios) y lo que trae coincide.
+
+### Observaciones sobre el Button (no aplicadas)
+
+- En los cinco `Button*Tokens.kt`, `SelectedContainerShapeRound = CornerFull` y
+  `SelectedContainerShapeSquare` es el radio Square del tamaño: el botón seleccionado
+  **conserva** su forma. El Button de matekit pasa a cuadrado al seleccionar,
+  como el kit (Toggle M seleccionado, radio 16). Vale el kit (ADR-0004); se anota por si se
+  revisa.
+- El Button de matekit no atenúa los toggles deshabilitados: tonal seleccionado, filled sin
+  seleccionar y outlined seleccionado deshabilitados se ven con sus colores normales (las
+  reglas `[data-variant][aria-pressed]` le ganan en especificidad a `:disabled`). Compose
+  atenúa todos. El IconButton lo resuelve en su CSS; el Button queda igual a pedido.
+
 ## No revisado
 
 Los tokens de Dialog, Navigation rail y los de color de la barra de navegación
