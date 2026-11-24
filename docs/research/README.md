@@ -13,6 +13,7 @@ El paquete se publicará como `@matekit/react` (ver
 | [03-tokens.md](03-tokens.md) | Tipografía, esquinas, elevación, color y capas de estado leídos del kit |
 | [04-componentes.md](04-componentes.md) | Variantes y estados de los componentes del primer conjunto |
 | [05-medidas.md](05-medidas.md) | Medidas internas, colores por estado y tipografía de cada componente |
+| [06-alternativas.md](06-alternativas.md) | Revisión de `m3-expressive-react` y `expressive-react` |
 | [data/color-schemes.csv](data/color-schemes.csv) | Los 49 roles de color, claro y oscuro |
 | [tools/extraccion-pendiente.md](tools/extraccion-pendiente.md) | Ids de nodos consultados y cómo repetir la extracción |
 

@@ -21,6 +21,10 @@ diseño oficial.
   estado como variables CSS, antes que cualquier componente.
 - **Sin dependencias de comportamiento al inicio:** elementos nativos de HTML, `<dialog>` y
   la API Popover donde alcancen.
+- **API por composición:** las partes de cada componente se arman con subcomponentes
+  (`TextFieldLabel`, `DialogActions`) organizados en capas al estilo Atomic Design, y las
+  primitivas se exportan para construir componentes propios
+  ([ADR-0002](docs/adr/0002-api-por-composicion-con-capas-atomicas.md)).
 - **Pocos componentes, bien hechos:** primer conjunto de Button, Text field, Checkbox,
   Switch, Dialog, Menu y Navigation.
 
