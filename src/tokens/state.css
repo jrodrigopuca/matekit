@@ -1,0 +1,12 @@
+/* Generado por scripts/build-tokens.ts desde tokens/. No editar a mano.
+   Fuente: Material 3 Design Kit (Figma): variables State Layers∕*∕Opacity-08|10|16 y su uso en los componentes (botón, checkbox, switch, menú, campo de texto). Extraído el 2026-11-24. */
+
+:root {
+  --md-sys-state-hover-state-layer-opacity: 0.08;
+  --md-sys-state-focus-state-layer-opacity: 0.1;
+  --md-sys-state-pressed-state-layer-opacity: 0.1;
+  --md-sys-state-dragged-state-layer-opacity: 0.16;
+  --md-sys-state-disabled-container-opacity: 0.1;
+  --md-sys-state-disabled-content-opacity: 0.38;
+  --md-sys-state-focus-indicator-thickness: 3px;
+}

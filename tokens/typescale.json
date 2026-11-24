@@ -1,0 +1,29 @@
+{
+  "$source": "Material 3 Design Kit (Figma), colección Typescale y variables Static/*. Extraído el 2026-11-24. Tamaño, interlineado y espaciado en px del kit (dp).",
+  "typeface": {
+    "brand": "Roboto",
+    "plain": "Roboto"
+  },
+  "weight": {
+    "regular": 400,
+    "medium": 500,
+    "semibold": 600
+  },
+  "styles": {
+    "display-large":   { "typeface": "brand", "size": 57, "lineHeight": 64, "tracking": -0.25, "weight": 400, "weightEmphasized": 500 },
+    "display-medium":  { "typeface": "brand", "size": 45, "lineHeight": 52, "tracking": 0,     "weight": 400, "weightEmphasized": 500 },
+    "display-small":   { "typeface": "brand", "size": 36, "lineHeight": 44, "tracking": 0,     "weight": 400, "weightEmphasized": 500 },
+    "headline-large":  { "typeface": "brand", "size": 32, "lineHeight": 40, "tracking": 0,     "weight": 400, "weightEmphasized": 500 },
+    "headline-medium": { "typeface": "brand", "size": 28, "lineHeight": 36, "tracking": 0,     "weight": 400, "weightEmphasized": 500 },
+    "headline-small":  { "typeface": "brand", "size": 24, "lineHeight": 32, "tracking": 0,     "weight": 400, "weightEmphasized": 500 },
+    "title-large":     { "typeface": "brand", "size": 22, "lineHeight": 28, "tracking": 0,     "weight": 400, "weightEmphasized": 500 },
+    "title-medium":    { "typeface": "plain", "size": 16, "lineHeight": 24, "tracking": 0.15,  "weight": 500, "weightEmphasized": 600 },
+    "title-small":     { "typeface": "plain", "size": 14, "lineHeight": 20, "tracking": 0.1,   "weight": 500, "weightEmphasized": 600 },
+    "body-large":      { "typeface": "plain", "size": 16, "lineHeight": 24, "tracking": 0.5,   "weight": 400, "weightEmphasized": 500 },
+    "body-medium":     { "typeface": "plain", "size": 14, "lineHeight": 20, "tracking": 0.25,  "weight": 400, "weightEmphasized": 500 },
+    "body-small":      { "typeface": "plain", "size": 12, "lineHeight": 16, "tracking": 0.4,   "weight": 400, "weightEmphasized": 500 },
+    "label-large":     { "typeface": "plain", "size": 14, "lineHeight": 20, "tracking": 0.1,   "weight": 500, "weightEmphasized": 600 },
+    "label-medium":    { "typeface": "plain", "size": 12, "lineHeight": 16, "tracking": 0.5,   "weight": 500, "weightEmphasized": 600 },
+    "label-small":     { "typeface": "plain", "size": 11, "lineHeight": 16, "tracking": 0.5,   "weight": 500, "weightEmphasized": 600 }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "name": "@matekit/react",
+  "version": "0.0.0",
+  "description": "Librería de componentes React basada en Material 3 Expressive",
+  "private": true,
+  "type": "module",
+  "license": "UNLICENSED",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jrodrigopuca/matekit.git"
+  },
+  "packageManager": "pnpm@10.33.0",
+  "scripts": {
+    "tokens": "node scripts/build-tokens.ts",
+    "typecheck": "tsc -p .",
+    "test": "node --test \"tests/**/*.test.ts\""
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.7",
+    "typescript": "7.0.2"
+  }
+}

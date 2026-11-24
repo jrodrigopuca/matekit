@@ -1,0 +1,15 @@
+{
+  "$source": "Material 3 Design Kit (Figma): variables State Layers/*/Opacity-08|10|16 y su uso en los componentes (botón, checkbox, switch, menú, campo de texto). Extraído el 2026-11-24.",
+  "hover-state-layer-opacity": 0.08,
+  "focus-state-layer-opacity": 0.10,
+  "pressed-state-layer-opacity": 0.10,
+  "dragged-state-layer-opacity": 0.16,
+  "disabled-container-opacity": 0.10,
+  "disabled-content-opacity": 0.38,
+  "focus-indicator-thickness": 3,
+  "$notes": {
+    "pressed": "El kit superpone capa al 8 % y onda al 10 % al presionar; aquí se toma el 10 % como opacidad de la capa presionada.",
+    "dragged": "El kit define opacidades del 16 % sin uso visto en los componentes revisados; el uso para arrastre es una suposición.",
+    "focus-indicator-thickness": "Anillo de foco del botón: 3 px en Secondary."
+  }
+}

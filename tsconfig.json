@@ -1,0 +1,25 @@
+{
+  // Base: la configuración que genera `tsc --init` en TypeScript 7.0.2.
+  "compilerOptions": {
+    "module": "nodenext",
+    "target": "esnext",
+    "types": ["node"],
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "jsx": "react-jsx",
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "noUncheckedSideEffectImports": true,
+    "moduleDetection": "force",
+    "skipLibCheck": true,
+
+    // Por ahora solo se verifican tipos; la compilación de la librería se configura después.
+    "noEmit": true,
+    // Node ejecuta los .ts quitando los tipos, sin compilar: solo admite sintaxis que se
+    // pueda borrar (nada de enum ni namespace) y los imports llevan la extensión .ts.
+    "erasableSyntaxOnly": true,
+    "allowImportingTsExtensions": true
+  },
+  "include": ["scripts", "tests", "tokens", "src"]
+}

@@ -1,0 +1,15 @@
+{
+  "$source": "Material 3 Design Kit (Figma), colección Shape. Extraído el 2026-11-24. Valores en px del kit (dp). El kit usa 1000 para 'full'; en CSS se usa 9999px.",
+  "corner": {
+    "none": 0,
+    "extra-small": 4,
+    "small": 8,
+    "medium": 12,
+    "large": 16,
+    "large-increased": 20,
+    "extra-large": 28,
+    "extra-large-increased": 32,
+    "extra-extra-large": 48,
+    "full": 9999
+  }
+}

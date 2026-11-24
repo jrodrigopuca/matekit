@@ -1,0 +1,9 @@
+{
+  "$source": "Material 3 Design Kit (Figma), estilos M3/Elevation Light y Dark (iguales en ambos modos). Extraído el 2026-11-24. Cada sombra: [x, y, desenfoque, expansión, color].",
+  "level0": [],
+  "level1": [[0, 1, 2, 0, "#0000004d"], [0, 1, 3, 1, "#00000026"]],
+  "level2": [[0, 1, 2, 0, "#0000004d"], [0, 2, 6, 2, "#00000026"]],
+  "level3": [[0, 1, 3, 0, "#0000004d"], [0, 4, 8, 3, "#00000026"]],
+  "level4": [[0, 2, 3, 0, "#0000004d"], [0, 6, 10, 4, "#00000026"]],
+  "level5": [[0, 4, 4, 0, "#0000004d"], [0, 8, 12, 6, "#00000026"]]
+}

@@ -1,0 +1,7 @@
+/* Generado por scripts/build-tokens.ts desde tokens/. No editar a mano.
+   Fuente: todos los archivos de tokens */
+@import './color.css';
+@import './typescale.css';
+@import './shape.css';
+@import './elevation.css';
+@import './state.css';
