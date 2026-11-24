@@ -14,8 +14,9 @@ se ejecuta con la herramienta `use_figma` del conector o como plugin de Figma).
 ## Nodos a consultar
 
 Archivo: el de `FIGMA_FILE_KEY` (copia propia del kit; la clave no se versiona). Los ids de
-página y de nodo son los del kit de la comunidad y se conservan al duplicarlo. Una llamada
-por página.
+página y de nodo son los del kit de la comunidad y se conservan al duplicarlo (verificado
+el 2026-11-24 sobre una segunda copia: las 9 páginas, 2 variantes de muestra y las 4
+colecciones de variables coincidían). Una llamada por página.
 
 | Página | Id de página | Variantes (ids) |
 |---|---|---|
