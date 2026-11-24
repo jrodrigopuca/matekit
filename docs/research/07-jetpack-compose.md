@@ -46,8 +46,41 @@ Seleccionado (toggle) usa el radio Square. Coincide con lo que documenta `expres
 | Tema | Kit | Compose | Comentario |
 |---|---|---|---|
 | Botón XSmall: espacio lateral y separación | 12 y 4 | 16 y 8 | `expressive-react` usa 12 y 4, como el kit. Sin resolver. |
-| Color claro: `on-primary-container`, `on-secondary-container`, `on-tertiary-container`, `on-error-container` | Tono 30 (por ejemplo `#4f378a`) | Tono 10 (`#21005d`) | El kit es más reciente que la línea base de Compose; posiblemente un cambio de la especificación. Sin verificar. |
+| Color claro: `on-primary-container`, `on-secondary-container`, `on-tertiary-container`, `on-error-container` | Tono 30 (por ejemplo `#4f378a`) | Tono 10 (`#21005d`) | **Resuelto: vale el kit.** Ver la sección siguiente. |
 | Menú | Radio 16, sombra 3, `Surface Container Low`, seleccionado `Tertiary Container` | Radio 4, sombra 2, `Surface Container`, seleccionado `Secondary Container` | `MenuTokens.kt` describe el menú anterior (baseline); no son la misma versión. |
+
+## Colores "on container": verificado con material-color-utilities
+
+Verificado el 2026-11-24 en `material-color-utilities` (la librería oficial de Google que
+calcula los esquemas; repositorio `material-foundation/material-color-utilities`, commit
+`0f07b68` del 2026-11-23):
+
+- El commit `03336bf` del 2024-06-11 ("Update MCU to for expressive on-colors") cambió el
+  tono de los cuatro roles `on-*-container` del tema claro de 10 a 30
+  (`s.isDark ? 90 : 10` → `s.isDark ? 90 : 30`) en todas las versiones de la librería
+  (TypeScript, Java, Dart, C++, Swift).
+- La especificación 2021 vigente en esa librería devuelve tono 30 para
+  `on-primary-container` en claro (comprobado ejecutando el paquete publicado 0.4.0).
+- Los tokens estáticos de Compose (`ColorLightTokens.kt`) siguen en tono 10, es decir, son
+  anteriores a ese cambio.
+
+Conclusión: los valores del kit son los vigentes y `tokens/color.json` no cambia.
+
+Otros hallazgos de la misma prueba:
+
+- El esquema del kit no es el que genera la librería a partir de la semilla `#6750a4`
+  (variante Tonal Spot): ahí `primary` sale `#65558f`, no `#6750a4`. El esquema base del kit
+  usa paletas fijas elegidas a mano, como los tokens de Compose (`PaletteTokens.kt`). Al
+  agregar color dinámico, un tema generado desde una semilla no va a reproducir el esquema
+  base exacto; es esperable.
+- La librería tiene especificaciones 2021, 2025 y 2026. El kit coincide con la 2021 en
+  37 de 45 roles en claro (salvo primary, error y derivados, por lo de la paleta fija) y
+  con la 2025 solo en 10 de 45. Pendiente decidir qué especificación usar para el color
+  dinámico.
+- El paquete publicado `@material/material-color-utilities@0.4.0` tiene imports internos
+  sin extensión (`./dynamic_color` en vez de `./dynamic_color.js`) que Node no resuelve al
+  ejecutarlo directamente. Los empaquetadores (Vite, el de Next.js) sí los resuelven.
+  Tenerlo en cuenta si se usa en scripts de Node.
 
 ## No revisado
 
