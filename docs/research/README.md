@@ -26,6 +26,10 @@ El paquete se publicará como `@matekit/react` (ver
   https://www.figma.com/community/file/1035203688168086460/material-3-design-kit
 - **Especificación:** https://m3.material.io — no se pudo leer de forma automática (la página
   se dibuja con JavaScript). Pendiente de leer con navegador.
+- **Documentación de `@material/web`:**
+  https://github.com/material-components/material-web/tree/main/docs/components — uso,
+  accesibilidad, comportamiento y API de cada componente web oficial. Actualizada en 2026,
+  pero anterior a Expressive: sirve para comportamiento, no para medidas ni colores.
 - **design.google:** sitio editorial, sin especificaciones. Solo sirve el artículo
   https://design.google/library/expressive-material-design-google-research
 

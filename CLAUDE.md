@@ -82,6 +82,13 @@ exporta desde el `index.ts` de su capa y su CSS se importa en `src/styles.css`.
 3. Un conflicto real entre ambos se verifica con una tercera fuente y se anota en
    `docs/research/07-jetpack-compose.md`.
 
+**Comportamiento y accesibilidad en web:** la documentación de `@material/web`, la
+librería web oficial de Google, en `material-components/material-web`, carpeta
+`docs/components/` (`text-field.md`, `menu.md`, `dialog.md`, …; leer con
+`gh api "repos/material-components/material-web/contents/docs/components/<archivo>.md" -H "Accept: application/vnd.github.raw"`).
+Sirve para uso, teclado, roles, validación y posicionamiento. **No** para medidas ni colores:
+es Material 3 anterior a Expressive (sin tamaños XS–XL, sin cambio de forma, sin Vibrant).
+
 No llamar al conector de Figma salvo que falte un dato imprescindible: tiene límite de uso.
 
 ## Pruebas

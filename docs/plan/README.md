@@ -88,7 +88,9 @@ Fuente: `05-medidas.md` § Icon button; Compose `IconButtonTokens.kt`,
 ## 3. TextField
 
 Fuente: `05-medidas.md` § Text field; Compose `FilledTextFieldTokens.kt` y
-`OutlinedTextFieldTokens.kt`. Indicador con foco de 2 px (ADR-0004), no 3.
+`OutlinedTextFieldTokens.kt`. Indicador con foco de 2 px (ADR-0004), no 3. Comportamiento y
+accesibilidad: `@material/web` `docs/components/text-field.md` (tipos de input, textarea,
+prefijo y sufijo, contador de caracteres, validación).
 
 ```tsx
 <TextField variant="outlined" error={!!err}>
@@ -112,7 +114,8 @@ Fuente: `05-medidas.md` § Text field; Compose `FilledTextFieldTokens.kt` y
 
 ## 4. Dialog
 
-Fuente: `05-medidas.md` § Dialog; Compose `DialogTokens.kt`.
+Fuente: `05-medidas.md` § Dialog; Compose `DialogTokens.kt`. Comportamiento y accesibilidad:
+`@material/web` `docs/components/dialog.md` (apertura y cierre, valor de retorno, alertas).
 
 ```tsx
 <Dialog open={open} onClose={() => setOpen(false)}>
@@ -139,7 +142,9 @@ Fuente: `05-medidas.md` § Dialog; Compose `DialogTokens.kt`.
 ## 5. Menu
 
 Fuente: `05-medidas.md` § Menu (versión Expressive, Standard y Vibrant). `MenuTokens.kt` de
-Compose describe el menú anterior: no usarlo para colores ni forma.
+Compose describe el menú anterior: no usarlo para colores ni forma. Comportamiento y
+accesibilidad: `@material/web` `docs/components/menu.md` (submenús y posicionamiento con
+Popover, fijo o en el documento).
 
 ```tsx
 <Menu>
