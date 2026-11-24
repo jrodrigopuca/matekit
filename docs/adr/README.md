@@ -10,3 +10,4 @@ nueva la reemplaza y la anterior pasa a "superseded by".
 | [0003](0003-componentes-universales-e-interactivos.md) | Componentes universales sin `'use client'` e interactivos con `'use client'` | accepted |
 | [0004](0004-fuentes-de-verdad-y-especificacion-de-color.md) | Fuentes de verdad de los tokens y especificación de color 2021 por defecto | accepted |
 | [0005](0005-estilos-css-con-prefijo-y-capas.md) | Estilos en CSS plano con prefijo `mk-`, capas `@layer` y una hoja única | accepted |
+| [0006](0006-iconos-atomo-y-set-acotado.md) | Átomo `Icon` como contenedor y un set acotado de Material Symbols en SVG | accepted |

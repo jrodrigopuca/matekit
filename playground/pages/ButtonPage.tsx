@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Button, type ButtonShape, type ButtonSize, type ButtonVariant } from '../../src/index.ts'
-import { PlusIcon, StarIcon } from '../icons.tsx'
+import { AddIcon, StarIcon } from '../../src/index.ts'
 
 const VARIANTS: ButtonVariant[] = ['filled', 'tonal', 'outlined', 'elevated', 'text']
 const SIZES: ButtonSize[] = ['xs', 'sm', 'md', 'lg', 'xl']
@@ -28,7 +28,7 @@ export function ButtonPage() {
   ]
     .filter(Boolean)
     .join(' ')
-    .concat(`>${withIcon ? '<PlusIcon />' : ''}${label}</Button>`)
+    .concat(`>${withIcon ? '<AddIcon />' : ''}${label}</Button>`)
 
   return (
     <>
@@ -70,7 +70,7 @@ export function ButtonPage() {
               if (toggle !== 'none') setToggle(toggle === 'on' ? 'off' : 'on')
             }}
           >
-            {withIcon && <PlusIcon />}
+            {withIcon && <AddIcon />}
             {label}
           </Button>
         </div>
@@ -118,7 +118,7 @@ function Row({ variant }: { variant: ButtonVariant }) {
   return (
     <>
       <span className="pg-row-head">{variant}</span>
-      <span><Button variant={variant}><PlusIcon />Etiqueta</Button></span>
+      <span><Button variant={variant}><AddIcon />Etiqueta</Button></span>
       <span><Button variant={variant} shape="square">Cuadrado</Button></span>
       <span>
         {togglable && (

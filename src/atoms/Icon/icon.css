@@ -1,0 +1,17 @@
+/* Icon: contenedor de iconos. 24 px por defecto; los componentes definen --mk-icon-size. */
+
+@layer matekit.atoms {
+  .mk-icon {
+    display: inline-flex;
+    flex-shrink: 0;
+    width: var(--mk-icon-size, 24px);
+    height: var(--mk-icon-size, 24px);
+    vertical-align: middle;
+  }
+
+  .mk-icon > svg {
+    width: 100%;
+    height: 100%;
+    fill: currentColor;
+  }
+}

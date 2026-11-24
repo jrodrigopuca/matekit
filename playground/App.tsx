@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ButtonPage } from './pages/ButtonPage.tsx'
 import { CheckboxPage } from './pages/CheckboxPage.tsx'
+import { IconsPage } from './pages/IconsPage.tsx'
 import { TokensPage } from './pages/TokensPage.tsx'
 
 type Theme = 'system' | 'light' | 'dark'
@@ -9,6 +10,7 @@ type Motion = 'expressive' | 'standard'
 const PAGES = {
   button: { label: 'Button', Page: ButtonPage },
   checkbox: { label: 'Checkbox', Page: CheckboxPage },
+  icons: { label: 'Iconos', Page: IconsPage },
   tokens: { label: 'Tokens', Page: TokensPage },
 } as const
 type PageId = keyof typeof PAGES

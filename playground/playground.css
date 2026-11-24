@@ -206,3 +206,37 @@ body {
 .pg-motion-track:hover .pg-motion-dot {
   left: calc(70% - 12px);
 }
+
+.pg-subhead {
+  margin: 20px 0 8px;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: var(--md-sys-typescale-title-small-size);
+  font-weight: 500;
+}
+
+.pg-icons {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 8px;
+}
+
+.pg-icon-cell {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 16px 8px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 12px;
+  background: var(--md-sys-color-surface-container-low);
+  color: var(--md-sys-color-on-surface);
+  font: inherit;
+  cursor: pointer;
+}
+
+.pg-icon-cell:hover {
+  background: var(--md-sys-color-surface-container-high);
+}
+
+.pg-icon-cell code {
+  font-size: 12px;
+}

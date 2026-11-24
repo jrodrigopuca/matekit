@@ -4,6 +4,7 @@
 @layer matekit.tokens, matekit.atoms, matekit.components;
 
 @import './tokens/index.css' layer(matekit.tokens);
+@import './atoms/Icon/icon.css';
 @import './atoms/StateLayer/state-layer.css';
 @import './atoms/FocusRing/focus-ring.css';
 @import './atoms/Ripple/ripple.css';
