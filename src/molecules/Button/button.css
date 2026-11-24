@@ -1,0 +1,228 @@
+/* Button de Material 3 Expressive.
+   Medidas: kit de Figma (docs/research/05-medidas.md) y Jetpack Compose para lo que el kit no
+   trae (radios por tamaño, borde del Outlined, colores de toggle y sombras en hover); ver
+   docs/research/07-jetpack-compose.md y ADR-0004. */
+
+@layer matekit.components {
+  .mk-button {
+    /* Valores del tamaño (sm por defecto); cada data-size los cambia. */
+    --_height: 40px;
+    --_padding: 16px;
+    --_gap: 8px;
+    --_icon-size: 20px;
+    --_radius-square: var(--md-sys-shape-corner-medium);
+    --_radius-pressed: var(--md-sys-shape-corner-small);
+    --_outline-width: 1px;
+    --_font: var(--md-sys-typescale-label-large-font);
+    --_font-size: var(--md-sys-typescale-label-large-size);
+    --_line-height: var(--md-sys-typescale-label-large-line-height);
+    --_font-weight: var(--md-sys-typescale-label-large-weight);
+    --_tracking: var(--md-sys-typescale-label-large-tracking);
+
+    /* Redondo = la mitad del alto (no 9999px), para que el cambio de forma se anime bien. */
+    --_radius-round: calc(var(--_height) / 2);
+    --_radius: var(--_radius-round);
+
+    /* Colores (filled por defecto); cada data-variant los cambia. */
+    --_container: var(--md-sys-color-primary);
+    --_content: var(--md-sys-color-on-primary);
+    --_outline: transparent;
+    --_elevation: var(--md-sys-elevation-level0);
+    --_elevation-hover: var(--md-sys-elevation-level1);
+
+    /* Para un icono futuro (átomo Icon) o una fuente de iconos. */
+    --mk-icon-size: var(--_icon-size);
+
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    gap: var(--_gap);
+    box-sizing: border-box;
+    height: var(--_height);
+    min-width: var(--_height);
+    margin: 0;
+    padding: 0 var(--_padding);
+    border: none;
+    border-radius: var(--_radius);
+    background-color: var(--_container);
+    box-shadow: var(--_elevation);
+    /* Borde interior que no cambia el tamaño y sigue el radio, como en el kit. Se dibuja con
+       outline (no con box-shadow) porque la elevación de nivel 0 vale "none", que no se
+       puede combinar en una lista de sombras. El anillo de foco es otro elemento. */
+    outline: var(--_outline-width) solid var(--_outline);
+    outline-offset: calc(-1 * var(--_outline-width));
+    color: var(--_content);
+    font-family: var(--_font);
+    font-size: var(--_font-size);
+    line-height: var(--_line-height);
+    font-weight: var(--_font-weight);
+    letter-spacing: var(--_tracking);
+    white-space: nowrap;
+    text-decoration: none;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transition:
+      border-radius var(--md-sys-motion-spring-fast-spatial-duration)
+        var(--md-sys-motion-spring-fast-spatial-easing),
+      background-color var(--md-sys-motion-spring-default-effects-duration)
+        var(--md-sys-motion-spring-default-effects-easing),
+      color var(--md-sys-motion-spring-default-effects-duration)
+        var(--md-sys-motion-spring-default-effects-easing),
+      box-shadow var(--md-sys-motion-spring-default-effects-duration)
+        var(--md-sys-motion-spring-default-effects-easing);
+  }
+
+  /* Área táctil de al menos 48 px de alto en los tamaños chicos, sin cambiar lo visible. */
+  .mk-button::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: max(100%, 48px);
+    transform: translateY(-50%);
+  }
+
+  .mk-button > svg,
+  .mk-button > .mk-icon {
+    flex-shrink: 0;
+    width: var(--_icon-size);
+    height: var(--_icon-size);
+  }
+
+  /* --- Tamaños --- */
+  .mk-button[data-size='xs'] {
+    --_height: 32px;
+    --_padding: 12px;
+    --_gap: 4px;
+  }
+  .mk-button[data-size='md'] {
+    --_height: 56px;
+    --_padding: 24px;
+    --_icon-size: 24px;
+    --_radius-square: var(--md-sys-shape-corner-large);
+    --_radius-pressed: var(--md-sys-shape-corner-medium);
+    --_font: var(--md-sys-typescale-title-medium-font);
+    --_font-size: var(--md-sys-typescale-title-medium-size);
+    --_line-height: var(--md-sys-typescale-title-medium-line-height);
+    --_font-weight: var(--md-sys-typescale-title-medium-weight);
+    --_tracking: var(--md-sys-typescale-title-medium-tracking);
+  }
+  .mk-button[data-size='lg'] {
+    --_height: 96px;
+    --_padding: 48px;
+    --_gap: 12px;
+    --_icon-size: 32px;
+    --_radius-square: var(--md-sys-shape-corner-extra-large);
+    --_radius-pressed: var(--md-sys-shape-corner-large);
+    --_outline-width: 2px;
+    --_font: var(--md-sys-typescale-headline-small-font);
+    --_font-size: var(--md-sys-typescale-headline-small-size);
+    --_line-height: var(--md-sys-typescale-headline-small-line-height);
+    --_font-weight: var(--md-sys-typescale-headline-small-weight);
+    --_tracking: var(--md-sys-typescale-headline-small-tracking);
+  }
+  .mk-button[data-size='xl'] {
+    --_height: 136px;
+    --_padding: 64px;
+    --_gap: 16px;
+    --_icon-size: 40px;
+    --_radius-square: var(--md-sys-shape-corner-extra-large);
+    --_radius-pressed: var(--md-sys-shape-corner-large);
+    --_outline-width: 3px;
+    --_font: var(--md-sys-typescale-headline-large-font);
+    --_font-size: var(--md-sys-typescale-headline-large-size);
+    --_line-height: var(--md-sys-typescale-headline-large-line-height);
+    --_font-weight: var(--md-sys-typescale-headline-large-weight);
+    --_tracking: var(--md-sys-typescale-headline-large-tracking);
+  }
+
+  /* --- Forma: cuadrada en reposo, seleccionada (toggle) y presionada --- */
+  .mk-button[data-shape='square'],
+  .mk-button[aria-pressed='true'] {
+    --_radius: var(--_radius-square);
+  }
+  .mk-button:active:not(:disabled, [aria-disabled='true']) {
+    --_radius: var(--_radius-pressed);
+  }
+
+  /* --- Colores --- */
+  .mk-button[data-variant='filled'][aria-pressed='false'] {
+    --_container: var(--md-sys-color-surface-container);
+    --_content: var(--md-sys-color-on-surface-variant);
+  }
+
+  .mk-button[data-variant='tonal'] {
+    --_container: var(--md-sys-color-secondary-container);
+    --_content: var(--md-sys-color-on-secondary-container);
+  }
+  .mk-button[data-variant='tonal'][aria-pressed='true'] {
+    --_container: var(--md-sys-color-secondary);
+    --_content: var(--md-sys-color-on-secondary);
+  }
+
+  .mk-button[data-variant='outlined'] {
+    --_container: transparent;
+    --_content: var(--md-sys-color-on-surface-variant);
+    --_outline: var(--md-sys-color-outline-variant);
+    --_elevation-hover: var(--md-sys-elevation-level0);
+  }
+  .mk-button[data-variant='outlined'][aria-pressed='true'] {
+    --_container: var(--md-sys-color-inverse-surface);
+    --_content: var(--md-sys-color-inverse-on-surface);
+    --_outline: transparent;
+  }
+
+  .mk-button[data-variant='elevated'] {
+    --_container: var(--md-sys-color-surface-container-low);
+    --_content: var(--md-sys-color-primary);
+    --_elevation: var(--md-sys-elevation-level1);
+    --_elevation-hover: var(--md-sys-elevation-level2);
+  }
+  .mk-button[data-variant='elevated'][aria-pressed='true'] {
+    --_container: var(--md-sys-color-primary);
+    --_content: var(--md-sys-color-on-primary);
+  }
+
+  .mk-button[data-variant='text'] {
+    --_container: transparent;
+    --_content: var(--md-sys-color-primary);
+    --_elevation-hover: var(--md-sys-elevation-level0);
+  }
+
+  /* --- Estados --- */
+  @media (hover: hover) {
+    .mk-button:hover:not(:disabled, [aria-disabled='true']) {
+      --_elevation: var(--_elevation-hover);
+    }
+  }
+  /* Con la onda presente, la capa de presionado queda en la opacidad de hover (8 %) y la onda
+     suma su 10 %, como en el kit. */
+  .mk-button:active > .mk-state-layer {
+    opacity: var(--md-sys-state-hover-state-layer-opacity);
+  }
+
+  .mk-button:disabled,
+  .mk-button[aria-disabled='true'] {
+    --_container: color-mix(
+      in srgb,
+      var(--md-sys-color-on-surface) calc(var(--md-sys-state-disabled-container-opacity) * 100%),
+      transparent
+    );
+    --_content: color-mix(
+      in srgb,
+      var(--md-sys-color-on-surface) calc(var(--md-sys-state-disabled-content-opacity) * 100%),
+      transparent
+    );
+    --_elevation: var(--md-sys-elevation-level0);
+    cursor: default;
+  }
+  .mk-button:is([data-variant='text'], [data-variant='outlined']):is(:disabled, [aria-disabled='true']) {
+    --_container: transparent;
+  }
+  .mk-button[data-variant='outlined']:is(:disabled, [aria-disabled='true']) {
+    --_outline: var(--md-sys-color-outline-variant);
+  }
+}

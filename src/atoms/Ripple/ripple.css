@@ -1,0 +1,26 @@
+/* Ripple: onda de Material 3. Opacidad de presionado de tokens/state.json. */
+
+@layer matekit.atoms {
+  :where(:has(> .mk-ripple)) {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .mk-ripple {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .mk-ripple-wave {
+    position: absolute;
+    border-radius: 50%;
+    background-color: var(--mk-ripple-color, currentColor);
+    opacity: var(--md-sys-state-pressed-state-layer-opacity);
+    transform: scale(0);
+    pointer-events: none;
+  }
+}

@@ -1,6 +1,17 @@
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import { playwright } from '@vitest/browser-playwright'
+import type { BrowserCommand } from 'vitest/node'
+
+// Mantener apretado el botón del mouse sobre un elemento, para probar :active y la onda.
+// userEvent no lo permite; estos comandos corren del lado de Playwright.
+const pressDown: BrowserCommand<[selector: string]> = async (ctx, selector) => {
+  await ctx.iframe.locator(selector).hover()
+  await ctx.page.mouse.down()
+}
+const pressUp: BrowserCommand<[]> = async (ctx) => {
+  await ctx.page.mouse.up()
+}
 
 // Pruebas de componentes en un navegador real: los estados de los átomos (hover, foco,
 // presionado) son CSS y solo se pueden comprobar con un motor de navegador.
@@ -14,6 +25,7 @@ export default defineConfig({
       headless: true,
       provider: playwright({ launchOptions: { channel: 'chrome' } }),
       instances: [{ browser: 'chromium' }],
+      commands: { pressDown, pressUp },
     },
   },
 })

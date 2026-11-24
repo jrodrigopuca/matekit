@@ -6,8 +6,19 @@ import '../styles.css'
 
 // Sin transiciones durante las pruebas: getComputedStyle devolvería valores intermedios.
 const noMotion = document.createElement('style')
+noMotion.id = 'mk-test-no-motion'
 noMotion.textContent = '*, *::before, *::after { transition: none !important; }'
 document.head.append(noMotion)
+
+/** Ejecuta fn con las transiciones activas (para revisar su declaración). */
+export function withMotion<T>(fn: () => T): T {
+  noMotion.media = 'not all'
+  try {
+    return fn()
+  } finally {
+    noMotion.media = ''
+  }
+}
 
 let root: Root | undefined
 let container: HTMLElement | undefined
