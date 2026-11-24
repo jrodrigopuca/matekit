@@ -51,7 +51,8 @@ Ninguna está cerrada todavía.
 
 - Modos de contraste medio y alto, y los 13 temas de color del kit (solo se exportaron
   Light y Dark).
-- Valores de movimiento (resortes): el kit no tiene página de movimiento.
+- ~~Valores de movimiento~~: resueltos con los tokens de Jetpack Compose (ver
+  [03-tokens.md](03-tokens.md#movimiento)).
 - Detalles sueltos de medidas: botón Square fuera de Medium, campo de texto sin iconos,
   texto del elemento de menú, nivel de sombra del botón Elevated, switch sin activar en
   hover (ver [05-medidas.md](05-medidas.md)).

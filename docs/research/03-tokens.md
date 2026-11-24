@@ -135,4 +135,25 @@ No se vio dónde se usa la opacidad del 16 %; probablemente en arrastre (sin ver
 
 ## Movimiento
 
-El kit no trae valores de movimiento. Pendiente de otra fuente.
+El kit no trae valores de movimiento. Fuente usada: el código de Jetpack Compose Material 3
+(`androidx/androidx`, commit `160825094a` del 2026-08-05), archivos
+`StandardMotionTokens.kt`, `ExpressiveMotionTokens.kt` y `MotionTokens.kt`. Datos en
+[../../tokens/motion.json](../../tokens/motion.json).
+
+Resortes (amortiguación / rigidez, masa 1):
+
+| Resorte | Standard | Expressive |
+|---|---|---|
+| Fast spatial | 0.9 / 1400 | 0.6 / 800 |
+| Default spatial | 0.9 / 700 | 0.8 / 380 |
+| Slow spatial | 0.9 / 300 | 0.8 / 200 |
+| Fast effects | 1.0 / 3800 | 1.0 / 3800 |
+| Default effects | 1.0 / 1600 | 1.0 / 1600 |
+| Slow effects | 1.0 / 800 | 1.0 / 800 |
+
+"Spatial" es para posición, tamaño y forma, y puede rebotar; "effects" es para color y
+opacidad, y no rebota. Compose también define 16 duraciones (de 50 a 1000 ms) y 10 curvas de
+Bézier (emphasized, standard, legacy, linear y sus variantes de aceleración y desaceleración).
+
+En CSS cada resorte se convierte en una duración y una curva `linear()` (ver
+`tokens/spring.ts`).

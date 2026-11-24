@@ -32,6 +32,30 @@ export type Shadow = readonly [number, number, number, number, string]
 
 export type ElevationTokens = { $source: string } & Record<`level${number}`, Shadow[]>
 
+export interface Spring {
+  /** Razón de amortiguación: menor que 1 rebota, 1 no rebota. */
+  damping: number
+  /** Rigidez con masa 1. */
+  stiffness: number
+}
+
+export type SpringName =
+  | 'fast-spatial'
+  | 'default-spatial'
+  | 'slow-spatial'
+  | 'fast-effects'
+  | 'default-effects'
+  | 'slow-effects'
+
+export interface MotionTokens {
+  $source: string
+  $notes: Record<string, string>
+  springs: Record<'standard' | 'expressive', Record<SpringName, Spring>>
+  duration: Record<string, number>
+  /** Curvas de Bézier cúbicas: [x1, y1, x2, y2]. */
+  easing: Record<string, readonly [number, number, number, number]>
+}
+
 export type StateTokens = {
   $source: string
   $notes: Record<string, string>

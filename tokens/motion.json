@@ -1,0 +1,45 @@
+{
+  "$source": "Jetpack Compose Material 3 (androidx/androidx, commit 160825094a del 2026-08-05): tokens/StandardMotionTokens.kt, ExpressiveMotionTokens.kt y MotionTokens.kt en compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/. Leído el 2026-11-24.",
+  "springs": {
+    "standard": {
+      "fast-spatial":    { "damping": 0.9, "stiffness": 1400 },
+      "default-spatial": { "damping": 0.9, "stiffness": 700 },
+      "slow-spatial":    { "damping": 0.9, "stiffness": 300 },
+      "fast-effects":    { "damping": 1.0, "stiffness": 3800 },
+      "default-effects": { "damping": 1.0, "stiffness": 1600 },
+      "slow-effects":    { "damping": 1.0, "stiffness": 800 }
+    },
+    "expressive": {
+      "fast-spatial":    { "damping": 0.6, "stiffness": 800 },
+      "default-spatial": { "damping": 0.8, "stiffness": 380 },
+      "slow-spatial":    { "damping": 0.8, "stiffness": 200 },
+      "fast-effects":    { "damping": 1.0, "stiffness": 3800 },
+      "default-effects": { "damping": 1.0, "stiffness": 1600 },
+      "slow-effects":    { "damping": 1.0, "stiffness": 800 }
+    }
+  },
+  "duration": {
+    "short1": 50, "short2": 100, "short3": 150, "short4": 200,
+    "medium1": 250, "medium2": 300, "medium3": 350, "medium4": 400,
+    "long1": 450, "long2": 500, "long3": 550, "long4": 600,
+    "extra-long1": 700, "extra-long2": 800, "extra-long3": 900, "extra-long4": 1000
+  },
+  "easing": {
+    "emphasized":            [0.2, 0.0, 0.0, 1.0],
+    "emphasized-accelerate": [0.3, 0.0, 0.8, 0.15],
+    "emphasized-decelerate": [0.05, 0.7, 0.1, 1.0],
+    "standard":              [0.2, 0.0, 0.0, 1.0],
+    "standard-accelerate":   [0.3, 0.0, 1.0, 1.0],
+    "standard-decelerate":   [0.0, 0.0, 0.0, 1.0],
+    "legacy":                [0.4, 0.0, 0.2, 1.0],
+    "legacy-accelerate":     [0.4, 0.0, 1.0, 1.0],
+    "legacy-decelerate":     [0.0, 0.0, 0.2, 1.0],
+    "linear":                [0.0, 0.0, 1.0, 1.0]
+  },
+  "$notes": {
+    "springs": "Resortes con masa 1, de 0 a 1 y velocidad inicial 0. CSS no tiene resortes: el generador simula cada uno y lo convierte en una curva linear() más una duración.",
+    "settle": "La duración es el tiempo hasta que el resorte queda a menos de 0,001 del destino (redondeado hacia arriba a 10 ms).",
+    "default-scheme": "matekit usa el esquema expressive por defecto; data-motion=\"standard\" cambia al standard en cualquier elemento.",
+    "reduced-motion": "Con prefers-reduced-motion: reduce, los resortes spatial pasan a duración 0; los effects (color, opacidad) se mantienen."
+  }
+}

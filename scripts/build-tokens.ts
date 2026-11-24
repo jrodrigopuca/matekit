@@ -9,10 +9,13 @@ import { fileURLToPath } from 'node:url'
 import type {
   ColorTokens,
   ElevationTokens,
+  MotionTokens,
   ShapeTokens,
+  SpringName,
   StateTokens,
   TypescaleTokens,
 } from '../tokens/types.ts'
+import { springToCss, toLinear } from '../tokens/spring.ts'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const read = <T>(name: string): T =>
@@ -104,12 +107,53 @@ function buildState(): string {
   return header($source) + '\n' + block(':root', vars(values, 'md-sys-state-'))
 }
 
+// Movimiento: esquema expressive por defecto, standard con data-motion="standard" en cualquier
+// elemento. Cada resorte da dos variables: -duration y -easing (curva linear()).
+// Uso: transition: transform var(--md-sys-motion-spring-fast-spatial-duration)
+//                            var(--md-sys-motion-spring-fast-spatial-easing);
+function buildMotion(): string {
+  const m = read<MotionTokens>('motion.json')
+  const springDecls = (scheme: 'standard' | 'expressive'): Decl[] =>
+    (Object.entries(m.springs[scheme]) as [SpringName, (typeof m.springs)['standard'][SpringName]][])
+      .flatMap(([name, spring]) => {
+        const css = springToCss(spring)
+        return [
+          [`--md-sys-motion-spring-${name}-duration`, `${css.durationMs}ms`],
+          [`--md-sys-motion-spring-${name}-easing`, toLinear(css.points)],
+        ] as const
+      })
+  const durations = Object.fromEntries(Object.entries(m.duration).map(([k, v]) => [k, `${v}ms`]))
+  const easings = Object.fromEntries(
+    Object.entries(m.easing).map(([k, v]) => [k, `cubic-bezier(${v.join(', ')})`]),
+  )
+  const reduced: Decl[] = (['fast-spatial', 'default-spatial', 'slow-spatial'] as const).map(
+    (name) => [`--md-sys-motion-spring-${name}-duration`, '0ms'] as const,
+  )
+  return (
+    header(m.$source) +
+    '\n' +
+    block(':root,\n[data-motion="expressive"]', springDecls('expressive')) +
+    '\n' +
+    block('[data-motion="standard"]', springDecls('standard')) +
+    '\n' +
+    block(
+      ':root',
+      [...vars(durations, 'md-sys-motion-duration-'), ...vars(easings, 'md-sys-motion-easing-')],
+    ) +
+    '\n/* Movimiento reducido: los resortes spatial (desplazamiento, forma) no animan;\n   los effects (color, opacidad) se mantienen. */\n' +
+    '@media (prefers-reduced-motion: reduce) {\n' +
+    block(':root,\n  [data-motion]', reduced, '  ') +
+    '}\n'
+  )
+}
+
 const files: Record<string, string> = {
   'color.css': buildColor(),
   'typescale.css': buildTypescale(),
   'shape.css': buildShape(),
   'elevation.css': buildElevation(),
   'state.css': buildState(),
+  'motion.css': buildMotion(),
 }
 for (const [name, css] of Object.entries(files)) writeFileSync(join(outDir, name), css)
 

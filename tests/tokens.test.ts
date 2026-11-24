@@ -12,7 +12,15 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const json = <T>(name: string): T =>
   JSON.parse(readFileSync(join(root, 'tokens', name), 'utf8')) as T
 const css = (name: string): string => readFileSync(join(root, 'src', 'tokens', name), 'utf8')
-const FILES = ['color.css', 'typescale.css', 'shape.css', 'elevation.css', 'state.css', 'index.css']
+const FILES = [
+  'color.css',
+  'typescale.css',
+  'shape.css',
+  'elevation.css',
+  'state.css',
+  'motion.css',
+  'index.css',
+]
 
 type Decls = Record<string, string>
 interface Block {
