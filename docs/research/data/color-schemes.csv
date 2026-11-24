@@ -1,0 +1,50 @@
+role,light,dark
+Primary,#6750a4,#d0bcff
+On Primary,#ffffff,#381e72
+Primary Container,#eaddff,#4f378b
+On Primary Container,#4f378a,#eaddff
+Secondary,#625b71,#ccc2dc
+On Secondary,#ffffff,#332d41
+Secondary Container,#e8def8,#4a4458
+On Secondary Container,#4a4459,#e8def8
+Tertiary,#7d5260,#efb8c8
+On Tertiary,#ffffff,#492532
+Tertiary Container,#ffd8e4,#633b48
+On Tertiary Container,#633b48,#ffd8e4
+Error,#b3261e,#f2b8b5
+On Error,#ffffff,#601410
+Error Container,#f9dedc,#8c1d18
+On Error Container,#852221,#f9dedc
+Background,#fef7ff,#141218
+On Background,#1d1b20,#e6e0e9
+Surface,#fef7ff,#141218
+On Surface,#1d1b20,#e6e0e9
+Surface Variant,#e7e0ec,#49454f
+On Surface Variant,#49454f,#cac4d0
+Outline,#79747e,#938f99
+Outline Variant,#cac4d0,#49454f
+Surface Tint,#6750a4,#d0bcff
+Shadow,#000000,#000000
+Scrim,#000000,#000000
+Inverse Surface,#322f35,#e6e0e9
+Inverse On Surface,#f5eff7,#322f35
+Inverse Primary,#d0bcff,#6750a4
+Primary Fixed,#eaddff,#eaddff
+On Primary Fixed,#21005d,#21005d
+Primary Fixed Dim,#d0bcff,#d0bcff
+On Primary Fixed Variant,#4f378b,#4f378b
+Secondary Fixed,#e8def8,#e8def8
+On Secondary Fixed,#1d192b,#1d192b
+Secondary Fixed Dim,#ccc2dc,#ccc2dc
+On Secondary Fixed Variant,#4a4458,#4a4458
+Tertiary Fixed,#ffd8e4,#ffd8e4
+On Tertiary Fixed,#31111d,#31111d
+Tertiary Fixed Dim,#efb8c8,#efb8c8
+On Tertiary Fixed Variant,#633b48,#633b48
+Surface Dim,#ded8e1,#141218
+Surface Bright,#fef7ff,#3b383e
+Surface Container Lowest,#ffffff,#0f0d13
+Surface Container Low,#f7f2fa,#1d1b20
+Surface Container,#f3edf7,#211f26
+Surface Container High,#ece6f0,#2b2930
+Surface Container Highest,#e6e0e9,#36343b
