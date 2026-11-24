@@ -1,10 +1,18 @@
 /* Button de Material 3 Expressive.
    Medidas: kit de Figma (docs/research/05-medidas.md) y Jetpack Compose para lo que el kit no
    trae (radios por tamaño, borde del Outlined, colores de toggle y sombras en hover); ver
-   docs/research/07-jetpack-compose.md y ADR-0004. */
+   docs/research/07-jetpack-compose.md y ADR-0004.
+
+   Base común con el IconButton (src/molecules/IconButton/icon-button.css): las reglas con
+   :is(.mk-button, .mk-icon-button) valen para los dos. Ahí está lo que Compose define igual
+   para ambos: alto por tamaño, radios cuadrado y presionado, borde del Outlined, cambio de
+   forma, colores de Filled, Tonal y Outlined (con su toggle), estados y deshabilitado. :is()
+   tiene la especificidad de .mk-button, así que el Button se comporta igual que antes de
+   compartirlas. Lo propio de cada uno (relleno, texto, Elevated y Text en el Button; ancho,
+   estilo Standard y área táctil en el IconButton) va con su clase. */
 
 @layer matekit.components {
-  .mk-button {
+  :is(.mk-button, .mk-icon-button) {
     /* Valores del tamaño (sm por defecto); cada data-size los cambia. */
     --_height: 40px;
     --_padding: 16px;
@@ -21,6 +29,8 @@
 
     /* Redondo = la mitad del alto (no 9999px), para que el cambio de forma se anime bien. */
     --_radius-round: calc(var(--_height) / 2);
+    /* Forma del toggle seleccionado: cuadrada en el Button; el IconButton la cambia. */
+    --_radius-selected: var(--_radius-square);
     --_radius: var(--_radius-round);
 
     /* Colores (filled por defecto); cada data-variant los cambia. */
@@ -29,8 +39,18 @@
     --_outline: transparent;
     --_elevation: var(--md-sys-elevation-level0);
     --_elevation-hover: var(--md-sys-elevation-level1);
+    --_disabled-container: color-mix(
+      in srgb,
+      var(--md-sys-color-on-surface) calc(var(--md-sys-state-disabled-container-opacity) * 100%),
+      transparent
+    );
+    --_disabled-content: color-mix(
+      in srgb,
+      var(--md-sys-color-on-surface) calc(var(--md-sys-state-disabled-content-opacity) * 100%),
+      transparent
+    );
 
-    /* Para un icono futuro (átomo Icon) o una fuente de iconos. */
+    /* Tamaño del átomo Icon (o de una fuente de iconos). */
     --mk-icon-size: var(--_icon-size);
 
     display: inline-flex;
@@ -85,53 +105,63 @@
     transform: translateY(-50%);
   }
 
-  .mk-button > svg,
-  .mk-button > .mk-icon {
+  :is(.mk-button, .mk-icon-button) > svg,
+  :is(.mk-button, .mk-icon-button) > .mk-icon {
     flex-shrink: 0;
     width: var(--_icon-size);
     height: var(--_icon-size);
   }
 
-  /* --- Tamaños --- */
-  .mk-button[data-size='xs'] {
+  /* --- Tamaños ---
+     Comunes: alto, icono, radios (Compose Button*Tokens.kt e *IconButtonTokens.kt coinciden) y
+     borde del Outlined. Propios del Button: relleno, separación y texto. */
+  :is(.mk-button, .mk-icon-button)[data-size='xs'] {
     --_height: 32px;
+  }
+  .mk-button[data-size='xs'] {
     --_padding: 12px;
     --_gap: 4px;
   }
-  .mk-button[data-size='md'] {
+  :is(.mk-button, .mk-icon-button)[data-size='md'] {
     --_height: 56px;
-    --_padding: 24px;
     --_icon-size: 24px;
     --_radius-square: var(--md-sys-shape-corner-large);
     --_radius-pressed: var(--md-sys-shape-corner-medium);
+  }
+  .mk-button[data-size='md'] {
+    --_padding: 24px;
     --_font: var(--md-sys-typescale-title-medium-font);
     --_font-size: var(--md-sys-typescale-title-medium-size);
     --_line-height: var(--md-sys-typescale-title-medium-line-height);
     --_font-weight: var(--md-sys-typescale-title-medium-weight);
     --_tracking: var(--md-sys-typescale-title-medium-tracking);
   }
-  .mk-button[data-size='lg'] {
+  :is(.mk-button, .mk-icon-button)[data-size='lg'] {
     --_height: 96px;
-    --_padding: 48px;
-    --_gap: 12px;
     --_icon-size: 32px;
     --_radius-square: var(--md-sys-shape-corner-extra-large);
     --_radius-pressed: var(--md-sys-shape-corner-large);
     --_outline-width: 2px;
+  }
+  .mk-button[data-size='lg'] {
+    --_padding: 48px;
+    --_gap: 12px;
     --_font: var(--md-sys-typescale-headline-small-font);
     --_font-size: var(--md-sys-typescale-headline-small-size);
     --_line-height: var(--md-sys-typescale-headline-small-line-height);
     --_font-weight: var(--md-sys-typescale-headline-small-weight);
     --_tracking: var(--md-sys-typescale-headline-small-tracking);
   }
-  .mk-button[data-size='xl'] {
+  :is(.mk-button, .mk-icon-button)[data-size='xl'] {
     --_height: 136px;
-    --_padding: 64px;
-    --_gap: 16px;
     --_icon-size: 40px;
     --_radius-square: var(--md-sys-shape-corner-extra-large);
     --_radius-pressed: var(--md-sys-shape-corner-large);
     --_outline-width: 3px;
+  }
+  .mk-button[data-size='xl'] {
+    --_padding: 64px;
+    --_gap: 16px;
     --_font: var(--md-sys-typescale-headline-large-font);
     --_font-size: var(--md-sys-typescale-headline-large-size);
     --_line-height: var(--md-sys-typescale-headline-large-line-height);
@@ -140,36 +170,38 @@
   }
 
   /* --- Forma: cuadrada en reposo, seleccionada (toggle) y presionada --- */
-  .mk-button[data-shape='square'],
-  .mk-button[aria-pressed='true'] {
+  :is(.mk-button, .mk-icon-button)[data-shape='square'] {
     --_radius: var(--_radius-square);
   }
-  .mk-button:active:not(:disabled, [aria-disabled='true']) {
+  :is(.mk-button, .mk-icon-button)[aria-pressed='true'] {
+    --_radius: var(--_radius-selected);
+  }
+  :is(.mk-button, .mk-icon-button):active:not(:disabled, [aria-disabled='true']) {
     --_radius: var(--_radius-pressed);
   }
 
   /* --- Colores --- */
-  .mk-button[data-variant='filled'][aria-pressed='false'] {
+  :is(.mk-button, .mk-icon-button)[data-variant='filled'][aria-pressed='false'] {
     --_container: var(--md-sys-color-surface-container);
     --_content: var(--md-sys-color-on-surface-variant);
   }
 
-  .mk-button[data-variant='tonal'] {
+  :is(.mk-button, .mk-icon-button)[data-variant='tonal'] {
     --_container: var(--md-sys-color-secondary-container);
     --_content: var(--md-sys-color-on-secondary-container);
   }
-  .mk-button[data-variant='tonal'][aria-pressed='true'] {
+  :is(.mk-button, .mk-icon-button)[data-variant='tonal'][aria-pressed='true'] {
     --_container: var(--md-sys-color-secondary);
     --_content: var(--md-sys-color-on-secondary);
   }
 
-  .mk-button[data-variant='outlined'] {
+  :is(.mk-button, .mk-icon-button)[data-variant='outlined'] {
     --_container: transparent;
     --_content: var(--md-sys-color-on-surface-variant);
     --_outline: var(--md-sys-color-outline-variant);
     --_elevation-hover: var(--md-sys-elevation-level0);
   }
-  .mk-button[data-variant='outlined'][aria-pressed='true'] {
+  :is(.mk-button, .mk-icon-button)[data-variant='outlined'][aria-pressed='true'] {
     --_container: var(--md-sys-color-inverse-surface);
     --_content: var(--md-sys-color-inverse-on-surface);
     --_outline: transparent;
@@ -194,35 +226,35 @@
 
   /* --- Estados --- */
   @media (hover: hover) {
-    .mk-button:hover:not(:disabled, [aria-disabled='true']) {
+    :is(.mk-button, .mk-icon-button):hover:not(:disabled, [aria-disabled='true']) {
       --_elevation: var(--_elevation-hover);
     }
   }
   /* Con la onda presente, la capa de presionado queda en la opacidad de hover (8 %) y la onda
      suma su 10 %, como en el kit. */
-  .mk-button:active > .mk-state-layer {
+  :is(.mk-button, .mk-icon-button):active > .mk-state-layer {
     opacity: var(--md-sys-state-hover-state-layer-opacity);
   }
 
-  .mk-button:disabled,
-  .mk-button[aria-disabled='true'] {
-    --_container: color-mix(
-      in srgb,
-      var(--md-sys-color-on-surface) calc(var(--md-sys-state-disabled-container-opacity) * 100%),
-      transparent
-    );
-    --_content: color-mix(
-      in srgb,
-      var(--md-sys-color-on-surface) calc(var(--md-sys-state-disabled-content-opacity) * 100%),
-      transparent
-    );
+  /* Deshabilitado. [data-variant] (que los dos componentes siempre tienen) sube la
+     especificidad a la de las reglas de toggle ([data-variant][aria-pressed], 0,3,0); por
+     orden, gana: un toggle deshabilitado también se atenúa. */
+  :is(.mk-button, .mk-icon-button)[data-variant]:is(:disabled, [aria-disabled='true']) {
+    --_container: var(--_disabled-container);
+    --_content: var(--_disabled-content);
     --_elevation: var(--md-sys-elevation-level0);
     cursor: default;
   }
-  .mk-button:is([data-variant='text'], [data-variant='outlined']):is(:disabled, [aria-disabled='true']) {
+  /* Text y Outlined sin seleccionar no tienen fondo. El Outlined seleccionado deshabilitado
+     conserva el fondo on-surface al 10 % y no lleva borde (Compose OutlinedButtonTokens.kt,
+     SelectedDisabledContainerColor; IconButtonDefaults.outlinedIconToggleButtonBorder). */
+  :is(.mk-button, .mk-icon-button):is([data-variant='text'], [data-variant='outlined']:not([aria-pressed='true'])):is(:disabled, [aria-disabled='true']) {
     --_container: transparent;
   }
-  .mk-button[data-variant='outlined']:is(:disabled, [aria-disabled='true']) {
+  :is(.mk-button, .mk-icon-button)[data-variant='outlined']:is(:disabled, [aria-disabled='true']) {
     --_outline: var(--md-sys-color-outline-variant);
+  }
+  :is(.mk-button, .mk-icon-button)[data-variant='outlined'][aria-pressed='true']:is(:disabled, [aria-disabled='true']) {
+    --_outline: transparent;
   }
 }

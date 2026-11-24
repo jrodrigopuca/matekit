@@ -202,6 +202,36 @@ describe('Button: colores', () => {
     expect(style(b).boxShadow).toContain('0px 2px 6px 2px')
   })
 
+  test('un toggle deshabilitado también se atenúa, seleccionado o no', async () => {
+    const c = await render(
+      <div>
+        <Button variant="tonal" selected disabled>T</Button>
+        <Button variant="filled" selected={false} disabled>F</Button>
+        <Button variant="elevated" selected aria-disabled="true">E</Button>
+      </div>,
+    )
+    const onSurface = roleColor('on-surface').match(/\d+/g)?.slice(0, 3).join(', ')
+    for (const b of c.querySelectorAll('button')) {
+      expect(style(b).backgroundColor).toBe(`color(srgb ${rgbFraction(onSurface)} / 0.1)`)
+      expect(style(b).color).toBe(`color(srgb ${rgbFraction(onSurface)} / 0.38)`)
+    }
+  })
+
+  test('outlined: deshabilitado sin seleccionar sin fondo; seleccionado con fondo al 10 % y sin borde', async () => {
+    const c = await render(
+      <div>
+        <Button variant="outlined" disabled>A</Button>
+        <Button variant="outlined" selected disabled>B</Button>
+      </div>,
+    )
+    const [plain, selected] = [...c.querySelectorAll('button')].map((b) => style(b))
+    const onSurface = roleColor('on-surface').match(/\d+/g)?.slice(0, 3).join(', ')
+    expect(plain?.backgroundColor).toBe('rgba(0, 0, 0, 0)')
+    expect(plain?.outlineColor).toBe(roleColor('outline-variant'))
+    expect(selected?.backgroundColor).toBe(`color(srgb ${rgbFraction(onSurface)} / 0.1)`)
+    expect(selected?.outlineColor).toBe('rgba(0, 0, 0, 0)')
+  })
+
   test('deshabilitado: fondo on-surface al 10 % y contenido al 38 %, sin sombra', async () => {
     const c = await render(
       <Button variant="elevated" disabled>
