@@ -1,0 +1,141 @@
+/* Checkbox de Material 3.
+   Medidas del kit (área 48, capa de estado circular de 40, caja de 18 con radio 2, borde 2) y
+   colores de Jetpack Compose (CheckboxTokens.kt); ver docs/research/05-medidas.md y
+   07-jetpack-compose.md. */
+
+@layer matekit.components {
+  .mk-checkbox {
+    display: inline-flex;
+    align-items: center;
+    vertical-align: middle;
+    color: var(--md-sys-color-on-surface);
+    font-family: var(--md-sys-typescale-body-medium-font);
+    font-size: var(--md-sys-typescale-body-medium-size);
+    line-height: var(--md-sys-typescale-body-medium-line-height);
+    font-weight: var(--md-sys-typescale-body-medium-weight);
+    letter-spacing: var(--md-sys-typescale-body-medium-tracking);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Círculo de 40 px con 4 px alrededor: 48 px de área táctil, como el kit. */
+  .mk-checkbox-control {
+    /* Sin marcar. */
+    --_outline: var(--md-sys-color-on-surface-variant);
+    --_container: transparent;
+    --_icon: transparent;
+    --mk-state-layer-color: var(--md-sys-color-on-surface);
+    /* La onda anticipa el resultado: presionar una casilla sin marcar la marca (primary). */
+    --mk-ripple-color: var(--md-sys-color-primary);
+
+    display: inline-grid;
+    flex-shrink: 0;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    margin: 4px;
+    border-radius: 50%;
+  }
+
+  /* El input nativo, invisible, cubre los 48 px y recibe clics, teclado y foco. */
+  .mk-checkbox-input {
+    position: absolute;
+    inset: -4px;
+    z-index: 1;
+    margin: 0;
+    opacity: 0;
+    cursor: inherit;
+  }
+
+  .mk-checkbox-box {
+    display: grid;
+    width: 18px;
+    height: 18px;
+    border-radius: 2px;
+    background-color: var(--_container);
+    /* Borde interior de 2 px sin cambiar el tamaño de la caja. */
+    box-shadow: inset 0 0 0 2px var(--_outline);
+    transition:
+      background-color var(--md-sys-motion-spring-fast-effects-duration)
+        var(--md-sys-motion-spring-fast-effects-easing),
+      box-shadow var(--md-sys-motion-spring-fast-effects-duration)
+        var(--md-sys-motion-spring-fast-effects-easing);
+  }
+
+  .mk-checkbox-icon {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: var(--_icon);
+    stroke-width: 2px;
+  }
+  .mk-checkbox-check,
+  .mk-checkbox-dash {
+    opacity: 0;
+    transition: opacity var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects-easing);
+  }
+
+  /* --- Con el puntero, con foco o presionado, el borde se oscurece --- */
+  @media (hover: hover) {
+    .mk-checkbox:hover .mk-checkbox-control {
+      --_outline: var(--md-sys-color-on-surface);
+      --mk-state-layer-opacity: var(--md-sys-state-hover-state-layer-opacity);
+    }
+  }
+  .mk-checkbox-control:has(> .mk-checkbox-input:focus-visible) {
+    --_outline: var(--md-sys-color-on-surface);
+    --mk-state-layer-opacity: var(--md-sys-state-focus-state-layer-opacity);
+    --mk-focus-ring-visible: 1;
+  }
+  .mk-checkbox-control:active {
+    --_outline: var(--md-sys-color-on-surface);
+  }
+
+  /* --- Marcado e indeterminado --- */
+  .mk-checkbox-control:has(> .mk-checkbox-input:is(:checked, :indeterminate)) {
+    --_outline: var(--md-sys-color-primary);
+    --_container: var(--md-sys-color-primary);
+    --_icon: var(--md-sys-color-on-primary);
+    --mk-state-layer-color: var(--md-sys-color-primary);
+    /* Presionar una casilla marcada la desmarca: onda on-surface, como en el kit. */
+    --mk-ripple-color: var(--md-sys-color-on-surface);
+  }
+  .mk-checkbox-control:has(> .mk-checkbox-input:checked:not(:indeterminate)) .mk-checkbox-check,
+  .mk-checkbox-control:has(> .mk-checkbox-input:indeterminate) .mk-checkbox-dash {
+    opacity: 1;
+  }
+
+  /* --- Error --- */
+  .mk-checkbox[data-error] .mk-checkbox-control {
+    --_outline: var(--md-sys-color-error);
+    --mk-state-layer-color: var(--md-sys-color-error);
+    --mk-ripple-color: var(--md-sys-color-error);
+  }
+  .mk-checkbox[data-error] .mk-checkbox-control:has(> .mk-checkbox-input:is(:checked, :indeterminate)) {
+    --_container: var(--md-sys-color-error);
+    --_icon: var(--md-sys-color-on-error);
+  }
+
+  /* --- Deshabilitado: todo al 38 %, caja on-surface con icono surface --- */
+  .mk-checkbox:has(.mk-checkbox-input:disabled) {
+    cursor: default;
+  }
+  .mk-checkbox-control:has(> .mk-checkbox-input:disabled) {
+    --_outline: var(--md-sys-color-on-surface);
+    opacity: var(--md-sys-state-disabled-content-opacity);
+  }
+  /* Con el prefijo .mk-checkbox gana también sobre el estado de error. */
+  .mk-checkbox .mk-checkbox-control:has(> .mk-checkbox-input:disabled:is(:checked, :indeterminate)) {
+    --_outline: var(--md-sys-color-on-surface);
+    --_container: var(--md-sys-color-on-surface);
+    --_icon: var(--md-sys-color-surface);
+  }
+  .mk-checkbox:has(.mk-checkbox-input:disabled) .mk-checkbox-label {
+    opacity: var(--md-sys-state-disabled-content-opacity);
+  }
+
+  .mk-checkbox-label {
+    padding-inline-end: 8px;
+  }
+}

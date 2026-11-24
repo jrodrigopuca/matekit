@@ -43,7 +43,8 @@
 
   /* Deshabilitado: sin capa, aunque haya puntero o foco. Va al final para ganar. */
   :disabled > .mk-state-layer,
-  [aria-disabled='true'] > .mk-state-layer {
+  [aria-disabled='true'] > .mk-state-layer,
+  :has(> :disabled) > .mk-state-layer {
     opacity: 0;
   }
 }

@@ -10,7 +10,8 @@ export interface StateLayerProps extends HTMLAttributes<HTMLSpanElement> {}
  * visible al pasar el puntero (8 %), con foco de teclado (10 %) y al presionar (10 %).
  *
  * Se coloca como hijo directo del elemento interactivo y reacciona a los estados de ese
- * padre. Hereda su radio de borde.
+ * padre. Hereda su radio de borde. No se muestra si el padre está deshabilitado o contiene,
+ * como hijo directo, un control deshabilitado (por ejemplo un `<input>` oculto).
  *
  * Personalización con variables CSS:
  * - `--mk-state-layer-color`: color de la capa (por defecto, `currentColor`).

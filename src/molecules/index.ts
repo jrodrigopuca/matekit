@@ -5,3 +5,4 @@ export {
   type ButtonSize,
   type ButtonVariant,
 } from './Button/Button.tsx'
+export { Checkbox, type CheckboxProps } from './Checkbox/Checkbox.tsx'

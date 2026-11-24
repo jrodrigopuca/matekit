@@ -226,8 +226,8 @@ describe('Button: estados', () => {
     expect(wave).not.toBeNull()
     expect(Number(style(wave).opacity)).toBeCloseTo(0.1)
     await commands.pressUp()
-    await new Promise((r) => setTimeout(r, 400))
-    expect(b.querySelector('.mk-ripple-wave')).toBeNull()
+    // La onda se desvanece en 200 ms; con varias pruebas en paralelo puede tardar más.
+    await expect.poll(() => b.querySelector('.mk-ripple-wave'), { timeout: 2000 }).toBeNull()
   })
 
   test('deshabilitado no muestra onda', async () => {

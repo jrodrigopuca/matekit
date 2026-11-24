@@ -8,3 +8,4 @@
 @import './atoms/FocusRing/focus-ring.css';
 @import './atoms/Ripple/ripple.css';
 @import './molecules/Button/button.css';
+@import './molecules/Checkbox/checkbox.css';

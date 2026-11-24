@@ -16,7 +16,8 @@ const toMs = (value: string): number =>
  * capa de estado.
  *
  * Se coloca como hijo directo del elemento interactivo y escucha los eventos de ese padre.
- * No se activa si el padre está deshabilitado. Con movimiento reducido, la onda no crece:
+ * No se activa si el padre está deshabilitado o contiene, como hijo directo, un control
+ * deshabilitado. Con movimiento reducido, la onda no crece:
  * aparece completa y se desvanece.
  *
  * Personalización: `--mk-ripple-color` (por defecto, `currentColor`).
@@ -31,7 +32,7 @@ export function Ripple({ className, ...props }: RippleProps) {
 
     const onPointerDown = (event: PointerEvent) => {
       if (event.button !== 0) return
-      if (target.matches(':disabled, [aria-disabled="true"]')) return
+      if (target.matches(':disabled, [aria-disabled="true"], :has(> :disabled)')) return
 
       const rect = host.getBoundingClientRect()
       const x = event.clientX - rect.left
