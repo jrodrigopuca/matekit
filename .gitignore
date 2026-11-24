@@ -1,2 +1,7 @@
 .DS_Store
 node_modules/
+
+# Claves y configuración local (clave del archivo de Figma, tokens)
+.env
+.env.*
+!.env.example

@@ -1,6 +1,7 @@
 # Material 3 Design Kit (Figma)
 
-Leído del kit el 2026-11-24. Archivo `FR7cY1bLTygH3S4sxNLd17`.
+Leído del kit el 2026-11-24, desde una copia propia del archivo de la comunidad
+(clave en `FIGMA_FILE_KEY`, fuera del repositorio).
 
 ## Páginas
 

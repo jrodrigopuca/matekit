@@ -1,7 +1,7 @@
 # Extracción de medidas internas
 
-Estado al 2026-11-24: hecha. El primer intento chocó con el límite del plan Starter; tras
-pasar a un plan pago, las 7 llamadas funcionaron. Resultado en
+Estado al 2026-11-24: hecha. El primer intento chocó con el límite de llamadas del
+conector de Figma; el segundo funcionó. Resultado en
 [../05-medidas.md](../05-medidas.md).
 
 ## Qué se quiere sacar
@@ -13,7 +13,9 @@ se ejecuta con la herramienta `use_figma` del conector o como plugin de Figma).
 
 ## Nodos a consultar
 
-Archivo `FR7cY1bLTygH3S4sxNLd17`. Una llamada por página.
+Archivo: el de `FIGMA_FILE_KEY` (copia propia del kit; la clave no se versiona). Los ids de
+página y de nodo son los del kit de la comunidad y se conservan al duplicarlo. Una llamada
+por página.
 
 | Página | Id de página | Variantes (ids) |
 |---|---|---|
@@ -27,7 +29,8 @@ Archivo `FR7cY1bLTygH3S4sxNLd17`. Una llamada por página.
 
 ## Alternativa sin el conector
 
-La API REST de Figma (`GET /v1/files/FR7cY1bLTygH3S4sxNLd17/nodes?ids=...`) devuelve el
+La API REST de Figma (`GET /v1/files/$FIGMA_FILE_KEY/nodes?ids=...`) devuelve el
 JSON completo de cada nodo, con auto-layout, radios, rellenos y variables vinculadas. Tiene
 un límite aparte del conector y aceptaría todos los ids anteriores en pocas peticiones.
-Requiere un token de acceso personal de Figma.
+Requiere un token de acceso personal de Figma (`FIGMA_TOKEN` en `.env.local`, nunca en el
+repositorio).

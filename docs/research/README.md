@@ -18,8 +18,9 @@ El paquete se publicará como `@matekit/react` (ver
 
 ## Fuentes
 
-- **Kit de Figma (fuente principal):** copia propia del "Material 3 Design Kit (Community)",
-  clave de archivo `FR7cY1bLTygH3S4sxNLd17`. Original:
+- **Kit de Figma (fuente principal):** copia propia del "Material 3 Design Kit (Community)".
+  La clave de esa copia no se versiona: va en `.env.local` como `FIGMA_FILE_KEY` (ver
+  [`.env.example`](../../.env.example)). Original:
   https://www.figma.com/community/file/1035203688168086460/material-3-design-kit
 - **Especificación:** https://m3.material.io — no se pudo leer de forma automática (la página
   se dibuja con JavaScript). Pendiente de leer con navegador.
