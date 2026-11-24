@@ -2,6 +2,7 @@
 
 export interface ColorTokens {
   $source: string
+  $notes?: Record<string, string>
   light: Record<string, string>
   dark: Record<string, string>
 }

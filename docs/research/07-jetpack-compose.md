@@ -45,7 +45,7 @@ Seleccionado (toggle) usa el radio Square. Coincide con lo que documenta `expres
 
 | Tema | Kit | Compose | Comentario |
 |---|---|---|---|
-| Botón XSmall: espacio lateral y separación | 12 y 4 | 16 y 8 | `expressive-react` usa 12 y 4, como el kit. Sin resolver. |
+| Botón XSmall: espacio lateral y separación | 12 y 4 | 16 y 8 | `expressive-react` y `m3-expressive-react` usan 12 y 4, como el kit (`m3-expressive-react` declara priorizar m3.material.io sobre Compose). Tres fuentes contra una. **Decidido: 12 y 4** ([ADR-0004](../adr/0004-fuentes-de-verdad-y-especificacion-de-color.md)). |
 | Color claro: `on-primary-container`, `on-secondary-container`, `on-tertiary-container`, `on-error-container` | Tono 30 (por ejemplo `#4f378a`) | Tono 10 (`#21005d`) | **Resuelto: vale el kit.** Ver la sección siguiente. |
 | Menú | Radio 16, sombra 3, `Surface Container Low`, seleccionado `Tertiary Container` | Radio 4, sombra 2, `Surface Container`, seleccionado `Secondary Container` | `MenuTokens.kt` describe el menú anterior (baseline); no son la misma versión. |
 
@@ -81,6 +81,46 @@ Otros hallazgos de la misma prueba:
   sin extensión (`./dynamic_color` en vez de `./dynamic_color.js`) que Node no resuelve al
   ejecutarlo directamente. Los empaquetadores (Vite, el de Next.js) sí los resuelven.
   Tenerlo en cuenta si se usa en scripts de Node.
+
+## Las tres especificaciones de color
+
+Leído en el código de `material-color-utilities` el 2026-11-24
+(`typescript/dynamiccolor/color_spec*.ts` y `dynamic_scheme.ts`).
+
+| Versión | Agregada | Qué es | A qué variantes aplica |
+|---|---|---|---|
+| 2021 | Con la librería (2023 en TypeScript) | Material 3 original. Es la versión por defecto (`DEFAULT_SPEC_VERSION = '2021'`). | Todas |
+| 2025 | 2025-04-07 | La generación de color de la época Expressive: redefine 51 roles (superficies, contornos, contenedores), agrega roles nuevos (`primaryDim`, `secondaryDim`, `tertiaryDim`, `errorDim`) y distingue plataforma (`phone` o `watch`). | Tonal Spot, Neutral, Vibrant y Expressive; el resto vuelve a 2021 |
+| 2026 | 2026-02-17 | Agrega el esquema "CMF" y ajusta sus roles. Qué significa CMF no está documentado en el código. | Solo la variante CMF; las demás usan 2025 aunque se pida 2026 |
+
+La librería conserva las versiones anteriores para que actualizarla no cambie los colores
+de una aplicación existente: la versión nueva se elige de forma explícita.
+
+El kit de Figma, aunque sus componentes son Expressive, usa colores de la especificación
+2021 (con el cambio de tonos "on container" de 2024) sobre paletas fijas.
+
+### Qué usa Jetpack Compose
+
+Leído en `androidx/androidx` (commit `4d01fc9d`, 2026-11-24), carpeta
+`compose/material3/material3/src`:
+
+- **No usa las versiones de especificación de `material-color-utilities`.** No hay ninguna
+  referencia a `SpecVersion` ni a las clases `ColorSpec*` en el código de Material 3.
+- **Esquemas fijos:** `lightColorScheme()` es la línea base con "on container" en tono 10.
+  `expressiveLightColorScheme()` (en `ColorScheme.kt`), documentado como el esquema por
+  defecto de `MaterialExpressiveTheme`, es el mismo esquema con los cuatro "on container"
+  en tono 30 (`PaletteTokens.Primary30`, `Secondary30`, `Tertiary30`, `Error30`). El oscuro
+  es `darkColorScheme()` en ambos casos.
+- **Color dinámico:** `dynamicLightColorScheme(context)` y `dynamicDarkColorScheme(context)`
+  solo existen en Android 12 o superior y leen los colores que calcula el sistema operativo
+  a partir del fondo de pantalla (`android.R.color.system_*`). Compose no los genera, así que
+  la especificación depende de la versión de Android, no de Compose.
+
+El kit coincide con `expressiveLightColorScheme()`. Comparando los cuatro roles con la
+paleta de Compose: `on-primary-container` `#4f378a` frente a `#4f378b`,
+`on-secondary-container` `#4a4459` frente a `#4a4458`, `on-tertiary-container` igual
+(`#633b48`), y `on-error-container` `#852221` frente a `#8c1d18`, que es la única
+diferencia visible.
 
 ## No revisado
 

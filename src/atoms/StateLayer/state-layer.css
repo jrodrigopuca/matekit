@@ -1,0 +1,49 @@
+/* StateLayer: capa de estado de Material 3. Opacidades de tokens/state.json. */
+
+@layer matekit.atoms {
+  /* El padre de una capa de estado se posiciona y aísla su apilado, para que la capa quede
+     sobre su fondo y bajo su contenido. :where() deja la especificidad en 0: cualquier estilo
+     del componente gana. */
+  :where(:has(> .mk-state-layer)) {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .mk-state-layer {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    pointer-events: none;
+    background-color: var(--mk-state-layer-color, currentColor);
+    opacity: var(--mk-state-layer-opacity, 0);
+    transition: opacity var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects-easing);
+  }
+
+  /* Solo en dispositivos con puntero que puede "pasar por encima" (no en pantallas táctiles,
+     donde :hover queda pegado después de tocar). */
+  @media (hover: hover) {
+    :hover > .mk-state-layer {
+      opacity: var(--md-sys-state-hover-state-layer-opacity);
+    }
+  }
+
+  :focus-visible > .mk-state-layer {
+    opacity: var(--md-sys-state-focus-state-layer-opacity);
+  }
+
+  :active > .mk-state-layer {
+    opacity: var(--md-sys-state-pressed-state-layer-opacity);
+  }
+
+  [data-dragged] > .mk-state-layer {
+    opacity: var(--md-sys-state-dragged-state-layer-opacity);
+  }
+
+  /* Deshabilitado: sin capa, aunque haya puntero o foco. Va al final para ganar. */
+  :disabled > .mk-state-layer,
+  [aria-disabled='true'] > .mk-state-layer {
+    opacity: 0;
+  }
+}

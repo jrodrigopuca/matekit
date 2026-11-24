@@ -1,0 +1,8 @@
+/* Hoja de estilos única de matekit: se importa una vez en la aplicación.
+   El orden de las capas permite que cualquier estilo propio (fuera de @layer) gane. */
+
+@layer matekit.tokens, matekit.atoms, matekit.components;
+
+@import './tokens/index.css' layer(matekit.tokens);
+@import './atoms/StateLayer/state-layer.css';
+@import './atoms/FocusRing/focus-ring.css';

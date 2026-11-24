@@ -4,11 +4,11 @@
     "primary": "#6750a4",
     "on-primary": "#ffffff",
     "primary-container": "#eaddff",
-    "on-primary-container": "#4f378a",
+    "on-primary-container": "#4f378b",
     "secondary": "#625b71",
     "on-secondary": "#ffffff",
     "secondary-container": "#e8def8",
-    "on-secondary-container": "#4a4459",
+    "on-secondary-container": "#4a4458",
     "tertiary": "#7d5260",
     "on-tertiary": "#ffffff",
     "tertiary-container": "#ffd8e4",
@@ -16,7 +16,7 @@
     "error": "#b3261e",
     "on-error": "#ffffff",
     "error-container": "#f9dedc",
-    "on-error-container": "#852221",
+    "on-error-container": "#8c1d18",
     "background": "#fef7ff",
     "on-background": "#1d1b20",
     "surface": "#fef7ff",
@@ -101,5 +101,8 @@
     "surface-container": "#211f26",
     "surface-container-high": "#2b2930",
     "surface-container-highest": "#36343b"
+  },
+  "$notes": {
+    "on-container-light": "Los cuatro roles on-*-container del tema claro usan el tono 30 exacto de la paleta de Jetpack Compose (expressiveLightColorScheme, PaletteTokens.Primary30, Secondary30, Tertiary30, Error30), no los valores redondeados del kit (ver ADR-0004). Valores del kit: on-primary-container #4f378a, on-secondary-container #4a4459, on-tertiary-container #633b48, on-error-container #852221."
   }
 }

@@ -1,0 +1,23 @@
+/* FocusRing: anillo de foco de Material 3. Grosor de tokens/state.json; separación de 2 px y
+   color secondary como en @material/web. */
+
+@layer matekit.atoms {
+  :where(:has(> .mk-focus-ring)) {
+    position: relative;
+  }
+
+  .mk-focus-ring {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    outline: var(--md-sys-state-focus-indicator-thickness) solid
+      var(--mk-focus-ring-color, var(--md-sys-color-secondary));
+    outline-offset: var(--mk-focus-ring-offset, 2px);
+    opacity: var(--mk-focus-ring-visible, 0);
+  }
+
+  :focus-visible > .mk-focus-ring {
+    opacity: 1;
+  }
+}
