@@ -11,6 +11,7 @@
   },
   "packageManager": "pnpm@10.33.0",
   "scripts": {
+    "dev": "vite --config playground/vite.config.ts",
     "tokens": "node scripts/build-tokens.ts",
     "typecheck": "tsc -p .",
     "test": "pnpm test:tokens && pnpm test:browser",

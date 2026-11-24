@@ -21,5 +21,5 @@
     "erasableSyntaxOnly": true,
     "allowImportingTsExtensions": true
   },
-  "include": ["scripts", "tests", "tokens", "src", "vitest.config.ts"]
+  "include": ["scripts", "tests", "tokens", "src", "playground", "vitest.config.ts"]
 }
