@@ -1,5 +1,5 @@
 import { createRef, useState } from 'react'
-import { afterEach, beforeEach, describe, expect, test } from 'vitest'
+import { afterEach, describe, expect, test } from 'vitest'
 import { commands, page, userEvent } from 'vitest/browser'
 import {
   TextField,
@@ -49,19 +49,6 @@ const border = (c: HTMLElement) => {
   const s = style(outline(c))
   return { color: s.borderTopColor, width: s.borderTopWidth }
 }
-
-/**
- * Deja el puntero lejos del campo: el de la prueba anterior puede quedar sobre el mismo lugar
- * de la pantalla y activar el hover del campo nuevo.
- */
-async function pointerAway() {
-  const spot = document.createElement('div')
-  spot.style.cssText = 'position: fixed; right: 0; bottom: 0; width: 4px; height: 4px;'
-  document.body.append(spot)
-  await userEvent.hover(spot)
-  spot.remove()
-}
-beforeEach(pointerAway)
 
 function Basic(props: TextFieldProps & { value?: string; inputId?: string }) {
   const { value, inputId, ...rest } = props

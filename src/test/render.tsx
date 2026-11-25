@@ -2,6 +2,8 @@
 
 import { act, type ReactNode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
+import { afterEach, beforeEach } from 'vitest'
+import { userEvent } from 'vitest/browser'
 import '../styles.css'
 
 // Sin transiciones durante las pruebas: getComputedStyle devolvería valores intermedios.
@@ -23,9 +25,33 @@ export function withMotion<T>(fn: () => T): T {
 let root: Root | undefined
 let container: HTMLElement | undefined
 
-export async function render(ui: ReactNode): Promise<HTMLElement> {
+/** Desmonta lo que haya renderizado la prueba anterior. */
+async function cleanup() {
   if (root) await act(async () => root?.unmount())
+  root = undefined
   container?.remove()
+  container = undefined
+}
+
+/**
+ * Deja el puntero en una esquina lejana. Si no, queda donde lo dejó la prueba anterior y, si el
+ * componente nuevo aparece debajo, empieza con hover (en CI eso cambia según el orden).
+ */
+async function pointerAway() {
+  const spot = document.createElement('div')
+  spot.style.cssText = 'position: fixed; right: 0; bottom: 0; width: 4px; height: 4px;'
+  document.body.append(spot)
+  await userEvent.hover(spot)
+  spot.remove()
+}
+
+// Cada prueba empieza aislada de la anterior: sin componentes montados (un diálogo abierto
+// dejaría la página sin scroll) y con el puntero lejos.
+beforeEach(pointerAway)
+afterEach(cleanup)
+
+export async function render(ui: ReactNode): Promise<HTMLElement> {
+  await cleanup()
   container = document.createElement('div')
   document.body.append(container)
   root = createRoot(container)

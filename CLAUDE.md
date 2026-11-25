@@ -102,6 +102,9 @@ No llamar al conector de Figma salvo que falte un dato imprescindible: tiene lí
 - Antes de dar algo por terminado: `pnpm typecheck` y `pnpm test` en verde, y romper a
   propósito una regla CSS para confirmar que alguna prueba falla (luego restaurarla).
 - Para esperar animaciones, `expect.poll`, no tiempos fijos.
+- `src/test/render.tsx` aísla cada prueba: desmonta lo renderizado al terminar y deja el
+  puntero en una esquina antes de empezar. No repetir eso en cada archivo. Para detectar
+  dependencias de orden: `pnpm exec vitest run --sequence.shuffle --sequence.seed=<n>`.
 
 ## Playground
 
