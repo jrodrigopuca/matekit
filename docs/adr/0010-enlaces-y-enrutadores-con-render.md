@@ -66,4 +66,12 @@
   - Cubierto en `NavigationBar.test.tsx` con un enlace propio que imita a los dos (recibe
     `prefetch`, `to`, la clase, `aria-current`, `id`, `data-*` y la `ref`) y con uno que imita a
     `NavLink`.
-  - **No** se reprodujo en una aplicación Next.js ni React Router reales.
+  - **Next.js 16.4.6, verificado el 2026-11-25** en una aplicación mínima (App Router, React
+    19.3.1) con la barra en un Server Component y `render={<Link href="…" />}`:
+    - `next build` sin errores; las dos rutas se prerenderizan como estáticas.
+    - El HTML trae un `<a href>` real con las clases de matekit más la propia del `Link`,
+      `aria-current="page"` en el activo, las partes adentro y el texto oculto de la insignia.
+    - En Chrome, el clic y Tab + Enter navegan del lado del cliente (una sola carga de
+      documento; el estado de `window` sobrevive), el activo cambia y no hay errores de
+      hidratación en la consola.
+  - React Router no se reprodujo en una aplicación real (solo con el enlace que lo imita).
