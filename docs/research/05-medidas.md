@@ -88,6 +88,7 @@ escrito; Outlined en Enabled, Focused y Error. Todas con iconos a ambos lados y 
   Body Small.
 
 No se consultó la variante sin iconos, así que el relleno lateral sin icono queda pendiente.
+Resuelto con Jetpack Compose: 16 (ver [07-jetpack-compose.md § TextField](07-jetpack-compose.md#textfield)).
 
 ### Tipografía
 

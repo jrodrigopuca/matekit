@@ -4,6 +4,7 @@ import { CheckboxPage } from './pages/CheckboxPage.tsx'
 import { IconButtonPage } from './pages/IconButtonPage.tsx'
 import { IconsPage } from './pages/IconsPage.tsx'
 import { SwitchPage } from './pages/SwitchPage.tsx'
+import { TextFieldPage } from './pages/TextFieldPage.tsx'
 import { TokensPage } from './pages/TokensPage.tsx'
 
 type Theme = 'system' | 'light' | 'dark'
@@ -14,6 +15,7 @@ const PAGES = {
   'icon-button': { label: 'IconButton', Page: IconButtonPage },
   checkbox: { label: 'Checkbox', Page: CheckboxPage },
   switch: { label: 'Switch', Page: SwitchPage },
+  'text-field': { label: 'TextField', Page: TextFieldPage },
   icons: { label: 'Iconos', Page: IconsPage },
   tokens: { label: 'Tokens', Page: TokensPage },
 } as const

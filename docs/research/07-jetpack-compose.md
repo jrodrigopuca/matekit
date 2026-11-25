@@ -223,6 +223,60 @@ Small y XSmall, radios) y lo que trae coincide.
   reglas `[data-variant][aria-pressed]` le ganan en especificidad a `:disabled`). Compose
   atenúa todos. El IconButton lo resuelve en su CSS; el Button queda igual a pedido.
 
+## TextField
+
+Leído el 2026-11-24 (último cambio de los tokens: commit `160825094a`, del 2026-08-05):
+`tokens/FilledTextFieldTokens.kt`, `tokens/OutlinedTextFieldTokens.kt` y, fuera de `tokens/`,
+`TextFieldDefaults.kt`, `TextField.kt`, `OutlinedTextField.kt` e `internal/TextFieldImpl.kt`.
+
+### Lo que confirma
+
+Alto 56; radio 4 (`CornerExtraSmallTop` en el filled, `CornerExtraSmall` en el outlined);
+contenedor `surface-container-highest`; iconos de 24; etiqueta Body Large que pasa a Body Small;
+texto Body Large; ayuda Body Small; cursor `primary`; colores de reposo, hover del filled
+(indicador `on-surface`), foco (`primary`), error (`error` en indicador, etiqueta, ayuda e icono
+final; el inicial sigue en `on-surface-variant`) y deshabilitado del filled (contenedor
+`on-surface` 4 %, indicador y contenido al 38 %).
+
+El kit escribe los rellenos como "vertical / horizontal" y "arriba, derecha, abajo, izquierda":
+"capa de estado 4 / 0" y "bloque de texto 4 / 0" son 4 arriba y abajo. Así los 56 quedan en
+4 + 4 + 16 (etiqueta flotante) + 24 (texto) + 4 + 4, lo mismo que Compose (8 arriba y abajo,
+`TextFieldWithLabelVerticalPadding`).
+
+### Lo que resuelve
+
+| Duda | Compose |
+|---|---|
+| Indicador con foco: 3 en el kit | **2** (`FocusActiveIndicatorHeight`, `FocusOutlineWidth`; ya anotado arriba) |
+| Relleno lateral sin icono (el kit no consultó esa variante) | **16** (`TextFieldPadding`) |
+| Relleno entre icono y texto | **4**: `TextFieldPadding` menos `(48 − 24) / 2` (`textFieldHorizontalIconPadding`); el texto empieza en 52 con icono |
+
+### Datos nuevos (el kit no los trae)
+
+| Dato | Compose |
+|---|---|
+| Error con hover | indicador o borde, etiqueta e icono final en `on-error-container` (`ErrorHover*`) |
+| Error con foco | indicador o borde de 2 en `error`; etiqueta `error`; cursor `error` (`ErrorFocusCaretColor`) |
+| Outlined con hover | borde **y etiqueta** en `on-surface` (`HoverOutlineColor`, `HoverLabelColor`); en el filled la etiqueta no cambia con hover |
+| Outlined deshabilitado | borde `on-surface` al **12 %** (`DisabledOutlineOpacity`), de 1; contenido al 38 % |
+| Etiqueta flotante del outlined | centrada sobre el borde superior (y = −8) y en el relleno de 16 **aunque haya icono inicial** (`endX` en `TextFieldImpl.kt`); en el filled queda alineada con el texto (52 con icono) |
+| Corte del borde | 4 a cada lado del texto de la etiqueta (`OutlinedTextFieldInnerPadding`), igual que el relleno 0, 4 del kit |
+| Ancho | mínimo 280 (`TextFieldDefaults.MinWidth`); matekit lo usa como ancho por defecto |
+| Multilínea | la etiqueta en reposo se alinea arriba con el relleno, no al centro |
+| Movimiento | etiqueta con `FastSpatial`; colores con `FastEffects`; grosor del borde con `FastSpatial` |
+
+### Conflictos y decisiones
+
+| Tema | Kit | Compose | Decisión |
+|---|---|---|---|
+| Capa de estado con hover | Filled: `on-surface` 8 % | No hay capa en los tokens ni en `TextFieldImpl.kt` | **Kit** (ADR-0004): el kit es la primera fuente y trae el dato. |
+| Capa de estado del outlined | No consultado | Sin capa | **Sin capa**: el hover cambia el borde. |
+| Borde del outlined deshabilitado | No consultado | 12 % | **Compose** (es la única fuente). Es 2 puntos más que `--md-sys-state-disabled-container-opacity` (10 %), así que va escrito en el CSS con la cita. Revisar si se prefiere el token. |
+| Corte del borde | Etiqueta con fondo `surface` | Recorte del borde (`clipRect` con `ClipOp.Difference`) | **Recorte** (con `<fieldset>`/`<legend>` en web): el fondo `surface` del kit se ve mal sobre cualquier otra superficie (tarjetas, diálogos, `surface-container-*`). Mismo resultado visual sobre `surface`. |
+
+No se buscó una tercera fuente: no hay conflictos de valor, solo datos que el kit no trae y una
+técnica de dibujo.
+
 ## No revisado
 
 Los tokens de Dialog, Navigation rail y los de color de la barra de navegación

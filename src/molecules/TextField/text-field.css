@@ -1,0 +1,387 @@
+/* TextField de Material 3 (filled y outlined).
+
+   Fuentes:
+   - Kit de Figma (docs/research/05-medidas.md § Text field): alto 56; capa de estado con
+     relleno 4 / 0; iconos en un área de 48 con icono de 24; bloque de texto con relleno
+     4 / 0; texto de ayuda con relleno 4, 16, 0, 16 en Body Small; tipografía y colores de
+     Enabled, Hovered, Focused, Error y Disabled del filled, y de Enabled, Focused y Error del
+     outlined.
+   - Jetpack Compose, carpeta compose/material3/material3/src/commonMain/kotlin/androidx/
+     compose/material3/ (commit 160825094a, 2026-08-05):
+     - tokens/FilledTextFieldTokens.kt y tokens/OutlinedTextFieldTokens.kt: indicador y borde
+       con foco de 2 (FocusActiveIndicatorHeight, FocusOutlineWidth; el kit dice 3, ADR-0004);
+       colores de error con hover (OnErrorContainer); etiqueta del outlined con hover
+       (OnSurface); borde deshabilitado del outlined (OnSurface al 12 %).
+     - internal/TextFieldImpl.kt: relleno lateral 16 sin icono (TextFieldPadding) y 4 junto a
+       un icono (TextFieldPadding menos (48 − 24) / 2); en el outlined, la etiqueta flotante
+       vuelve al relleno 16 aunque haya icono inicial (endX del CutoutTextFieldLayout); la
+       etiqueta se mueve con el resorte rápido espacial (FastSpatial) y los colores con el
+       rápido de efectos (FastEffects).
+     - TextField.kt: 8 arriba y abajo en el filled con etiqueta
+       (TextFieldWithLabelVerticalPadding): etiqueta flotante en y = 8, texto en y = 24.
+     - OutlinedTextField.kt: el corte del borde deja 4 a cada lado del texto de la etiqueta
+       (OutlinedTextFieldInnerPadding), igual que el relleno 0, 4 del kit.
+     - TextFieldDefaults.kt: ancho mínimo 280 (MinWidth), usado acá como ancho por defecto.
+   Ver docs/research/07-jetpack-compose.md § TextField.
+
+   Estructura: el contenedor es una grilla de 3 columnas (icono inicial, contenido, icono
+   final) y 2 filas (campo y texto de ayuda). Las partes se ubican por clase, así que el orden
+   de los hijos no importa. La etiqueta y el input comparten la celda del contenido. */
+
+@layer matekit.components {
+  .mk-text-field {
+    /* --- Filled en reposo --- */
+    --_radius: var(--md-sys-shape-corner-extra-small) var(--md-sys-shape-corner-extra-small) 0 0;
+    --_container-color: var(--md-sys-color-surface-container-highest);
+    --_indicator-color: var(--md-sys-color-on-surface-variant);
+    --_indicator-width: 1px;
+    --_outline-color: var(--md-sys-color-outline);
+    --_outline-width: 1px;
+    --_label-color: var(--md-sys-color-on-surface-variant);
+    --_input-color: var(--md-sys-color-on-surface);
+    --_caret-color: var(--md-sys-color-primary);
+    --_leading-color: var(--md-sys-color-on-surface-variant);
+    --_trailing-color: var(--md-sys-color-on-surface-variant);
+    --_supporting-color: var(--md-sys-color-on-surface-variant);
+    --_disabled-content: color-mix(
+      in srgb,
+      var(--md-sys-color-on-surface) calc(var(--md-sys-state-disabled-content-opacity) * 100%),
+      transparent
+    );
+
+    /* Rellenos del contenido: 16 sin icono, 4 junto a un icono (cambian abajo con :has). */
+    --_pad-start: 16px;
+    --_pad-end: 16px;
+    /* Input: 24 arriba y 8 abajo con etiqueta en el filled; 16 y 16 en los demás casos. */
+    --_input-pad-top: 16px;
+    --_input-pad-bottom: 16px;
+
+    /* Etiqueta en reposo (Body Large, centrada en los 56) y flotante (Body Small). */
+    --_label-rest-y: 16px;
+    --_label-float-y: 8px;
+    --_label-float-x: 0px;
+    --_label-y: var(--_label-rest-y);
+    --_label-x: 0px;
+    --_label-size: var(--md-sys-typescale-body-large-size);
+    --_label-line-height: var(--md-sys-typescale-body-large-line-height);
+    --_label-tracking: var(--md-sys-typescale-body-large-tracking);
+
+    position: relative;
+    /* Contexto de apilado propio: el fondo (z-index -1) queda bajo el texto y sobre lo que
+       haya detrás del campo. */
+    isolation: isolate;
+    display: inline-grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-rows: minmax(56px, auto) auto;
+    box-sizing: border-box;
+    width: 280px;
+    max-width: 100%;
+    vertical-align: top;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .mk-text-field:has(> .mk-text-field-leading) {
+    --_pad-start: 4px;
+  }
+  .mk-text-field:has(> .mk-text-field-trailing) {
+    --_pad-end: 4px;
+  }
+  .mk-text-field[data-variant='filled']:has(> .mk-text-field-label) {
+    --_input-pad-top: 24px;
+    --_input-pad-bottom: 8px;
+  }
+
+  /* --- Outlined en reposo --- */
+  .mk-text-field[data-variant='outlined'] {
+    --_radius: var(--md-sys-shape-corner-extra-small);
+    --_container-color: transparent;
+    /* La etiqueta flotante queda centrada sobre el borde superior. */
+    --_label-float-y: -8px;
+  }
+  /* Con icono inicial, la etiqueta flotante vuelve al relleno de 16 del borde: desde la
+     columna del contenido (48 del icono + 4) son 36 hacia el inicio. */
+  .mk-text-field[data-variant='outlined']:has(> .mk-text-field-leading) {
+    --_label-float-x: -36px;
+  }
+
+  /* --- Etiqueta flotante: con foco o con valor ---
+     :placeholder-shown es verdadero solo con el campo vacío (TextFieldInput pone un
+     placeholder de un espacio si no hay otro). Los inputs que siempre muestran algo (date,
+     time, color…) no admiten placeholder, nunca lo cumplen y la etiqueta queda arriba. */
+  .mk-text-field:has(.mk-text-field-input:is(:focus, :not(:placeholder-shown))) {
+    --_label-y: var(--_label-float-y);
+    --_label-x: var(--_label-float-x);
+    --_label-size: var(--md-sys-typescale-body-small-size);
+    --_label-line-height: var(--md-sys-typescale-body-small-line-height);
+    --_label-tracking: var(--md-sys-typescale-body-small-tracking);
+  }
+
+  /* --- Fondo, capa de estado e indicador --- */
+  .mk-text-field-container {
+    /* La capa de estado se activa con esta variable desde los estados del campo. */
+    --mk-state-layer-color: var(--md-sys-color-on-surface);
+    grid-area: 1 / 1 / 2 / -1;
+    z-index: -1;
+    border-radius: var(--_radius);
+    background-color: var(--_container-color);
+    pointer-events: none;
+    transition: background-color var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects-easing);
+  }
+  /* Indicador inferior del filled. */
+  .mk-text-field-container::after {
+    content: '';
+    position: absolute;
+    inset: auto 0 0;
+    height: var(--_indicator-width);
+    background-color: var(--_indicator-color);
+    transition:
+      height var(--md-sys-motion-spring-fast-spatial-duration)
+        var(--md-sys-motion-spring-fast-spatial-easing),
+      background-color var(--md-sys-motion-spring-fast-effects-duration)
+        var(--md-sys-motion-spring-fast-effects-easing);
+  }
+  .mk-text-field[data-variant='outlined'] .mk-text-field-container {
+    /* Borde interior para el outlined sin etiqueta; con etiqueta lo dibuja el fieldset. */
+    box-shadow: inset 0 0 0 var(--_outline-width) var(--_outline-color);
+  }
+  .mk-text-field[data-variant='outlined'] .mk-text-field-container::after,
+  .mk-text-field[data-variant='outlined'] .mk-state-layer {
+    /* El outlined no tiene indicador ni capa de estado: el hover cambia el borde. */
+    display: none;
+  }
+  .mk-text-field[data-variant='outlined']:has(> .mk-text-field-outline) .mk-text-field-container {
+    box-shadow: none;
+  }
+
+  /* --- Borde del outlined con corte para la etiqueta ---
+     Un <fieldset> con <legend>: el navegador no dibuja el borde detrás del legend, así que
+     el corte no depende del color de fondo (funciona en los dos temas y sobre cualquier
+     superficie). El legend lleva una copia invisible de la etiqueta en Body Small con 4 de
+     relleno a cada lado; cerrado mide 0 y se abre al flotar la etiqueta. */
+  .mk-text-field-outline {
+    grid-area: 1 / 1 / 2 / -1;
+    box-sizing: border-box;
+    min-inline-size: 0;
+    /* El borde superior se dibuja en el medio del legend (16 de alto): se sube 8 menos medio
+       borde para que quede en y = 0, por dentro de los 56, como un borde interior. */
+    margin: calc(var(--_outline-width) / 2 - 8px) 0 0;
+    /* El legend empieza en 12 (borde + relleno) y su texto, con 4 más, en 16: donde queda la
+       etiqueta flotante. */
+    padding: 0 calc(12px - var(--_outline-width));
+    border: var(--_outline-width) solid var(--_outline-color);
+    border-radius: var(--_radius);
+    pointer-events: none;
+    transition:
+      border-color var(--md-sys-motion-spring-fast-effects-duration)
+        var(--md-sys-motion-spring-fast-effects-easing),
+      border-width var(--md-sys-motion-spring-fast-spatial-duration)
+        var(--md-sys-motion-spring-fast-spatial-easing),
+      margin var(--md-sys-motion-spring-fast-spatial-duration)
+        var(--md-sys-motion-spring-fast-spatial-easing);
+  }
+  .mk-text-field-notch {
+    float: none;
+    height: var(--md-sys-typescale-body-small-line-height);
+    max-width: 0.01px;
+    padding: 0;
+    overflow: hidden;
+    visibility: hidden;
+    white-space: nowrap;
+    font-family: var(--md-sys-typescale-body-small-font);
+    font-size: var(--md-sys-typescale-body-small-size);
+    line-height: var(--md-sys-typescale-body-small-line-height);
+    font-weight: var(--md-sys-typescale-body-small-weight);
+    letter-spacing: var(--md-sys-typescale-body-small-tracking);
+    transition: max-width var(--md-sys-motion-spring-fast-spatial-duration)
+      var(--md-sys-motion-spring-fast-spatial-easing);
+  }
+  .mk-text-field-notch > span {
+    display: inline-block;
+    padding: 0 4px;
+  }
+  .mk-text-field:has(.mk-text-field-input:is(:focus, :not(:placeholder-shown))) .mk-text-field-notch {
+    max-width: 100%;
+  }
+
+  /* --- Etiqueta --- */
+  .mk-text-field-label {
+    grid-area: 1 / 2;
+    align-self: start;
+    justify-self: start;
+    box-sizing: border-box;
+    max-width: calc(100% - var(--_pad-start) - var(--_pad-end));
+    margin-inline-start: var(--_pad-start);
+    overflow: hidden;
+    color: var(--_label-color);
+    font-family: var(--md-sys-typescale-body-large-font);
+    font-size: var(--_label-size);
+    line-height: var(--_label-line-height);
+    font-weight: var(--md-sys-typescale-body-large-weight);
+    letter-spacing: var(--_label-tracking);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    /* Los clics pasan al input, que ocupa la misma celda. */
+    pointer-events: none;
+    transform: translate(var(--_label-x), var(--_label-y));
+    transition:
+      transform var(--md-sys-motion-spring-fast-spatial-duration)
+        var(--md-sys-motion-spring-fast-spatial-easing),
+      font-size var(--md-sys-motion-spring-fast-spatial-duration)
+        var(--md-sys-motion-spring-fast-spatial-easing),
+      line-height var(--md-sys-motion-spring-fast-spatial-duration)
+        var(--md-sys-motion-spring-fast-spatial-easing),
+      color var(--md-sys-motion-spring-fast-effects-duration)
+        var(--md-sys-motion-spring-fast-effects-easing);
+  }
+
+  /* --- Input y textarea: ocupan toda la celda, así cualquier clic en ella da el foco --- */
+  .mk-text-field-input {
+    grid-area: 1 / 2;
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+    padding: var(--_input-pad-top) var(--_pad-end) var(--_input-pad-bottom) var(--_pad-start);
+    border: none;
+    outline: none;
+    border-radius: 0;
+    background: transparent;
+    color: var(--_input-color);
+    caret-color: var(--_caret-color);
+    font-family: var(--md-sys-typescale-body-large-font);
+    font-size: var(--md-sys-typescale-body-large-size);
+    line-height: var(--md-sys-typescale-body-large-line-height);
+    font-weight: var(--md-sys-typescale-body-large-weight);
+    letter-spacing: var(--md-sys-typescale-body-large-tracking);
+  }
+  .mk-text-field-input::placeholder {
+    color: var(--md-sys-color-on-surface-variant);
+    opacity: 1;
+  }
+  /* Con etiqueta en reposo el placeholder se taparía con ella: se muestra al flotar. */
+  .mk-text-field:has(> .mk-text-field-label) .mk-text-field-input:not(:focus)::placeholder {
+    color: transparent;
+  }
+  .mk-text-field-textarea {
+    resize: none;
+  }
+
+  /* --- Iconos: área de 48 centrada en los 56 (arriba en el multilínea) --- */
+  .mk-text-field-leading,
+  .mk-text-field-trailing {
+    --mk-icon-size: 24px;
+    grid-row: 1;
+    align-self: start;
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    margin-top: 4px;
+    transition: color var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects-easing);
+  }
+  .mk-text-field-leading {
+    grid-column: 1;
+    color: var(--_leading-color);
+  }
+  .mk-text-field-trailing {
+    grid-column: 3;
+    color: var(--_trailing-color);
+  }
+  /* Un IconButton estándar en el icono final sigue el color del campo (en error, error). Se
+     usa la variable interna --_content del IconButton (icon-button.css): si cambia, cambiar
+     también esto. Deshabilitado, conserva su propio color. */
+  .mk-text-field-trailing > .mk-icon-button[data-variant='standard']:not(:disabled, [aria-disabled='true'], [aria-pressed='true']) {
+    --_content: var(--_trailing-color);
+  }
+
+  /* --- Texto de ayuda --- */
+  .mk-text-field-supporting {
+    grid-area: 2 / 1 / 3 / -1;
+    padding: 4px 16px 0;
+    color: var(--_supporting-color);
+    font-family: var(--md-sys-typescale-body-small-font);
+    font-size: var(--md-sys-typescale-body-small-size);
+    line-height: var(--md-sys-typescale-body-small-line-height);
+    font-weight: var(--md-sys-typescale-body-small-weight);
+    letter-spacing: var(--md-sys-typescale-body-small-tracking);
+    transition: color var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects-easing);
+  }
+
+  /* --- Estados ---
+     Todas las reglas llevan [data-variant] y los estados van dentro de :where(), así la
+     especificidad depende solo de los atributos y el orden decide: hover < foco < error
+     (con su hover y su foco) < deshabilitado. El hover es sobre el campo, no sobre el texto
+     de ayuda. */
+  @media (hover: hover) {
+    .mk-text-field[data-variant]:where(:hover:not(:has(.mk-text-field-supporting:hover))) {
+      --_indicator-color: var(--md-sys-color-on-surface);
+      --_outline-color: var(--md-sys-color-on-surface);
+    }
+    .mk-text-field[data-variant]:where(:hover:not(:has(.mk-text-field-supporting:hover))) .mk-text-field-container {
+      --mk-state-layer-opacity: var(--md-sys-state-hover-state-layer-opacity);
+    }
+    /* Compose: la etiqueta del outlined pasa a on-surface; la del filled no cambia. */
+    .mk-text-field[data-variant='outlined']:where(:hover:not(:has(.mk-text-field-supporting:hover))) {
+      --_label-color: var(--md-sys-color-on-surface);
+    }
+  }
+
+  .mk-text-field[data-variant]:where(:has(.mk-text-field-input:focus)) {
+    --_indicator-color: var(--md-sys-color-primary);
+    --_indicator-width: 2px;
+    --_outline-color: var(--md-sys-color-primary);
+    --_outline-width: 2px;
+    --_label-color: var(--md-sys-color-primary);
+  }
+
+  .mk-text-field[data-variant][data-error] {
+    --_indicator-color: var(--md-sys-color-error);
+    --_outline-color: var(--md-sys-color-error);
+    --_label-color: var(--md-sys-color-error);
+    --_trailing-color: var(--md-sys-color-error);
+    --_supporting-color: var(--md-sys-color-error);
+    --_caret-color: var(--md-sys-color-error);
+  }
+  @media (hover: hover) {
+    .mk-text-field[data-variant][data-error]:where(:hover:not(:has(.mk-text-field-supporting:hover))) {
+      --_indicator-color: var(--md-sys-color-on-error-container);
+      --_outline-color: var(--md-sys-color-on-error-container);
+      --_label-color: var(--md-sys-color-on-error-container);
+      --_trailing-color: var(--md-sys-color-on-error-container);
+    }
+  }
+  .mk-text-field[data-variant][data-error]:where(:has(.mk-text-field-input:focus)) {
+    --_indicator-color: var(--md-sys-color-error);
+    --_outline-color: var(--md-sys-color-error);
+    --_label-color: var(--md-sys-color-error);
+    --_trailing-color: var(--md-sys-color-error);
+  }
+
+  /* --- Deshabilitado: contenedor on-surface 4 %, contenido al 38 % --- */
+  .mk-text-field[data-variant][data-variant]:where(:has(.mk-text-field-input:disabled)) {
+    /* FilledTextFieldTokens.kt DisabledContainerOpacity = 0.04 (igual que el kit). */
+    --_container-color: color-mix(in srgb, var(--md-sys-color-on-surface) 4%, transparent);
+    --_indicator-color: var(--_disabled-content);
+    --_indicator-width: 1px;
+    --_outline-color: color-mix(in srgb, var(--md-sys-color-on-surface) 12%, transparent);
+    --_outline-width: 1px;
+    --_label-color: var(--_disabled-content);
+    --_input-color: var(--_disabled-content);
+    --_leading-color: var(--_disabled-content);
+    --_trailing-color: var(--_disabled-content);
+    --_supporting-color: var(--_disabled-content);
+  }
+  .mk-text-field[data-variant='outlined'][data-variant]:where(:has(.mk-text-field-input:disabled)) {
+    /* OutlinedTextFieldTokens.kt: DisabledOutlineOpacity = 0.12; sin contenedor. */
+    --_container-color: transparent;
+  }
+  .mk-text-field[data-variant][data-variant]:where(:has(.mk-text-field-input:disabled)) .mk-text-field-container {
+    --mk-state-layer-opacity: 0;
+  }
+  .mk-text-field:has(.mk-text-field-input:disabled) .mk-text-field-input {
+    cursor: default;
+  }
+}
