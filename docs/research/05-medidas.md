@@ -218,6 +218,8 @@ Jetpack Compose, junto con el color de los iconos (ver
 
 Pendiente: el estilo y color del texto del elemento (está dentro de una instancia que el
 script no abrió) y los colores de texto en Vibrant.
+Los colores se completaron con Jetpack Compose y la tipografía queda sin confirmar: ver
+[07-jetpack-compose.md § Menu](07-jetpack-compose.md#menu).
 
 ## Navigation bar
 

@@ -11,6 +11,11 @@ import {
   DialogContent,
   DialogHeadline,
   IconButton,
+  Menu,
+  MenuContent,
+  MenuDivider,
+  MenuItem,
+  MenuTrigger,
   StarIcon,
   Switch,
   TextField,
@@ -163,5 +168,46 @@ describe('Dialog', () => {
     const d = style(q(c, 'dialog'))
     expect(d.outlineStyle).toBe('solid')
     expect(d.outlineColor).toBe(systemColor('CanvasText'))
+  })
+})
+
+describe('Menu', () => {
+  const menu = () => (
+    <Menu defaultOpen>
+      <MenuTrigger><Button>Abrir</Button></MenuTrigger>
+      <MenuContent>
+        <MenuItem className="plain">Editar</MenuItem>
+        <MenuDivider />
+        <MenuItem type="radio" selected className="on">Elegido</MenuItem>
+        <MenuItem disabled className="off">No</MenuItem>
+        <MenuItem type="radio" selected disabled className="on-off">Elegido y no</MenuItem>
+      </MenuContent>
+    </Menu>
+  )
+
+  test('el menú tiene contorno CanvasText y el divisor es un borde visible', async () => {
+    const c = await render(menu())
+    const m = style(q(c, '.mk-menu'))
+    expect(m.outlineStyle).toBe('solid')
+    expect(m.outlineWidth).toBe('1px')
+    expect(m.outlineColor).toBe(systemColor('CanvasText'))
+    const d = style(q(c, '.mk-menu-divider'))
+    expect(d.borderTopStyle).toBe('solid')
+    expect(d.borderTopColor).toBe(systemColor('CanvasText'))
+  })
+
+  test('seleccionado en Highlight con HighlightText', async () => {
+    const c = await render(menu())
+    expect(style(q(c, '.on')).backgroundColor).toBe(systemColor('Highlight'))
+    expect(style(q(c, '.on')).color).toBe(systemColor('HighlightText'))
+    expect(style(q(c, '.plain')).color).toBe(systemColor('CanvasText'))
+  })
+
+  test('deshabilitado en GrayText, también si está seleccionado', async () => {
+    const c = await render(menu())
+    for (const sel of ['.off', '.on-off']) {
+      expect(style(q(c, sel)).color, sel).toBe(systemColor('GrayText'))
+      expect(style(q(c, sel)).backgroundColor, sel).toBe(systemColor('Canvas'))
+    }
   })
 })

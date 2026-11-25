@@ -15,6 +15,16 @@ import {
   DialogIcon,
   DeleteIcon,
   IconButton,
+  Menu,
+  MenuContent,
+  MenuDivider,
+  MenuItem,
+  MenuItemLeading,
+  MenuItemTrailing,
+  MenuTrigger,
+  MoreVertIcon,
+  EditIcon,
+  CheckIcon,
   SearchIcon,
   StarIcon,
   Switch,
@@ -144,6 +154,30 @@ describe('Accesibilidad automática (axe-core)', () => {
                 <Button variant="text">Eliminar</Button>
               </DialogActions>
             </Dialog>
+          </Themed>,
+        )
+        expect(await a11yViolations(c)).toEqual([])
+      })
+    }
+  }
+
+  for (const theme of THEMES) {
+    for (const variant of ['standard', 'vibrant'] as const) {
+      test(`Menu ${variant} abierto, tema ${theme === 'light' ? 'claro' : 'oscuro'}`, async () => {
+        const c = await render(
+          <Themed theme={theme}>
+            <Menu defaultOpen>
+              <MenuTrigger><IconButton label="Más opciones"><MoreVertIcon /></IconButton></MenuTrigger>
+              <MenuContent variant={variant}>
+                <MenuItem><MenuItemLeading><EditIcon /></MenuItemLeading>Editar<MenuItemTrailing>Ctrl+E</MenuItemTrailing></MenuItem>
+                <MenuItem disabled><MenuItemLeading><DeleteIcon /></MenuItemLeading>Eliminar</MenuItem>
+                <MenuDivider />
+                <MenuItem type="radio" selected><MenuItemLeading><CheckIcon /></MenuItemLeading>Por nombre</MenuItem>
+                <MenuItem type="radio" selected={false}><MenuItemLeading />Por fecha</MenuItem>
+                <MenuDivider />
+                <MenuItem type="checkbox" selected={false}>Mostrar ocultos</MenuItem>
+              </MenuContent>
+            </Menu>
           </Themed>,
         )
         expect(await a11yViolations(c)).toEqual([])

@@ -4,6 +4,7 @@ import { CheckboxPage } from './pages/CheckboxPage.tsx'
 import { DialogPage } from './pages/DialogPage.tsx'
 import { IconButtonPage } from './pages/IconButtonPage.tsx'
 import { IconsPage } from './pages/IconsPage.tsx'
+import { MenuPage } from './pages/MenuPage.tsx'
 import { SwitchPage } from './pages/SwitchPage.tsx'
 import { TextFieldPage } from './pages/TextFieldPage.tsx'
 import { TokensPage } from './pages/TokensPage.tsx'
@@ -18,6 +19,7 @@ const PAGES = {
   switch: { label: 'Switch', Page: SwitchPage },
   'text-field': { label: 'TextField', Page: TextFieldPage },
   dialog: { label: 'Dialog', Page: DialogPage },
+  menu: { label: 'Menu', Page: MenuPage },
   icons: { label: 'Iconos', Page: IconsPage },
   tokens: { label: 'Tokens', Page: TokensPage },
 } as const

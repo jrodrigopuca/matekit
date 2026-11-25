@@ -1,0 +1,288 @@
+/* Menu de Material 3 Expressive (temas Standard y Vibrant).
+
+   Fuentes:
+   - Kit de Figma (docs/research/05-medidas.md § Menu): contenedor de radio 16 (Corner/Large),
+     Surface Container Low y elevación 3, lista con 2 de relleno arriba y abajo; elemento de 48
+     con relleno exterior 2, 4 y contenido de 44 con radio 4 (Corner/Extra-small); capa de
+     estado con relleno 12 y separación 8; iconos de 20; hover On Surface 8 %, foco 10 %,
+     presionado 8 % más onda 10 %; deshabilitado al 38 %; seleccionado en Tertiary Container con
+     radio 12 (Corner/Medium). Vibrant: elemento en Tertiary Container y seleccionado en Tertiary.
+   - Jetpack Compose, para lo que el kit no trae (compose/material3/material3/src/commonMain/
+     kotlin/androidx/compose/material3/):
+     - tokens/StandardMenuTokens.kt y tokens/VibrantMenuTokens.kt (commit 160825094a,
+       2026-08-05): colores de texto e iconos por estado. Standard: texto On Surface, iconos On
+       Surface Variant, seleccionado On Tertiary Container, deshabilitado On Surface al 38 %.
+       Vibrant: fondo Tertiary Container, texto e iconos On Tertiary Container, iconos con
+       hover, foco o presionado en Tertiary, seleccionado On Tertiary, deshabilitado On Tertiary
+       Container al 38 %. (MenuTokens.kt es el menú anterior: no se usa.)
+     - Menu.kt (commit 23acf55b06, 2026-10-19): texto Label Large; ancho entre 112 y 280
+       (DropdownMenuItemDefaultMinWidth/MaxWidth); 48 de margen con los bordes de la ventana
+       (MenuVerticalMargin); animación de escala 0,8 → 1 con FastSpatial y opacidad con
+       FastEffects, desde el borde del disparador.
+     - tokens/DividerTokens.kt: divisor de 1 en Outline Variant.
+     La tipografía tiene un conflicto dentro de Compose (Label Large en Menu.kt, Body Large en
+     SegmentedMenuTokens.ItemLabelTextFont); ver docs/research/07-jetpack-compose.md § Menu.
+
+   Posición: CSS anchor positioning (ADR-0007). El disparador lleva anchor-name y el menú
+   position-anchor (--_anchor, que pone Menu.tsx). Debajo del disparador y desde su borde
+   inicial; si no entra, se da vuelta hacia arriba, hacia el otro lado o las dos cosas. El
+   ancho es max-content (no fit-content) para que, cerca del borde derecho, el menú desborde y
+   el navegador pruebe la alternativa en vez de achicarlo. Sin anchor positioning, Menu.tsx
+   calcula top y left (position.ts).
+
+   Movimiento: entrada con @starting-style; salida con data-closing, que pone Menu.tsx y quita
+   al terminar las transiciones, recién ahí oculta el popover (mismo patrón que Dialog). */
+
+@layer matekit.components {
+  .mk-menu {
+    /* Colores del tema (Standard); data-variant='vibrant' los cambia. */
+    --_container: var(--md-sys-color-surface-container-low);
+    --_label: var(--md-sys-color-on-surface);
+    --_icon: var(--md-sys-color-on-surface-variant);
+    --_icon-active: var(--md-sys-color-on-surface-variant);
+    --_selected-container: var(--md-sys-color-tertiary-container);
+    --_selected-content: var(--md-sys-color-on-tertiary-container);
+    --_disabled-base: var(--md-sys-color-on-surface);
+    --_scale-from: 0.8;
+    --_origin-x: left;
+    --_origin-y: top;
+
+    /* El popover del navegador ya es position: fixed con inset: 0 y margin: auto (centrado). */
+    inset: auto;
+    position-anchor: var(--_anchor);
+    position-area: block-end span-inline-end;
+    position-try-fallbacks: flip-block, flip-inline, flip-block flip-inline;
+
+    box-sizing: border-box;
+    width: max-content;
+    min-width: 112px;
+    max-width: 280px;
+    max-height: calc(100dvh - 96px);
+    margin: 0;
+    padding: 2px 0;
+    border: none;
+    border-radius: var(--md-sys-shape-corner-large);
+    background-color: var(--_container);
+    box-shadow: var(--md-sys-elevation-level3);
+    color: var(--_label);
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    opacity: 0;
+    scale: var(--_scale-from);
+    transform-origin: var(--_origin-x) var(--_origin-y);
+    transition:
+      opacity var(--md-sys-motion-spring-fast-effects-duration) var(--md-sys-motion-spring-fast-effects-easing),
+      scale var(--md-sys-motion-spring-fast-spatial-duration) var(--md-sys-motion-spring-fast-spatial-easing);
+  }
+
+  /* display solo abierto: un display propio en .mk-menu le ganaría al display: none del
+     navegador para el popover cerrado. */
+  .mk-menu:popover-open {
+    display: flex;
+    flex-direction: column;
+    opacity: 1;
+    scale: 1;
+  }
+
+  @starting-style {
+    .mk-menu:popover-open {
+      opacity: 0;
+      scale: var(--_scale-from);
+    }
+  }
+
+  .mk-menu:popover-open[data-closing] {
+    opacity: 0;
+    scale: var(--_scale-from);
+  }
+
+  /* La escala sale del borde del disparador: de arriba si el menú quedó debajo, de abajo si se
+     dio vuelta; del lado con el que se alinea. Menu.tsx anota de qué lado quedó. */
+  .mk-menu[data-side='top'] {
+    --_origin-y: bottom;
+  }
+  .mk-menu[data-align='right'] {
+    --_origin-x: right;
+  }
+
+  /* Movimiento reducido: los resortes spatial ya valen 0, pero sin esto la salida saltaría de
+     escala antes de desvanecerse. Queda solo el fundido. */
+  @media (prefers-reduced-motion: reduce) {
+    .mk-menu {
+      --_scale-from: 1;
+    }
+  }
+
+  /* Sin anchor positioning, Menu.tsx escribe top y left (respaldo, ADR-0007). */
+  @supports not (position-area: bottom) {
+    .mk-menu {
+      inset: auto;
+    }
+  }
+
+  .mk-menu[data-variant='vibrant'] {
+    --_container: var(--md-sys-color-tertiary-container);
+    --_label: var(--md-sys-color-on-tertiary-container);
+    --_icon: var(--md-sys-color-on-tertiary-container);
+    --_icon-active: var(--md-sys-color-tertiary);
+    --_selected-container: var(--md-sys-color-tertiary);
+    --_selected-content: var(--md-sys-color-on-tertiary);
+    --_disabled-base: var(--md-sys-color-on-tertiary-container);
+  }
+
+  /* --- Elemento --- */
+  .mk-menu-item {
+    --mk-icon-size: 20px;
+    /* Anillo hacia adentro: afuera lo cortaría el overflow del menú en el primer y el último
+       elemento (solo hay 2 + 2 px hasta el borde). */
+    --mk-focus-ring-offset: calc(-1 * var(--md-sys-state-focus-indicator-thickness));
+    --_item-container: transparent;
+    --_item-label: var(--_label);
+    --_item-icon: var(--_icon);
+    --_item-radius: var(--md-sys-shape-corner-extra-small);
+    --_disabled: color-mix(
+      in srgb,
+      var(--_disabled-base) calc(var(--md-sys-state-disabled-content-opacity) * 100%),
+      transparent
+    );
+
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 8px;
+    box-sizing: border-box;
+    min-height: 44px;
+    /* Filas de 48: 2 + 44 + 2. El menú es flex, así que los márgenes no se superponen. */
+    margin: 2px 4px;
+    padding: 0 12px;
+    border: none;
+    border-radius: var(--_item-radius);
+    background-color: var(--_item-container);
+    outline: none;
+    color: var(--_item-label);
+    font-family: var(--md-sys-typescale-label-large-font);
+    font-size: var(--md-sys-typescale-label-large-size);
+    line-height: var(--md-sys-typescale-label-large-line-height);
+    font-weight: var(--md-sys-typescale-label-large-weight);
+    letter-spacing: var(--md-sys-typescale-label-large-tracking);
+    text-align: start;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transition:
+      border-radius var(--md-sys-motion-spring-fast-spatial-duration) var(--md-sys-motion-spring-fast-spatial-easing),
+      background-color var(--md-sys-motion-spring-fast-effects-duration) var(--md-sys-motion-spring-fast-effects-easing),
+      color var(--md-sys-motion-spring-fast-effects-duration) var(--md-sys-motion-spring-fast-effects-easing);
+  }
+
+  .mk-menu-item-leading,
+  .mk-menu-item-trailing {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    color: var(--_item-icon);
+  }
+  .mk-menu-item-leading {
+    order: -1;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+  }
+  .mk-menu-item-trailing {
+    order: 1;
+    gap: 8px;
+    margin-inline-start: auto;
+  }
+  :is(.mk-menu-item-leading, .mk-menu-item-trailing) > svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+  }
+
+  /* --- Estados --- */
+  @media (hover: hover) {
+    .mk-menu-item:hover:not([aria-disabled='true']) {
+      --_item-icon: var(--_icon-active);
+    }
+  }
+  .mk-menu-item:focus-visible {
+    --_item-icon: var(--_icon-active);
+  }
+  /* Con la onda presente, la capa de presionado queda en la opacidad de hover (8 %) y la onda
+     suma su 10 %, como en el kit. */
+  .mk-menu-item:active:not([aria-disabled='true']) {
+    --_item-icon: var(--_icon-active);
+  }
+  .mk-menu-item:active:not([aria-disabled='true']) > .mk-state-layer {
+    opacity: var(--md-sys-state-hover-state-layer-opacity);
+  }
+
+  /* Seleccionado (aria-checked, en menuitemradio y menuitemcheckbox). */
+  .mk-menu-item[aria-checked='true'] {
+    --_item-container: var(--_selected-container);
+    --_item-label: var(--_selected-content);
+    --_item-icon: var(--_selected-content);
+    --_item-radius: var(--md-sys-shape-corner-medium);
+  }
+
+  /* Deshabilitado, al final. Seleccionado y deshabilitado: el fondo también al 38 %
+     (StandardMenuTokens.ItemSelectedDisabledContainerOpacity). */
+  .mk-menu-item[aria-disabled='true'] {
+    --_item-label: var(--_disabled);
+    --_item-icon: var(--_disabled);
+    cursor: default;
+  }
+  .mk-menu-item[aria-checked='true'][aria-disabled='true'] {
+    --_disabled-base: var(--_selected-content);
+    --_item-container: color-mix(
+      in srgb,
+      var(--_selected-container) calc(var(--md-sys-state-disabled-content-opacity) * 100%),
+      transparent
+    );
+  }
+
+  /* --- Divisor ---
+     Ni el kit (que agrupa) ni Compose (que separa grupos con espacio) dan el margen del
+     divisor: 6 + los 2 del elemento dejan 8 a cada lado, como el divisor del menú anterior. */
+  .mk-menu-divider {
+    flex-shrink: 0;
+    box-sizing: content-box;
+    height: 1px;
+    margin: 6px 0;
+    border: none;
+    background-color: var(--md-sys-color-outline-variant);
+  }
+
+  /* --- Alto contraste (forced-colors) ---
+     El navegador quita el fondo y la sombra, con lo que el menú se confunde con la página: un
+     contorno CanvasText marca su borde. El divisor es un fondo, así que pasa a borde. El
+     seleccionado se marca con Highlight y el deshabilitado con GrayText, sin opacidad; para eso
+     esos elementos salen del ajuste automático (forced-color-adjust: none, que se hereda) y
+     usan colores del sistema también en los iconos y el anillo de foco. */
+  @media (forced-colors: active) {
+    .mk-menu {
+      outline: 1px solid CanvasText;
+    }
+    .mk-menu-divider {
+      height: 0;
+      border-top: 1px solid CanvasText;
+    }
+    .mk-menu-item[aria-checked='true'] {
+      forced-color-adjust: none;
+      --_item-container: Highlight;
+      --_item-label: HighlightText;
+      --_item-icon: HighlightText;
+      --mk-focus-ring-color: HighlightText;
+    }
+    /* :is() toma la especificidad de su argumento más fuerte (0,3,0): así le gana también a la
+       regla de seleccionado y deshabilitado de arriba. */
+    :is(.mk-menu-item[aria-disabled='true'], .mk-menu-item[aria-checked='true'][aria-disabled='true']) {
+      forced-color-adjust: none;
+      --_item-container: Canvas;
+      --_item-label: GrayText;
+      --_item-icon: GrayText;
+      --mk-focus-ring-color: CanvasText;
+    }
+  }
+}

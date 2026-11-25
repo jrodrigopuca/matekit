@@ -318,6 +318,43 @@ relleno vertical y sigue midiendo 88.
 |---|---|---|---|
 | Alineación con icono | "Con icono, todo el contenido se centra" | Se centran el icono y el título; el texto sigue al inicio (`Alignment.Start` en `AlertDialog.kt`; `@material/web` centra solo el título) | **Icono y título centrados, texto al inicio**: dos fuentes contra una, y un párrafo centrado se lee peor. El kit no distingue texto de una línea y de varias; puede que "todo" se refiera al bloque superior. |
 
+## Menu
+
+Leído el 2026-11-24: `tokens/StandardMenuTokens.kt`, `tokens/VibrantMenuTokens.kt` y
+`tokens/SegmentedMenuTokens.kt` (commit `160825094a`, del 2026-08-05), que describen el menú
+Expressive, y `Menu.kt` (último cambio: commit `23acf55b06`, del 2026-10-19). `MenuTokens.kt`
+es el menú anterior y no se usa (ver "Conflictos con el kit"). Comportamiento: `@material/web`
+`docs/components/menu.md` y WAI-ARIA APG (patrones "Menu Button" y "Menu and Menubar",
+`w3c/aria-practices`, commit `b20627c7b3`).
+
+### Lo que confirma
+
+Fondo `surface-container-low` (Standard) y `tertiary-container` (Vibrant); elemento de 44
+(`SegmentedMenuTokens.Item`) con 4 a los costados (`DropdownMenuSelectableItemPadding`), radio
+`CornerExtraSmall` y seleccionado `CornerMedium`; iconos de 20; seleccionado en
+`tertiary-container` (Standard) y `tertiary` (Vibrant). Coincide con el kit.
+
+### Datos nuevos (el kit no los trae)
+
+| Dato | Fuente |
+|---|---|
+| Texto del elemento en **`on-surface`** e iconos en **`on-surface-variant`** (Standard) | `StandardMenuTokens.ItemLabelTextColor`, `ItemLeadingIconColor`, `ItemTrailingIconColor` |
+| Seleccionado: texto e iconos en **`on-tertiary-container`** (Standard) y **`on-tertiary`** (Vibrant) | `ItemSelectedLabelTextColor`, `ItemSelectedLeadingIconColor` |
+| Vibrant: texto e iconos en **`on-tertiary-container`**; iconos con hover, foco o presionado en **`tertiary`** | `VibrantMenuTokens.ItemLabelTextColor`, `ItemHoveredLeadingIconColor` y afines |
+| Deshabilitado al **38 %** de `on-surface` (Standard) o `on-tertiary-container` (Vibrant); seleccionado y deshabilitado, también el fondo al 38 % | `ItemDisabledLabelTextOpacity`, `ItemSelectedDisabledContainerOpacity` |
+| Ancho entre **112** y **280** | `Menu.kt`: `DropdownMenuItemDefaultMinWidth`, `DropdownMenuItemDefaultMaxWidth`. El kit muestra 208, que es un ejemplo. |
+| Margen de **48** con los bordes superior e inferior de la ventana | `Menu.kt`: `MenuVerticalMargin`. matekit lo usa como alto máximo: `100dvh - 96px`. |
+| Animación: escala **0,8 → 1** con `FastSpatial` y opacidad con `FastEffects`, desde el borde del disparador | `Menu.kt`: `ClosedScaleTarget`, `transformOrigin` |
+| Semántica del seleccionado | `Menu.kt`: el elemento con `selected` tiene rol `RadioButton` y el de `checked`, `Checkbox`. En web: `menuitemradio` y `menuitemcheckbox` con `aria-checked`. |
+| Divisor de 1 en `outline-variant` | `DividerTokens.kt`. El margen (8 a cada lado) no está en ninguna de las dos fuentes; es el del menú anterior. |
+
+### Conflictos y decisiones
+
+| Tema | Kit | Compose | Decisión |
+|---|---|---|---|
+| Tipografía del texto | Sin dato (la extracción no abrió la instancia del texto) | `Menu.kt` usa `typography.labelLarge` con un `// TODO replace with token`; `SegmentedMenuTokens.ItemLabelTextFont` dice `BodyLarge` | **Label Large**, que es lo que Compose dibuja hoy, lo que usaba el menú anterior y la misma familia que la etiqueta de sección del kit. **Sin confirmar**: el token nuevo (`BodyLarge`) puede ser el destino del TODO. Se resuelve leyendo el estilo del texto del elemento en el kit (nodo `58966:4101`). |
+| Radio del último elemento | "El último elemento lleva radio 16 abajo" | `ItemLastChildShape = CornerMedium` (12), con esquinas interiores de 4, en el menú segmentado | **Sin aplicar**: todos los elementos llevan radio 4. El dato del kit parece describir el marco del elemento, que en matekit no se dibuja. |
+
 ## No revisado
 
 Los tokens de Navigation rail y los de color de la barra de navegación

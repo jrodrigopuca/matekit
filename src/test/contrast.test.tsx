@@ -11,6 +11,14 @@ import {
   DialogContent,
   DialogHeadline,
   IconButton,
+  Menu,
+  MenuContent,
+  MenuItem,
+  MenuItemLeading,
+  MenuItemTrailing,
+  MenuTrigger,
+  EditIcon,
+  CheckIcon,
   StarIcon,
   Switch,
   TextField,
@@ -158,5 +166,28 @@ for (const theme of THEMES) {
       expect(textContrast(q(c, '.mk-dialog-headline'))).toBeGreaterThanOrEqual(TEXT)
       expect(textContrast(q(c, '.mk-dialog-content'))).toBeGreaterThanOrEqual(TEXT)
     })
+
+    for (const variant of ['standard', 'vibrant'] as const) {
+      test(`Menu ${variant}: texto, iconos y atajo sobre el menú, y seleccionado sobre su fondo`, async () => {
+        const c = await render(
+          <Themed theme={theme}>
+            <Menu defaultOpen>
+              <MenuTrigger><Button>Abrir</Button></MenuTrigger>
+              <MenuContent variant={variant}>
+                <MenuItem className="plain"><MenuItemLeading><EditIcon /></MenuItemLeading>Editar<MenuItemTrailing>Ctrl+E</MenuItemTrailing></MenuItem>
+                <MenuItem className="on" type="radio" selected><MenuItemLeading><CheckIcon /></MenuItemLeading>Elegido<MenuItemTrailing>Ctrl+N</MenuItemTrailing></MenuItem>
+              </MenuContent>
+            </Menu>
+          </Themed>,
+        )
+        for (const sel of ['.plain', '.on']) {
+          const it = q(c, sel)
+          const bg = effectiveBackground(it)
+          expect(textContrast(it), `${sel} texto`).toBeGreaterThanOrEqual(TEXT)
+          expect(contrastRatio(cs(q(it, '.mk-menu-item-trailing')).color, bg), `${sel} atajo`).toBeGreaterThanOrEqual(TEXT)
+          expect(contrastRatio(cs(q(it, '.mk-menu-item-leading svg')).fill, bg), `${sel} icono`).toBeGreaterThanOrEqual(NON_TEXT)
+        }
+      })
+    }
   })
 }

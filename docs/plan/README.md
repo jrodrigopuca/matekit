@@ -16,6 +16,7 @@ siguiente. Convenciones en [`CLAUDE.md`](../../CLAUDE.md).
 | IconButton | molécula | universal; comparte la base de CSS con el Button; resuelto por agente y revisado el 2026-11-24 |
 | TextField | molécula | cliente (ids por contexto); filled, outlined y multilínea; resuelto por agente y revisado el 2026-11-24 |
 | Dialog | organismo | cliente (`showModal`); salida animada, foco atrapado, alerta; resuelto por agente y revisado el 2026-11-24 |
+| Menu | organismo | cliente (popover, foco, teclado APG); Standard y Vibrant; anchor positioning con respaldo en JS (ADR-0007); resuelto por agente y revisado el 2026-11-24 |
 | 32 iconos | icons | ADR-0006 |
 
 ## Orden y motivo
