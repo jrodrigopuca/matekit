@@ -355,8 +355,58 @@ Fondo `surface-container-low` (Standard) y `tertiary-container` (Vibrant); eleme
 | Tipografía del texto | Sin dato (la extracción no abrió la instancia del texto) | `Menu.kt` usa `typography.labelLarge` con un `// TODO replace with token`; `SegmentedMenuTokens.ItemLabelTextFont` dice `BodyLarge` | **Label Large**, que es lo que Compose dibuja hoy, lo que usaba el menú anterior y la misma familia que la etiqueta de sección del kit. **Sin confirmar**: el token nuevo (`BodyLarge`) puede ser el destino del TODO. Se resuelve leyendo el estilo del texto del elemento en el kit (nodo `58966:4101`). |
 | Radio del último elemento | "El último elemento lleva radio 16 abajo" | `ItemLastChildShape = CornerMedium` (12), con esquinas interiores de 4, en el menú segmentado | **Sin aplicar**: todos los elementos llevan radio 4. El dato del kit parece describir el marco del elemento, que en matekit no se dibuja. |
 
+## NavigationBar
+
+Revisión del 2026-11-25. Archivos (en `compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/`):
+`tokens/NavigationBarTokens.kt`, `tokens/NavigationBarVerticalItemTokens.kt`,
+`tokens/NavigationBarHorizontalItemTokens.kt` y `tokens/BadgeTokens.kt` (commit `160825094a`,
+2026-08-05); `ShortNavigationBar.kt` (`de12189a63`, 2026-11-11), `NavigationItem.kt`
+(`5f1e5af7ea`, 2026-11-03) y `Badge.kt` (`bbc070798f`, 2026-11-09). La barra Expressive de 64
+es `ShortNavigationBar`; la `NavigationBar` de Compose es la anterior, de 80
+(`TallContainerHeight`).
+
+### Lo que confirma
+
+Alto 64, fondo `surface-container`, indicador 56 × 32 en `secondary-container`, icono 24,
+relleno vertical 6 y separación 4 (`ContainerBetweenSpace`, `TopIconIndicatorToLabelPadding`),
+etiqueta Label Medium, colores sin activar en `on-surface-variant` e icono activo en
+`on-secondary-container`. Horizontal: indicador de 40 de alto con 16 a los lados
+(`ActiveIndicatorLeadingSpace`/`TrailingSpace`) y 4 entre icono y etiqueta
+(`ItemActiveIndicatorIconLabelSpace`). Insignia grande: 16, `error`, Label Small `on-error`.
+
+### Lo que resuelve
+
+| Duda del kit | Compose |
+|---|---|
+| Etiqueta activa: `Secondary` (variante sin insignia) u `On Secondary Container` (con insignia) | **`secondary`** en la vertical (`ItemActiveLabelTextColor`) y **`on-secondary-container`** en la horizontal, donde la etiqueta queda dentro del indicador (`ShortNavigationBar.kt`: `selectedTextColorStartIconPosition = ItemActiveIconColor`). Las dos variantes del kit son correctas, cada una en su disposición. |
+
+### Datos nuevos (el kit no los trae)
+
+| Dato | Fuente |
+|---|---|
+| Insignia pequeña: **6**, `error`, radio completo | `BadgeTokens.Size`, `Color`, `Shape` |
+| Insignia grande: ancho mínimo 16 y **4** de relleno lateral | `Badge.kt`: `defaultMinSize`, `BadgeWithContentHorizontalPadding` |
+| Posición: la pequeña a 6 del borde final del icono, sin sobresalir arriba; la grande desde 12 del borde final y 2 por encima (se superpone 14 con el icono) | `Badge.kt`: `BadgeOffset`, `BadgeWithContentHorizontalOffset`, `BadgeWithContentVerticalOffset` |
+| **Sin elevación**: `ShortNavigationBar` usa `Surface` sin `tonalElevation` ni `shadowElevation`; el token `ContainerElevation` (Level2) existe pero no se usa | `ShortNavigationBar.kt` |
+| Relleno para las barras del sistema **abajo y a los costados** | `ShortNavigationBarDefaults.windowInsets` (`systemBarsForVisualComponents`, Horizontal + Bottom). En web: `env(safe-area-inset-*)`. |
+| Todo el elemento es el área táctil (mínimo 48), pero la onda y el anillo de foco van solo en el indicador | `NavigationItem.kt`: `selectable` en el elemento, `IndicatorRipple` con `focusRingShape = indicatorShape` |
+| El indicador aparece creciendo a lo ancho desde el centro, con el resorte **DefaultSpatial** | `NavigationItem.kt`: `animateIndicatorProgressAsState`, `animatedIndicatorWidth` |
+| Semántica: elemento `selectable` con rol `Tab` dentro de un `selectableGroup` | `NavigationItem.kt`. En web, matekit usa enlaces con `aria-current="page"` dentro de `<nav>` (patrón de navegación de APG): los destinos cambian de página, no muestran paneles. |
+| Disposición `Centered` para pantallas medianas: elementos centrados ocupando del 60 al 90 % del ancho según la cantidad | `ShortNavigationBarArrangement.Centered`. **Sin aplicar**: matekit reparte siempre (`EqualWeight`). |
+
+### Conflictos y decisiones
+
+| Tema | Kit | Compose | Decisión |
+|---|---|---|---|
+| Radio del indicador | 16 (vertical) y 20 (horizontal) | `CornerFull` | Es lo mismo (la mitad del alto). matekit usa `corner-large` (16) y `corner-large-increased` (20), no `corner-full`, porque el ancho del indicador anima. |
+| `secondary` sobre `surface-container` (etiqueta activa vertical) | — | — | No está en la lista de pares garantizados de CLAUDE.md (que nombra `primary`, no `secondary`). En `material-color-utilities` 0.4.0 (`dynamiccolor/color_spec_2021.js`), `secondary` tiene la misma curva que `primary` y `error` (`ContrastCurve(3, 4.5, 7, 7)`) contra `highestSurface`, no contra `surface-container`, y el esquema base no se genera (ADR-0008); así que la garantía no alcanza sola. Se sigue a Compose porque `src/test/contrast.test.tsx` lo mide: cumple 4,5:1 en las 24 combinaciones. Si una paleta nueva falla, la salida es `on-surface`. |
+
+`@material/web` no tiene documentación de la barra de navegación
+(`docs/components/navigation-bar.md` no existe; consultado el 2026-11-25). Su versión en
+`labs/navigationbar` usa `role="tablist"` y `role="tab"` con flechas; matekit no la sigue
+(ver la fila de semántica).
+
 ## No revisado
 
-Los tokens de Navigation rail y los de color de la barra de navegación
-(los nombres de las variables de etiqueta activa no coincidieron con la búsqueda), y la
+Los tokens de Navigation rail, y la
 tipografía (`TypeScaleTokens.kt`, descargado pero sin comparar).

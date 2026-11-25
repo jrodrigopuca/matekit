@@ -29,3 +29,4 @@ export {
   type TextFieldVariant,
 } from './TextField/TextField.tsx'
 export { TextFieldLeading, TextFieldTrailing, type TextFieldSlotProps } from './TextField/TextFieldSlots.tsx'
+export { Badge, type BadgeProps } from './Badge/Badge.tsx'

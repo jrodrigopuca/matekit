@@ -5,6 +5,13 @@ import type { ReactNode } from 'react'
 import { describe, expect, test } from 'vitest'
 import {
   AddIcon,
+  Badge,
+  HomeIcon,
+  NavigationBar,
+  NavigationBarItem,
+  NavigationBarItemIcon,
+  NavigationBarItemLabel,
+  SettingsIcon,
   Button,
   CancelIcon,
   Checkbox,
@@ -119,6 +126,31 @@ const GALLERIES: Record<string, ReactNode> = {
             <TextFieldInput />
           </TextField>
         </div>
+      ))}
+    </>
+  ),
+  NavigationBar: (
+    <>
+      {(['vertical', 'horizontal'] as const).map((layout) => (
+        <NavigationBar key={layout} layout={layout} aria-label={`Principal ${layout}`}>
+          <NavigationBarItem href="#inicio" active>
+            <NavigationBarItemIcon><HomeIcon /></NavigationBarItemIcon>
+            <NavigationBarItemLabel>Inicio</NavigationBarItemLabel>
+          </NavigationBarItem>
+          <NavigationBarItem href="#favoritos">
+            <NavigationBarItemIcon><StarIcon /></NavigationBarItemIcon>
+            <NavigationBarItemLabel>Favoritos</NavigationBarItemLabel>
+            <Badge label="3 nuevos">3</Badge>
+          </NavigationBarItem>
+          <NavigationBarItem href="#buscar">
+            <NavigationBarItemIcon><SearchIcon /></NavigationBarItemIcon>
+            <NavigationBarItemLabel>Buscar</NavigationBarItemLabel>
+            <Badge label="Novedades" />
+          </NavigationBarItem>
+          <NavigationBarItem aria-label="Ajustes">
+            <NavigationBarItemIcon><SettingsIcon /></NavigationBarItemIcon>
+          </NavigationBarItem>
+        </NavigationBar>
       ))}
     </>
   ),

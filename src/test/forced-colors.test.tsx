@@ -5,7 +5,13 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { commands, userEvent } from 'vitest/browser'
 import {
+  Badge,
   Button,
+  HomeIcon,
+  NavigationBar,
+  NavigationBarItem,
+  NavigationBarItemIcon,
+  NavigationBarItemLabel,
   Checkbox,
   Dialog,
   DialogContent,
@@ -209,5 +215,54 @@ describe('Menu', () => {
       expect(style(q(c, sel)).color, sel).toBe(systemColor('GrayText'))
       expect(style(q(c, sel)).backgroundColor, sel).toBe(systemColor('Canvas'))
     }
+  })
+})
+
+describe('NavigationBar', () => {
+  const bar = (layout: 'vertical' | 'horizontal') => (
+    <div style={{ width: 400 }}>
+      <NavigationBar layout={layout}>
+        <NavigationBarItem href="#" className="plain">
+          <NavigationBarItemIcon><HomeIcon /></NavigationBarItemIcon>
+          <NavigationBarItemLabel>Inicio</NavigationBarItemLabel>
+          <Badge label="Novedades" />
+        </NavigationBarItem>
+        <NavigationBarItem href="#" active className="on">
+          <NavigationBarItemIcon><StarIcon filled /></NavigationBarItemIcon>
+          <NavigationBarItemLabel>Favoritos</NavigationBarItemLabel>
+          <Badge label="3 nuevos">3</Badge>
+        </NavigationBarItem>
+      </NavigationBar>
+    </div>
+  )
+
+  test('la barra se separa del contenido con un borde CanvasText', async () => {
+    const c = await render(bar('vertical'))
+    const nav = style(q(c, 'nav'))
+    expect(nav.borderTopStyle).toBe('solid')
+    expect(nav.borderTopColor).toBe(systemColor('CanvasText'))
+  })
+
+  for (const layout of ['vertical', 'horizontal'] as const) {
+    test(`activo (${layout}): indicador en Highlight, icono en HighlightText`, async () => {
+      const c = await render(bar(layout))
+      const ind = q(c, '.on > .mk-navigation-bar-item-indicator')
+      expect(style(ind).backgroundColor).toBe(systemColor('Highlight'))
+      expect(ind.getBoundingClientRect().width).toBeGreaterThan(0)
+      expect(style(q(c, '.on .mk-navigation-bar-item-icon')).color).toBe(systemColor('HighlightText'))
+      expect(style(q(c, '.on .mk-navigation-bar-item-label')).color).toBe(
+        systemColor(layout === 'vertical' ? 'Highlight' : 'HighlightText'),
+      )
+      // El que no está activo no tiene indicador visible.
+      expect(q(c, '.plain > .mk-navigation-bar-item-indicator').getBoundingClientRect().width).toBe(0)
+    })
+  }
+
+  test('las insignias se ven: CanvasText con el número en Canvas', async () => {
+    const c = await render(bar('vertical'))
+    for (const sel of ['.plain .mk-badge', '.on .mk-badge']) {
+      expect(style(q(c, sel)).backgroundColor, sel).toBe(systemColor('CanvasText'))
+    }
+    expect(style(q(c, '.on .mk-badge')).color).toBe(systemColor('Canvas'))
   })
 })

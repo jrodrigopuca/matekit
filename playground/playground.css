@@ -300,3 +300,29 @@ body {
   gap: 8px;
   margin-top: 8px;
 }
+
+/* Marco de teléfono para la NavigationBar: la barra queda pegada abajo. */
+.pg-phone {
+  margin: 0;
+  max-width: 100%;
+  padding: 10px;
+  border-radius: 36px;
+  background: var(--md-sys-color-outline-variant);
+}
+
+.pg-phone-screen {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  height: 260px;
+  border-radius: 28px;
+  background: var(--md-sys-color-surface);
+}
+
+.pg-phone-content {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: var(--md-sys-typescale-title-medium-size);
+}

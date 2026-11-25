@@ -6,7 +6,13 @@
 import type { ReactNode } from 'react'
 import { describe, expect, test } from 'vitest'
 import {
+  Badge,
   Button,
+  HomeIcon,
+  NavigationBar,
+  NavigationBarItem,
+  NavigationBarItemIcon,
+  NavigationBarItemLabel,
   Checkbox,
   Dialog,
   DialogContent,
@@ -180,6 +186,46 @@ for (const scheme of SCHEMES) {
       expect(textContrast(q(c, '.mk-dialog-headline'))).toBeGreaterThanOrEqual(TEXT)
       expect(textContrast(q(c, '.mk-dialog-content'))).toBeGreaterThanOrEqual(TEXT)
     })
+
+    for (const layout of ['vertical', 'horizontal'] as const) {
+      test(`NavigationBar ${layout}: iconos y etiquetas, activo e inactivo, e insignias`, async () => {
+        const c = await render(
+          <Themed scheme={scheme}>
+            <NavigationBar layout={layout} style={{ width: 400 }}>
+              <NavigationBarItem href="#" className="off">
+                <NavigationBarItemIcon><HomeIcon /></NavigationBarItemIcon>
+                <NavigationBarItemLabel>Inicio</NavigationBarItemLabel>
+                <Badge label="Novedades" />
+              </NavigationBarItem>
+              <NavigationBarItem href="#" active className="on">
+                <NavigationBarItemIcon><StarIcon filled /></NavigationBarItemIcon>
+                <NavigationBarItemLabel>Favoritos</NavigationBarItemLabel>
+                <Badge label="3 nuevos">3</Badge>
+              </NavigationBarItem>
+            </NavigationBar>
+          </Themed>,
+        )
+        const bar = effectiveBackground(q(c, 'nav'))
+        for (const sel of ['.off', '.on']) {
+          const item = q(c, sel)
+          const indicator = q(item, ':scope > .mk-navigation-bar-item-indicator')
+          const label = q(item, '.mk-navigation-bar-item-label')
+          // El indicador inactivo mide 0 de ancho (conserva el color para encogerse al
+          // desactivarse): ahí el fondo del icono es la barra. La etiqueta queda sobre el
+          // indicador solo en la horizontal.
+          const iconBg = sel === '.on' ? effectiveBackground(indicator) : bar
+          expect(contrastRatio(cs(q(item, 'svg')).fill, iconBg), `${sel} icono`).toBeGreaterThanOrEqual(NON_TEXT)
+          const labelBg = layout === 'horizontal' ? iconBg : bar
+          expect(contrastRatio(cs(label).color, labelBg), `${sel} etiqueta`).toBeGreaterThanOrEqual(TEXT)
+        }
+        // El indicador activo identifica el estado (1.4.11), pero el activo también se marca con
+        // el color del icono y la etiqueta; no se le exige 3:1 contra la barra, igual que a los
+        // contenedores tonales de los botones.
+        expect(contrastRatio(cs(q(c, '.off .mk-badge')).backgroundColor, bar), 'insignia pequeña').toBeGreaterThanOrEqual(NON_TEXT)
+        const large = q(c, '.on .mk-badge')
+        expect(contrastRatio(cs(large).color, effectiveBackground(large)), 'número de la insignia').toBeGreaterThanOrEqual(TEXT)
+      })
+    }
 
     for (const variant of ['standard', 'vibrant'] as const) {
       test(`Menu ${variant}: texto, iconos y atajo sobre el menú, y seleccionado sobre su fondo`, async () => {

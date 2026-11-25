@@ -26,3 +26,17 @@ export {
   type MenuItemLeadingProps,
   type MenuItemTrailingProps,
 } from './Menu/MenuSlots.tsx'
+export {
+  NavigationBar,
+  NavigationBarItem,
+  NavigationBarItemIcon,
+  NavigationBarItemLabel,
+  type NavigationBarItemButtonProps,
+  type NavigationBarItemIconProps,
+  type NavigationBarItemLabelProps,
+  type NavigationBarItemLinkProps,
+  type NavigationBarItemProps,
+  type NavigationBarItemRenderProps,
+  type NavigationBarLayout,
+  type NavigationBarProps,
+} from './NavigationBar/NavigationBar.tsx'
