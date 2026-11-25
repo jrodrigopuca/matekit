@@ -212,3 +212,19 @@ FAB y FAB extendido (los usa el rail: si hacen falta, se agregan antes del paso 
 Lists, Tabs, Snackbar, Tooltip, Sheets, compilación y publicación del paquete, color
 dinámico (ADR-0004). Al publicar: crear `@matekit/theme` con el generador de `scripts/lib/` y
 su comando (ADR-0009).
+
+**Formas decorativas (pendiente, con ADR propio cuando se encare).** Las 35 formas de
+Expressive (`03-tokens.md` § Formas decorativas; Compose `MaterialShapes.kt` sobre
+`androidx.graphics.shapes`):
+
+- Átomo `Shape` que recorte su contenido con una de las 35 formas (avatares, imágenes,
+  fondos de iconos), con `clip-path: path()` (soportado en los tres navegadores).
+- Contornos generados al compilar, como los iconos, a partir de una portación a TypeScript de
+  `RoundedPolygon` (Apache 2.0: conservar el aviso de licencia); sin cálculo en el navegador
+  ni dependencia del conector de Figma.
+- Indicador de carga de Expressive, que anima entre formas: contornos con la misma cantidad de
+  puntos para poder interpolarlos, con `shape()` (Chrome 135, Safari 18.4, Firefox 148) o
+  pasos intermedios calculados al compilar.
+- Cambio de forma por posición (esquinas interiores más chicas) en grupos de botones
+  conectados, botón dividido y botones segmentados, cuando se hagan.
+- No se adopta `corner-shape` (esquinas superelípticas): Material 3 usa esquinas circulares.

@@ -77,6 +77,12 @@ exporta desde el `index.ts` de su capa y su CSS se importa en `src/styles.css`.
   nada de colores ni duraciones sueltos. `pnpm lint:css` lo verifica (también en CI); una
   excepción justificada lleva `/* lint-css-allow: motivo */` al final de la declaración. Movimiento: resortes
   `--md-sys-motion-spring-{fast,default,slow}-{spatial,effects}-{duration,easing}`.
+- **Forma:** radios con `--md-sys-shape-corner-*`; las variantes parciales de Compose
+  (`CornerExtraLargeTop`, `CornerLargeEnd`) se arman combinando radios por esquina, sin tokens
+  nuevos. Un radio que anima (cambio de forma al presionar o seleccionar) **no usa
+  `--md-sys-shape-corner-full`**: vale 9999px y la interpolación hacia otro radio no se ve
+  hasta el final. Para la forma redonda, usar la mitad del alto (`calc(var(--_height) / 2)`,
+  como el Button).
 - Estados en este orden: hover (solo dentro de `@media (hover: hover)`), foco, presionado,
   deshabilitado al final.
 - **Alto contraste:** un bloque `@media (forced-colors: active)` al final de cada CSS. El

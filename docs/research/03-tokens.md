@@ -57,11 +57,14 @@ La asociación nombre–valor se dedujo de la posición de las etiquetas en la p
 ## Formas decorativas (35)
 
 Circle, Square, Slanted, Arch, Fan, Arrow, Semicircle, Oval, Pill, Triangle, Diamond,
-Hexagon, Pentagon, Gem, Very sunny, Sunny, 4-sided cookie, 6-sided cookie, 7-sided cookie,
+Clamshell, Pentagon, Gem, Very sunny, Sunny, 4-sided cookie, 6-sided cookie, 7-sided cookie,
 9-sided cookie, 12-sided cookie, Ghost-ish, 4-leaf clover, 8-leaf clover, Burst, Soft burst,
 Boom, Soft boom, Flower, Puffy, Puffy diamond, Pixel circle, Pixel triangle, Bun, Heart.
 
-En la página, la etiqueta de "Hexagon" dice "Clamshell".
+En una primera lectura se tomó por "Hexagon" la forma que la página etiqueta "Clamshell". La
+etiqueta es correcta: Compose (`MaterialShapes.kt`, leído el 2026-11-25) tiene `ClamShell` y
+ninguna "Hexagon". Compose arma las 35 con `androidx.graphics.shapes` (`RoundedPolygon`, y
+`Morph` para animar de una a otra; licencia Apache 2.0).
 
 ## Elevación
 
