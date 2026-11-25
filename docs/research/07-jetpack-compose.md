@@ -352,7 +352,7 @@ Fondo `surface-container-low` (Standard) y `tertiary-container` (Vibrant); eleme
 
 | Tema | Kit | Compose | Decisión |
 |---|---|---|---|
-| Tipografía del texto | Sin dato (la extracción no abrió la instancia del texto) | `Menu.kt` usa `typography.labelLarge` con un `// TODO replace with token`; `SegmentedMenuTokens.ItemLabelTextFont` dice `BodyLarge` | **Label Large**, que es lo que Compose dibuja hoy, lo que usaba el menú anterior y la misma familia que la etiqueta de sección del kit. **Sin confirmar**: el token nuevo (`BodyLarge`) puede ser el destino del TODO. Se resuelve leyendo el estilo del texto del elemento en el kit (nodo `58966:4101`). |
+| Tipografía del texto | Sin dato (la extracción no abrió la instancia del texto) | `Menu.kt` usa `typography.labelLarge` con un `// TODO replace with token`; `SegmentedMenuTokens.ItemLabelTextFont` dice `BodyLarge` | **Label Large**, que es lo que Compose dibuja hoy, lo que usaba el menú anterior y la misma familia que la etiqueta de sección del kit. **Confirmado en el kit el 2026-11-25:** el elemento Expressive (`Menu item/Standard`) usa el estilo `M3/label/large` (14/20, 500). `Body Large` es el del menú anterior (`Building Blocks/Menu list item`, con ayuda en `Body Medium`), que es a lo que corresponde el token de `SegmentedMenuTokens`. |
 | Radio del último elemento | "El último elemento lleva radio 16 abajo" | `ItemLastChildShape = CornerMedium` (12), con esquinas interiores de 4, en el menú segmentado | **Sin aplicar**: todos los elementos llevan radio 4. El dato del kit parece describir el marco del elemento, que en matekit no se dibuja. |
 
 ## NavigationBar

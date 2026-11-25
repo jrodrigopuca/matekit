@@ -21,8 +21,9 @@
        (MenuVerticalMargin); animación de escala 0,8 → 1 con FastSpatial y opacidad con
        FastEffects, desde el borde del disparador.
      - tokens/DividerTokens.kt: divisor de 1 en Outline Variant.
-     La tipografía tiene un conflicto dentro de Compose (Label Large en Menu.kt, Body Large en
-     SegmentedMenuTokens.ItemLabelTextFont); ver docs/research/07-jetpack-compose.md § Menu.
+     Tipografía: Label Large, confirmado en el kit ("Menu item/Standard", M3/label/large). El
+     Body Large de SegmentedMenuTokens es el del menú anterior; ver
+     docs/research/07-jetpack-compose.md § Menu.
 
    Posición: CSS anchor positioning (ADR-0007). El disparador lleva anchor-name y el menú
    position-anchor (--_anchor, que pone Menu.tsx). Debajo del disparador y desde su borde

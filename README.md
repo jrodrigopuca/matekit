@@ -36,6 +36,37 @@ diseño oficial.
 - **Pocos componentes, bien hechos:** primer conjunto de Button, Text field, Checkbox,
   Switch, Dialog, Menu y Navigation.
 
+## Uso
+
+Todavía no está publicado en npm; mientras tanto se usa desde `src/`. Una vez por aplicación:
+
+```ts
+import '@matekit/react/styles.css'           // tokens y componentes (obligatoria)
+import '@matekit/react/palettes/orange.css'  // opcional: una paleta (ADR-0008)
+import '@matekit/react/shapes.css'           // opcional: las formas del átomo Shape (ADR-0011)
+```
+
+- **Tema, paleta y contraste** se eligen con atributos en `<html>` o en cualquier contenedor:
+  `data-theme="light|dark"` (sin él, sigue al sistema), `data-palette="…"` y
+  `data-contrast="standard|medium|high"` (sin él, `prefers-contrast: more` elige el alto).
+- **La tipografía no viene incluida.** Los tokens piden Roboto
+  (`--md-ref-typeface-brand` y `--md-ref-typeface-plain`, con `system-ui` como respaldo) y
+  matekit no la descarga: cada aplicación la carga como prefiera. Con Google Fonts:
+
+  ```html
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600&display=swap" />
+  ```
+
+  Con Next.js, `next/font` y la variable apuntando a la fuente cargada:
+
+  ```tsx
+  const roboto = Roboto({ subsets: ['latin'], weight: ['400', '500', '600'], variable: '--font-roboto' })
+  // <html className={roboto.variable}>, y en el CSS de la app:
+  // :root { --md-ref-typeface-brand: var(--font-roboto); --md-ref-typeface-plain: var(--font-roboto); }
+  ```
+
+  Con otra familia, basta con redefinir esas dos variables.
+
 ## Documentación
 
 - [Investigación](docs/research/README.md): panorama, kit de Figma, tokens, componentes y

@@ -73,7 +73,11 @@ export interface TextFieldProps extends HTMLAttributes<HTMLDivElement> {
  *
  * La etiqueta queda asociada al input y el texto de ayuda a su descripción sin pasar ids; si
  * se pasan (`id` en `TextFieldInput` o en `TextFieldSupporting`), se respetan.
- * `className` y `style` van al contenedor; el ancho por defecto es 280 px.
+ * `className` y `style` van al contenedor; el ancho por defecto es 280 px (el del kit), con
+ * `max-width: 100%`. En un formulario suele quedar mejor a todo el ancho (`width: 100%`).
+ * Dentro de una grilla CSS, la columna implícita toma el ancho mínimo de su contenido (los
+ * 280 px) aunque el contenedor sea más angosto: usar `grid-template-columns: minmax(0, 1fr)`
+ * en la grilla para que el campo se achique.
  */
 export function TextField({
   variant = 'filled',
