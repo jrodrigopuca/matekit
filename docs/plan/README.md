@@ -26,6 +26,7 @@ siguiente. Convenciones en [`CLAUDE.md`](../../CLAUDE.md).
 | 32 iconos | icons | ADR-0006 |
 | Formas decorativas (entrega 1): portación de `androidx.graphics.shapes`, 35 formas y átomo Shape | átomo | ADR-0011; universal, recorta con `mask-image` (se estira al tamaño del elemento); `pnpm shapes` genera `shapes/material-shapes.json`, el tipo `ShapeName`, `SHAPES` y las máscaras; resuelto por agente el 2026-11-25 |
 | LoadingIndicator (formas decorativas, entrega 2): portación de `Morph` | molécula | ADR-0011; universal, SVG con SMIL (`<animate>` y `<animateTransform>`) sin JavaScript; indeterminado (7 formas, giro y resorte de Compose, a menos de 0,2 dp de Compose) y determinado (`value`); `contained`; quieto en la primera forma con movimiento reducido; `pnpm shapes` genera `loading-indicator-data.ts`; resuelto por agente y revisado el 2026-11-25 |
+| LinearProgressIndicator y CircularProgressIndicator | molécula | ADR-0013; universales, SVG y CSS sin JavaScript: el lineal calcula los tramos con `100cqw` (se adapta a cualquier ancho, onda de 40 y 20 px sin estirarse, RTL girando 180° como Compose) y el circular usa guiones con `pathLength`; determinado (`value`, con transición de 500 ms) e indeterminado (tiempos de `ProgressIndicator.kt`), plano y `wavy` (onda entre 10 % y 95 %, desplazamiento de una onda por segundo, contornos del circular con `pnpm shapes`), `thickness` 4 u 8, separación de 4 y punto final que se achica; con movimiento reducido, sin desplazamientos y el indeterminado quieto latiendo en opacidad; en WebKit la onda del circular cambia sin transición (sin propiedad CSS `d`); conflictos con el kit en `07-jetpack-compose.md`; resuelto por agente el 2026-11-25 |
 
 ## Orden y motivo
 
@@ -233,7 +234,7 @@ activados por variables). Riesgo bajo.
 **9. Divider** (átomo, universal). `<hr>` completo, con sangría inicial o en ambos lados
 (`DividerTokens.kt`). Lo usan Lists y Cards; `MenuDivider` pasa a usarlo. Riesgo bajo.
 
-**10. Indicadores de progreso lineal y circular** (molécula, universal). Determinado e
+**10. Indicadores de progreso lineal y circular** (molécula, universal; hecho, ver "Hecho" y ADR-0013). Determinado e
 indeterminado, y las versiones onduladas de Expressive (`LinearProgressIndicatorTokens.kt`,
 `CircularProgressIndicatorTokens.kt`, `WavyProgressIndicator.kt`). `role="progressbar"` como
 el LoadingIndicator. Riesgo medio: la onda animada (SVG o CSS) y el movimiento reducido.

@@ -54,6 +54,8 @@ import {
   TextFieldTrailing,
   Icon,
   LoadingIndicator,
+  LinearProgressIndicator,
+  CircularProgressIndicator,
   Shape,
   Divider,
   DividerSubhead,
@@ -297,6 +299,15 @@ const GALLERIES: Record<string, ReactNode> = {
       <LoadingIndicator contained label="Actualizando" />
       <LoadingIndicator value={0.4} label="Subiendo foto" />
       <LoadingIndicator contained value={1} label="Listo" />
+    </>
+  ),
+  ProgressIndicator: (
+    <>
+      <LinearProgressIndicator label="Subiendo foto" value={0.4} />
+      <LinearProgressIndicator label="Cargando" wavy thickness={8} />
+      <LinearProgressIndicator label="Copiando" value={0.6} wavy />
+      <CircularProgressIndicator label="Actualizando" />
+      <CircularProgressIndicator label="Descargando" value={0.6} wavy thickness={8} />
     </>
   ),
 }

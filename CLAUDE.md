@@ -23,7 +23,7 @@ Antes de decidir algo que cueste revertir, leer `docs/adr/README.md` y aplicar l
 | `pnpm test:browser` | Solo las pruebas de componentes, en el Chrome del sistema; `MK_BROWSERS=firefox` o `webkit` (separados por coma) los corre en esos motores, que el CI prueba en cada push |
 | `pnpm tokens` | Regenera `src/tokens/*.css` y `src/tokens/palettes/*.css` desde `tokens/*.json` (paletas: ADR-0008) |
 | `pnpm icons` / `pnpm icons:fetch` | Regenera los iconos (ver ADR-0006) |
-| `pnpm shapes` | Regenera las 35 formas decorativas (`shapes/material-shapes.json`, `src/atoms/Shape/shapes.ts` y la hoja opcional `src/shapes.css`) y los datos del indicador de carga (`src/molecules/LoadingIndicator/loading-indicator-data.ts`) con la portación de `scripts/lib/shapes/` (ADR-0011) |
+| `pnpm shapes` | Regenera las 35 formas decorativas (`shapes/material-shapes.json`, `src/atoms/Shape/shapes.ts` y la hoja opcional `src/shapes.css`), los datos del indicador de carga (`src/molecules/LoadingIndicator/loading-indicator-data.ts`) y los contornos del progreso circular ondulado (`src/molecules/ProgressIndicator/circular-wavy-data.ts`) con la portación de `scripts/lib/shapes/` (ADR-0011) |
 
 ## Estructura y capas (ADR-0002)
 
@@ -32,9 +32,9 @@ tokens/          datos de origen de los tokens (JSON) y su física (spring.ts)
 scripts/lib/     color-schemes.ts, palette-css.ts y css.ts: generador de paletas, futuro
                  @matekit/theme (ADR-0009); no importan React, componentes ni tokens/
 scripts/lib/shapes/  portación a TypeScript de androidx.graphics.shapes (con Morph),
-                 MaterialShapes.kt y la animación de LoadingIndicator.kt (Apache 2.0, con el
-                 aviso y el commit de origen en cada archivo; ADR-0011); mismas reglas que
-                 scripts/lib/
+                 MaterialShapes.kt, la animación de LoadingIndicator.kt y los contornos de
+                 CircularWavyProgressModifiers.kt (Apache 2.0, con el aviso y el commit de
+                 origen en cada archivo; ADR-0011); mismas reglas que scripts/lib/
 shapes/          contornos SVG generados de las 35 formas decorativas (pnpm shapes)
 src/tokens/      CSS generado: no editar a mano
 src/atoms/       primitivas: StateLayer, FocusRing, Ripple, Icon, Shape
@@ -168,6 +168,15 @@ No llamar al conector de Figma salvo que falte un dato imprescindible: tiene lí
     los tres. Para probarla, congelar el reloj del `<svg>` con `pauseAnimations()` y
     `setCurrentTime(s)` y esperar el valor con `expect.poll` (`getBBox()`, `transform.animVal`,
     `getComputedStyle().visibility`).
+  - CSS en SVG (indicadores de progreso, comprobado el 2026-11-25): `stroke-dasharray` con `calc()`
+    sobre `cqw`, `pathLength`, `@property` animada o transicionada y `vector-effect:
+    non-scaling-stroke` (mide los guiones en pantalla) andan igual en los tres; la propiedad CSS
+    `d` no existe en WebKit. Firefox descarta un `calc()` sin unidades en `stroke-dasharray` (usar
+    px). Dentro de un `@keyframes`, `var()` no se resuelve en `animation-timing-function`
+    (comprobado en Chrome) ni en el valor de una propiedad registrada (Firefox). Para probar animaciones CSS:
+    `el.getAnimations()`, `pause()` y `currentTime`. En WebKit, mover `currentTime` de una
+    *transición* de una propiedad registrada no cambia el estilo calculado, y una captura de
+    Playwright da la transición por terminada: probar las transiciones por su declaración.
 - `src/test/render.tsx` aísla cada prueba: desmonta lo renderizado al terminar y deja el
   puntero en una esquina antes de empezar. No repetir eso en cada archivo. Para detectar
   dependencias de orden: `pnpm exec vitest run --sequence.shuffle --sequence.seed=<n>`.

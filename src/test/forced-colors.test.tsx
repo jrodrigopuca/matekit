@@ -23,6 +23,8 @@ import {
   RadioButton,
   RadioGroup,
   LoadingIndicator,
+  LinearProgressIndicator,
+  CircularProgressIndicator,
   Shape,
   Dialog,
   EditIcon,
@@ -513,6 +515,63 @@ describe('LoadingIndicator', () => {
     const px = await pixelsOf(q(c, '.mk-loading-indicator'))
     expect(near(px.at(24, 24), rgb(systemColor('CanvasText'))), `centro: ${px.at(24, 24)}`).toBe(true)
     expect(near(px.at(4, 24), rgb(systemColor('Canvas'))), `contenedor: ${px.at(4, 24)}`).toBe(true)
+  })
+})
+
+describe('LinearProgressIndicator y CircularProgressIndicator', () => {
+  const rgb = (css: string) => css.match(/\d+/g)!.slice(0, 3).map(Number)
+  // Todo lo define el CSS de matekit a mano (forced-color-adjust: none), así que vale también en
+  // WebKit. El indicador va macizo y la pista hueca: se distinguen por la forma.
+  test('lineal: indicador y punto en CanvasText, pista hueca (borde CanvasText de 1 px sobre Canvas)', async () => {
+    const c = await render(
+      <div style={{ width: 300 }}>
+        <LinearProgressIndicator label="a" value={0.5} className="det" />
+        <LinearProgressIndicator label="b" wavy className="ind" />
+      </div>,
+    )
+    for (const sel of ['.det', '.ind']) {
+      expect(style(q(c, `${sel} .mk-linear-progress-indicator-active`)).stroke, sel).toBe(systemColor('CanvasText'))
+      const t = style(q(c, `${sel} .mk-linear-progress-indicator-track`))
+      expect(t.backgroundColor, sel).toBe(systemColor('Canvas'))
+      expect([t.borderTopStyle, t.borderTopWidth, t.borderTopColor], sel).toEqual(['solid', '1px', systemColor('CanvasText')])
+    }
+    expect(style(q(c, '.det .mk-linear-progress-indicator-stop')).backgroundColor).toBe(systemColor('CanvasText'))
+  })
+
+  test('lineal: un tramo de pista que no existe no deja una raya del borde', async () => {
+    const c = await render(<div style={{ width: 300 }}><LinearProgressIndicator label="x" value={1} /></div>)
+    const t = q(c, '.mk-linear-progress-indicator-track')
+    expect(t.getBoundingClientRect().width).toBe(0)
+    expect(style(t).borderTopWidth).toBe('0px')
+  })
+
+  test('lineal: se ve el indicador macizo y la pista hueca', async () => {
+    const c = await render(
+      <div className="stage" style={{ width: 300, padding: 4, background: 'Canvas' }}>
+        <LinearProgressIndicator label="x" value={0.5} thickness={8} />
+      </div>,
+    )
+    const px = await pixelsOf(q(c, '.mk-linear-progress-indicator'))
+    expect(near(px.at(100, 4), rgb(systemColor('CanvasText'))), `indicador: ${px.at(100, 4)}`).toBe(true)
+    expect(near(px.at(250, 4), rgb(systemColor('Canvas'))), `interior de la pista: ${px.at(250, 4)}`).toBe(true)
+    expect(near(px.at(250, 0.5), rgb(systemColor('CanvasText'))), `borde de la pista: ${px.at(250, 0.5)}`).toBe(true)
+  })
+
+  test('circular: indicador en CanvasText, pista hueca (trazo CanvasText con otro Canvas encima)', async () => {
+    const c = await render(
+      <div>
+        <CircularProgressIndicator label="a" value={0.5} className="det" />
+        <CircularProgressIndicator label="b" wavy thickness={8} className="ind" />
+      </div>,
+    )
+    for (const [sel, thickness] of [['.det', 4], ['.ind', 8]] as const) {
+      expect(style(q(c, `${sel} .mk-circular-progress-indicator-active`)).stroke, sel).toBe(systemColor('CanvasText'))
+      expect(style(q(c, `${sel} .mk-circular-progress-indicator-track`)).stroke, sel).toBe(systemColor('CanvasText'))
+      const inner = style(q(c, `${sel} .mk-circular-progress-indicator-track-inner`))
+      expect(inner.display, sel).not.toBe('none')
+      expect(inner.stroke, sel).toBe(systemColor('Canvas'))
+      expect(inner.strokeWidth, sel).toBe(`${thickness - 2}px`)
+    }
   })
 })
 

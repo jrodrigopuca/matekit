@@ -24,6 +24,8 @@
 @import './molecules/TextField/text-field.css';
 @import './molecules/Badge/badge.css';
 @import './molecules/LoadingIndicator/loading-indicator.css';
+@import './molecules/ProgressIndicator/linear-progress-indicator.css';
+@import './molecules/ProgressIndicator/circular-progress-indicator.css';
 @import './organisms/Dialog/dialog.css';
 @import './organisms/Menu/menu.css';
 /* Después de badge.css: ubica la insignia sobre el icono del elemento. */

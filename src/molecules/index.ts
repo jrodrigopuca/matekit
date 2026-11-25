@@ -49,3 +49,12 @@ export {
 export { TextFieldLeading, TextFieldTrailing, type TextFieldSlotProps } from './TextField/TextFieldSlots.tsx'
 export { Badge, type BadgeProps } from './Badge/Badge.tsx'
 export { LoadingIndicator, type LoadingIndicatorProps } from './LoadingIndicator/LoadingIndicator.tsx'
+export {
+  LinearProgressIndicator,
+  type LinearProgressIndicatorProps,
+} from './ProgressIndicator/LinearProgressIndicator.tsx'
+export {
+  CircularProgressIndicator,
+  type CircularProgressIndicatorProps,
+} from './ProgressIndicator/CircularProgressIndicator.tsx'
+export type { ProgressIndicatorThickness } from './ProgressIndicator/progress.ts'

@@ -17,3 +17,4 @@ nueva la reemplaza y la anterior pasa a "superseded by".
 | [0010](0010-enlaces-y-enrutadores-con-render.md) | Destinos de navegación como `<a>`, `<button>` o el elemento de `render`, sin depender del enrutador | accepted |
 | [0011](0011-formas-decorativas-portando-graphics-shapes.md) | Formas decorativas e indicador de carga, portando `androidx.graphics.shapes` como herramienta de compilación | accepted |
 | [0012](0012-radiogroup-con-estado-por-contexto.md) | `RadioGroup` con estado compartido por contexto y `onValueChange`, como excepción al ADR-0003 | accepted |
+| [0013](0013-indicadores-de-progreso-dibujados-con-css.md) | Indicadores de progreso universales dibujados con CSS (consultas de contenedor, `@property` y guiones SVG) | accepted |

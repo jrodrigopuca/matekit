@@ -6,7 +6,9 @@
 //   importa aparte de styles.css, como las paletas): pesa unos 30 KB y no todos usan formas;
 // - src/molecules/LoadingIndicator/loading-indicator-data.ts: los contornos y tiempos SMIL del
 //   indicador de carga (scripts/lib/shapes/LoadingIndicator.ts), los 7 pasos quietos y los dos
-//   contornos del determinado.
+//   contornos del determinado;
+// - src/molecules/ProgressIndicator/circular-wavy-data.ts: la pista y la onda del indicador de
+//   progreso circular ondulado (scripts/lib/shapes/CircularWavyProgress.ts).
 // Uso: pnpm shapes   (sin conexión; determinista: dos corridas dan los mismos archivos)
 
 import { mkdirSync, writeFileSync } from 'node:fs'
@@ -28,6 +30,8 @@ import {
   morphDurationMillis,
   smilFrameAt,
 } from './lib/shapes/LoadingIndicator.ts'
+import { circularPath, circularPolygons, pathLength, radialRange, vertexCount, Wavelength } from './lib/shapes/CircularWavyProgress.ts'
+import type { PathCommand } from './lib/shapes/ShapeUtil.ts'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 
@@ -241,4 +245,69 @@ const transitionBytes = anim.shapes.reduce((sum, t) => sum + t.values.join(';').
 console.log(
   `Indicador de carga: ${anim.shapes.length} transiciones (${(transitionBytes / 1024).toFixed(1)} KiB de contornos), ` +
     `error máximo frente a Compose ${(maxError / 10).toFixed(3)} dp`,
+)
+
+// --- src/molecules/ProgressIndicator/circular-wavy-data.ts ---
+// Contornos del indicador de progreso circular ondulado (scripts/lib/shapes/CircularWavyProgress.ts).
+// En los dos grosores, el contorno se escala a size - stroke = 44 (48 - 4 y 52 - 8) y tiene los
+// mismos vértices, así que alcanza con un juego de contornos.
+const CW_SOURCE =
+  'androidx/androidx@acea2f5c1f, compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/internal/CircularWavyProgressModifiers.kt'
+const CW_SCALE = 44
+const cwVertices = vertexCount(48, 4)
+if (cwVertices !== vertexCount(52, 8)) throw new Error('los dos grosores del circular ondulado deberían tener los mismos vértices')
+const cw = circularPolygons(cwVertices)
+const cwTrack = circularPath(cw.track.cubics, CW_SCALE)
+const cwFlat = circularPath(cw.morph.asCubics(0), CW_SCALE)
+const cwWave = circularPath(cw.morph.asCubics(1), CW_SCALE)
+// Siempre `C` (sin la `L` de toSvgPathData): la onda y su versión plana tienen que tener los mismos
+// comandos para que la propiedad CSS `d` las interpole.
+const cubicPathData = (commands: readonly PathCommand[]) => {
+  const n = (v: number) => {
+    const s = String(Number(v.toFixed(PRECISION)))
+    return s === '-0' ? '0' : s
+  }
+  return commands
+    .map((c) =>
+      c.type === 'M'
+        ? `M${n(c.x)} ${n(c.y)}`
+        : c.type === 'C'
+          ? `C${[c.x1, c.y1, c.x2, c.y2, c.x, c.y].map(n).join(' ')}`
+          : 'Z',
+    )
+    .join('')
+}
+const [waveMin, waveMax] = radialRange(cwWave)
+const [trackMin, trackMax] = radialRange(cwTrack)
+const fmt = (v: number, d = 2) => v.toFixed(d).replace('.', ',')
+const cwTs = `// Generado por scripts/build-shapes.ts. No editar a mano.
+// Fuente: ${CW_SOURCE}
+// Geometría de androidx.graphics.shapes (RoundedPolygon.circle, RoundedPolygon.star y Morph):
+// Apache-2.0, The Android Open Source Project. Cómo se calcula:
+// scripts/lib/shapes/CircularWavyProgress.ts (ADR-0011).
+//
+// Unidades: dp, centrado en el origen, escalado a ${CW_SCALE} (size - stroke en 48 × 48 con trazo 4 y en
+// 52 × 52 con trazo 8). Los contornos empiezan a las 12 y van en sentido horario.
+// Pista: radio ${fmt(trackMin)} a ${fmt(trackMax)}. Onda: radio ${fmt(waveMin)} a ${fmt(waveMax)} (amplitud ${fmt((waveMax - waveMin) / 2)} dp).
+
+/** Vértices (ondas) del contorno: 2π · 22 / ${Wavelength} redondeado (CircularShapes.update). */
+export const WAVE_VERTICES = ${cwVertices}
+
+/** Pista: el círculo de ${cwVertices} vértices (trackPolygon). */
+export const TRACK_PATH = '${cubicPathData(cwTrack)}'
+
+/** Largo de la pista, en dp: convierte la separación (en dp) a la fracción del trazo. */
+export const TRACK_LENGTH = ${pathLength(cwTrack).toFixed(3)}
+
+/** Indicador sin onda: el Morph círculo → estrella en 0 (misma estructura que WAVE_PATH). */
+export const FLAT_PATH = '${cubicPathData(cwFlat)}'
+
+/** Indicador con onda: el Morph en 1, la estrella de ${cwVertices} puntas. */
+export const WAVE_PATH = '${cubicPathData(cwWave)}'
+`
+mkdirSync(join(root, 'src', 'molecules', 'ProgressIndicator'), { recursive: true })
+writeFileSync(join(root, 'src', 'molecules', 'ProgressIndicator', 'circular-wavy-data.ts'), cwTs)
+console.log(
+  `Progreso circular ondulado: ${cwVertices} ondas, amplitud ${((waveMax - waveMin) / 2).toFixed(2)} dp, ` +
+    `pista de ${pathLength(cwTrack).toFixed(1)} dp`,
 )

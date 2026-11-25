@@ -1,0 +1,401 @@
+/* Indicador de progreso lineal (Linear progress indicator) de Material 3 Expressive.
+
+   Fuentes:
+   - Kit de Figma (docs/research/05-medidas.md § Indicadores de progreso): pista Secondary
+     Container del grosor, indicador Primary con extremos redondos, separación visible de 4,
+     punto de 4 × 4 al final (pegado al borde con grosor 4, a 2 con grosor 8), onda de longitud
+     40 (determinado) y 20 (indeterminado).
+   - Jetpack Compose, androidx/androidx, carpeta compose/material3/material3/src/commonMain/kotlin/
+     androidx/compose/material3/:
+     - tokens/LinearProgressIndicatorTokens.kt (@76990c62ac): ActiveThickness y TrackThickness 4,
+       TrackActiveSpace 4, StopSize 4, LargeHeight 10 (alto con onda), ActiveWaveAmplitude 3,
+       ActiveWaveWavelength 40, IndeterminateActiveWaveWavelength 20.
+     - tokens/ProgressIndicatorTokens.kt (@76990c62ac): ActiveIndicatorColor y StopColor Primary,
+       TrackColor SecondaryContainer, formas CornerFull.
+     - internal/LinearWavyProgressModifiers.kt (@acea2f5c1f): updateDrawPaths (los tramos, la
+       separación que se achica cerca de 0 y el ajuste por los extremos redondos), drawStopIndicator
+       (el punto, que se achica cuando lo alcanza el indicador) y el giro de 180° en RTL.
+     - WavyProgressIndicator.kt (@76990c62ac): la onda solo entre 10 % y 95 % y su cambio de
+       amplitud (IncreasingAmplitudeAnimationSpec: DurationLong2 con EasingStandard;
+       DecreasingAmplitudeAnimationSpec: DurationLong2 con EasingEmphasizedAccelerate), una
+       longitud de onda por segundo, y ProgressAnimationSpec (DurationLong2, EasingLinear) para
+       animar el valor.
+     - ProgressIndicator.kt (@080d2b3e53): el ciclo indeterminado de 1750 ms con dos líneas
+       (cabeza y cola de cada una con su demora, EasingEmphasizedAccelerate).
+     Alto con grosor 8 y onda: 14, de ProgressIndicatorSamples.kt (@acea2f5c1f) y el kit.
+
+   Cómo se dibuja (todo en CSS, sin medir con JavaScript):
+   - .mk-linear-progress-indicator-canvas es un contenedor de consultas: 100cqw es el ancho W en
+     px, y con él se ubican los tramos igual que en updateDrawPaths de Compose. Las condiciones
+     ("si el tramo tiene largo") son escalones con clamp(): (x) * 10000 llega a 1 px en cuanto x
+     pasa una diezmilésima de px.
+   - Las fracciones de cada línea (cola t, cabeza h, de 0 a 1) son propiedades registradas
+     (@property): en el determinado, la cola es 0 y la cabeza es el valor (con transición); en el
+     indeterminado, las animan los @keyframes de Compose.
+   - El indicador es un guion de un trazado precalculado de 4096 px (progress.ts) con extremos
+     redondos. Con onda, scaleY lo aplana (amplitud) y vector-effect: non-scaling-stroke conserva el
+     grosor; con ese efecto los guiones se miden en pantalla en los tres motores (comprobado el
+     2026-11-25), así que su largo se multiplica por el largo de la curva por px de ancho, la
+     integral de sqrt(1 + (m u)²) con la pendiente máxima m = 0,6 o 1,2 por la amplitud.
+   - La pista son tres tramos (<span>) y el punto otro; RTL gira el lienzo 180°, como Compose. */
+
+/* Propiedades registradas: se animan y se heredan como números o longitudes. Van fuera de las
+   capas porque @property no pertenece a ninguna. */
+@property --_lpi-value {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+
+@property --_lpi-amp {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+
+@property --_lpi-shift {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 0px;
+}
+
+@property --_lpi-t1 {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+
+@property --_lpi-h1 {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+
+@property --_lpi-t2 {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+
+@property --_lpi-h2 {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+
+@layer matekit.components {
+  .mk-linear-progress-indicator {
+    --_thickness: 4px;
+    --_height: var(--_thickness);
+    /* Distancia del punto al final con grosor 8: StopSize distinto del grosor → grosor / 4. */
+    --_stop-offset: 0px;
+    /* Pendiente máxima de la onda con amplitud 1: 2 · 6 / (longitud de onda / 2). Plano: 0. */
+    --_slope: 0;
+    --_lpi-amp: 0;
+
+    display: block;
+    position: relative;
+    box-sizing: border-box;
+    height: var(--_height);
+    color: var(--md-sys-color-primary);
+    /* El valor, como ProgressAnimationSpec; la onda se aplana con EmphasizedAccelerate. */
+    transition:
+      --_lpi-value var(--md-sys-motion-duration-long2) var(--md-sys-motion-easing-linear),
+      --_lpi-amp var(--md-sys-motion-duration-long2) var(--md-sys-motion-easing-emphasized-accelerate);
+  }
+
+  .mk-linear-progress-indicator[data-thickness='8'] {
+    --_thickness: 8px;
+    --_stop-offset: 2px;
+  }
+
+  /* Con onda, el alto suma la onda: 4 + 6 = 10 (LargeHeight) y 8 + 6 = 14. */
+  .mk-linear-progress-indicator[data-wavy] {
+    --_height: calc(var(--_thickness) + 6px);
+    --_slope: 0.6;
+  }
+
+  .mk-linear-progress-indicator[data-wavy][data-indeterminate] {
+    --_slope: 1.2;
+  }
+
+  /* La onda crece con EasingStandard. */
+  .mk-linear-progress-indicator[data-wave] {
+    --_lpi-amp: 1;
+    transition:
+      --_lpi-value var(--md-sys-motion-duration-long2) var(--md-sys-motion-easing-linear),
+      --_lpi-amp var(--md-sys-motion-duration-long2) var(--md-sys-motion-easing-standard);
+  }
+
+  .mk-linear-progress-indicator-canvas {
+    position: absolute;
+    inset: 0;
+    container-type: inline-size;
+
+    /* Determinado: una línea de 0 al valor. */
+    --_lpi-h1: var(--_lpi-value);
+
+    /* Geometría de updateDrawPaths (se resuelve en los hijos, donde 100cqw es el ancho). */
+    --_w: 100cqw;
+    --_cap: calc(var(--_thickness) / 2);
+    --_gap: 4px;
+    --_xt1: calc(var(--_lpi-t1) * var(--_w));
+    --_xh1: calc(var(--_lpi-h1) * var(--_w));
+    --_xt2: calc(var(--_lpi-t2) * var(--_w));
+    --_xh2: calc(var(--_lpi-h2) * var(--_w));
+    /* Cola y cabeza de cada línea, dejando lugar para los extremos redondos. */
+    --_t1: clamp(var(--_cap), var(--_xt1), var(--_w) - var(--_cap));
+    --_h1: clamp(var(--_cap), var(--_xh1), var(--_w) - var(--_cap));
+    --_t2: clamp(var(--_cap), var(--_xt2), var(--_w) - var(--_cap));
+    --_h2: clamp(var(--_cap), var(--_xh2), var(--_w) - var(--_cap));
+    /* Separación entre pista e indicador: hasta 4, menos si la cabeza todavía no avanzó tanto, más
+       los dos extremos redondos en cuanto la cabeza pasa el primero (adaptiveTrackSpacing). */
+    --_sp: calc(
+      clamp(0px, var(--_xh1) - var(--_cap), var(--_gap)) +
+        clamp(0px, (var(--_xh1) - var(--_cap)) * 10000 + 2 * var(--_cap), 2 * var(--_cap))
+    );
+    /* Dónde termina cada tramo de pista a la izquierda de una línea (nextEndTrackOffset): si la
+       línea no tiene largo, sigue el anterior. */
+    --_e1: max(
+      var(--_cap),
+      var(--_t1) - var(--_sp),
+      var(--_w) - var(--_cap) - clamp(0px, (var(--_xh1) - var(--_xt1)) * 1000000, 100000px)
+    );
+    --_e2: max(
+      var(--_cap),
+      var(--_t2) - var(--_sp),
+      var(--_e1) - clamp(0px, (var(--_xh2) - var(--_xt2)) * 1000000, 100000px)
+    );
+  }
+
+  /* RTL: el lienzo entero gira 180°, como Compose (rotate en onDrawWithContent). */
+  .mk-linear-progress-indicator-canvas:dir(rtl) {
+    rotate: 180deg;
+  }
+
+  /* --- Pista: tres tramos; cada uno va de --_a a --_b (centros de sus extremos redondos) ---
+     Como a = max(cap, …), "b > a" es la misma condición de Compose para dibujar el tramo. */
+  .mk-linear-progress-indicator-track {
+    /* Largo b - a más los dos extremos; 0 si el tramo no existe (b <= a). */
+    --_len: min(calc(var(--_b) - var(--_a) + 2 * var(--_cap)), max(0px, (var(--_b) - var(--_a)) * 10000));
+    position: absolute;
+    top: calc(50% - var(--_cap));
+    box-sizing: border-box;
+    height: var(--_thickness);
+    left: calc(var(--_a) - var(--_cap));
+    width: var(--_len);
+    /* El radio no anima: corner-full sirve. */
+    border-radius: var(--md-sys-shape-corner-full);
+    background-color: var(--md-sys-color-secondary-container);
+  }
+
+  /* A la derecha de la primera línea, hasta el final. */
+  .mk-linear-progress-indicator-track[data-segment='end'] {
+    --_a: max(var(--_cap), var(--_h1) + var(--_sp));
+    --_b: calc(var(--_w) - var(--_cap));
+  }
+
+  /* Entre la segunda línea y la primera. */
+  .mk-linear-progress-indicator-track[data-segment='middle'] {
+    --_a: max(var(--_cap), var(--_h2) + var(--_sp));
+    --_b: var(--_e1);
+  }
+
+  /* Desde el inicio hasta la segunda línea. */
+  .mk-linear-progress-indicator-track[data-segment='start'] {
+    --_a: var(--_cap);
+    --_b: var(--_e2);
+  }
+
+  /* --- Indicador --- */
+  .mk-linear-progress-indicator-svg {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  .mk-linear-progress-indicator-active {
+    --_t: var(--_t1);
+    --_h: var(--_h1);
+    /* Largo de la curva por px de ancho (con m > 0: en 0 la fórmula divide por 0). */
+    --_m: max(var(--_slope) * var(--_lpi-amp), 0.001);
+    --_s: calc(0.5 * (sqrt(1 + var(--_m) * var(--_m)) + log(var(--_m) + sqrt(1 + var(--_m) * var(--_m))) / var(--_m)));
+
+    fill: none;
+    stroke: currentColor;
+    /* 0 si la línea no tiene largo: si no, un guion de largo 0 dibuja un punto. */
+    stroke-width: clamp(0px, (var(--_h) - var(--_t)) * 10000, var(--_thickness));
+    stroke-linecap: round;
+    stroke-dasharray: calc((var(--_h) - var(--_t)) * var(--_s)) 100000px;
+    stroke-dashoffset: calc(-1 * (var(--_t) + var(--_lpi-shift)) * var(--_s));
+    vector-effect: non-scaling-stroke;
+    transform: translateY(calc(var(--_height) / 2));
+  }
+
+  /* Con onda: avanza hacia el inicio (getSegment desde la cola + el desfase, y traslado de vuelta)
+     y scaleY da la amplitud. Solo con onda: el plano no necesita escala, y una escala casi nula
+     deja el trazado sin alto y Chrome compone mal la opacidad que late con movimiento reducido. */
+  .mk-linear-progress-indicator[data-wavy] .mk-linear-progress-indicator-active {
+    transform: translate(calc(-1 * var(--_lpi-shift)), calc(var(--_height) / 2)) scaleY(max(var(--_lpi-amp), 0.001));
+  }
+
+  .mk-linear-progress-indicator-active[data-line='2'] {
+    --_t: var(--_t2);
+    --_h: var(--_h2);
+  }
+
+  /* --- Punto final (solo determinado): se achica cuando la cabeza lo alcanza --- */
+  .mk-linear-progress-indicator-stop {
+    --_size: 4px;
+    --_x0: calc(var(--_w) - var(--_size) - var(--_stop-offset));
+    --_reach: calc(var(--_xh1) + var(--_cap));
+    position: absolute;
+    top: 50%;
+    left: max(var(--_x0), var(--_reach));
+    width: max(0px, var(--_size) - max(0px, var(--_reach) - var(--_x0)));
+    aspect-ratio: 1;
+    translate: 0 -50%;
+    border-radius: var(--md-sys-shape-corner-full);
+    background-color: currentColor;
+  }
+
+  /* --- Animaciones --- */
+
+  /* La onda se desplaza una longitud de onda por segundo (waveSpeed = wavelength). */
+  .mk-linear-progress-indicator[data-wavy] .mk-linear-progress-indicator-canvas {
+    animation: mk-lpi-wave 1000ms var(--md-sys-motion-easing-linear) infinite; /* lint-css-allow: 1 s por longitud de onda (WavyProgressIndicator.kt, waveSpeed) */
+  }
+
+  /* Indeterminado: el ciclo de 1750 ms (LinearAnimationDuration) de ProgressIndicator.kt. */
+  .mk-linear-progress-indicator[data-indeterminate] .mk-linear-progress-indicator-canvas {
+    animation-name: mk-lpi-head1, mk-lpi-tail1, mk-lpi-head2, mk-lpi-tail2;
+    animation-duration: 1750ms; /* lint-css-allow: LinearAnimationDuration (ProgressIndicator.kt) */
+    animation-timing-function: var(--md-sys-motion-easing-linear);
+    animation-iteration-count: infinite;
+  }
+
+  .mk-linear-progress-indicator[data-wavy][data-indeterminate] .mk-linear-progress-indicator-canvas {
+    animation-name: mk-lpi-head1, mk-lpi-tail1, mk-lpi-head2, mk-lpi-tail2, mk-lpi-wave-indeterminate;
+    animation-duration: 1750ms, 1750ms, 1750ms, 1750ms, 1000ms; /* lint-css-allow: LinearAnimationDuration y 1 s por longitud de onda (ProgressIndicator.kt, WavyProgressIndicator.kt) */
+  }
+
+  /* Movimiento reducido: sin desplazamientos. La onda queda quieta, el valor cambia sin
+     transición y el indeterminado se detiene en un fotograma (la primera línea del 10 % al 40 %,
+     como el Step 1 del kit) con el indicador latiendo en opacidad: un efecto, no un
+     desplazamiento, para que siga habiendo señal de actividad. */
+  @media (prefers-reduced-motion: reduce) {
+    .mk-linear-progress-indicator,
+    .mk-linear-progress-indicator[data-wave] {
+      transition: none;
+    }
+
+    .mk-linear-progress-indicator .mk-linear-progress-indicator-canvas,
+    .mk-linear-progress-indicator[data-wavy] .mk-linear-progress-indicator-canvas,
+    .mk-linear-progress-indicator[data-indeterminate] .mk-linear-progress-indicator-canvas,
+    .mk-linear-progress-indicator[data-wavy][data-indeterminate] .mk-linear-progress-indicator-canvas {
+      animation: none;
+    }
+
+    .mk-linear-progress-indicator[data-indeterminate] .mk-linear-progress-indicator-canvas {
+      --_lpi-t1: 0.1;
+      --_lpi-h1: 0.4;
+      --_lpi-t2: 0;
+      --_lpi-h2: 0;
+    }
+
+    .mk-linear-progress-indicator[data-indeterminate] .mk-linear-progress-indicator-active {
+      animation: mk-lpi-pulse var(--md-sys-motion-duration-extra-long4) var(--md-sys-motion-easing-standard) infinite alternate;
+    }
+  }
+
+  /* --- Alto contraste (forced-colors) ---
+     El navegador quitaría los fondos de la pista y del punto: se sale del ajuste automático. El
+     indicador y el punto, macizos en CanvasText; la pista, hueca (borde CanvasText de 1 px sobre
+     Canvas), así se distinguen por la forma con cualquier tema del sistema. */
+  @media (forced-colors: active) {
+    .mk-linear-progress-indicator {
+      forced-color-adjust: none;
+      color: CanvasText;
+    }
+
+    .mk-linear-progress-indicator-track {
+      /* El borde no puede ser más ancho que el tramo: uno inexistente (ancho 0) no se ve. */
+      border: min(1px, var(--_len) / 2) solid CanvasText;
+      background-color: Canvas;
+    }
+  }
+
+  /* Una longitud de onda (40 o 20 px), escrita: Firefox no resuelve var() en el valor de una
+     propiedad registrada dentro de un @keyframes (comprobado el 2026-11-25). */
+  @keyframes mk-lpi-wave {
+    to {
+      --_lpi-shift: 40px;
+    }
+  }
+
+  @keyframes mk-lpi-wave-indeterminate {
+    to {
+      --_lpi-shift: 20px;
+    }
+  }
+
+  /* Cada extremo queda en 0 durante su demora, va a 1 con EmphasizedAccelerate y queda en 1 hasta
+     el final del ciclo de 1750 ms (FirstLineHeadDelay 0 y Duration 1000; FirstLineTail 250 y 1000;
+     SecondLineHead 650 y 850; SecondLineTail 900 y 850). */
+  @keyframes mk-lpi-head1 {
+    0% {
+      --_lpi-h1: 0;
+      animation-timing-function: cubic-bezier(0.3, 0, 0.8, 0.15); /* lint-css-allow: --md-sys-motion-easing-emphasized-accelerate; var() no se resuelve en un @keyframes */
+    }
+    57.142857% {
+      --_lpi-h1: 1;
+    }
+    100% {
+      --_lpi-h1: 1;
+    }
+  }
+
+  @keyframes mk-lpi-tail1 {
+    0%,
+    14.285714% {
+      --_lpi-t1: 0;
+      animation-timing-function: cubic-bezier(0.3, 0, 0.8, 0.15); /* lint-css-allow: --md-sys-motion-easing-emphasized-accelerate; var() no se resuelve en un @keyframes */
+    }
+    71.428571%,
+    100% {
+      --_lpi-t1: 1;
+    }
+  }
+
+  @keyframes mk-lpi-head2 {
+    0%,
+    37.142857% {
+      --_lpi-h2: 0;
+      animation-timing-function: cubic-bezier(0.3, 0, 0.8, 0.15); /* lint-css-allow: --md-sys-motion-easing-emphasized-accelerate; var() no se resuelve en un @keyframes */
+    }
+    85.714286%,
+    100% {
+      --_lpi-h2: 1;
+    }
+  }
+
+  @keyframes mk-lpi-tail2 {
+    0%,
+    51.428571% {
+      --_lpi-t2: 0;
+      animation-timing-function: cubic-bezier(0.3, 0, 0.8, 0.15); /* lint-css-allow: --md-sys-motion-easing-emphasized-accelerate; var() no se resuelve en un @keyframes */
+    }
+    100% {
+      --_lpi-t2: 1;
+    }
+  }
+
+  @keyframes mk-lpi-pulse {
+    to {
+      opacity: 0.4;
+    }
+  }
+}

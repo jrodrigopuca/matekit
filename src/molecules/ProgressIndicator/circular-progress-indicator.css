@@ -1,0 +1,242 @@
+/* Indicador de progreso circular (Circular progress indicator) de Material 3 Expressive.
+
+   Fuentes:
+   - Kit de Figma (docs/research/05-medidas.md § Indicadores de progreso): 40 × 40 y 44 × 44
+     planos (grosor 4 y 8), 48 × 48 y 52 × 52 con onda; pista Secondary Container e indicador
+     Primary. El kit los trae como vectores rellenos: grosor, separación y onda salen de Compose.
+   - Jetpack Compose, androidx/androidx, carpeta compose/material3/material3/src/commonMain/kotlin/
+     androidx/compose/material3/:
+     - tokens/CircularProgressIndicatorTokens.kt (@76990c62ac): ActiveThickness y TrackThickness 4,
+       TrackActiveSpace 4, Size 40, LargeSize 48, ActiveWaveWavelength 15 (9 ondas en 48),
+       ActiveWaveAmplitude 1,6 (la onda generada mide 1,58).
+     - tokens/ProgressIndicatorTokens.kt (@76990c62ac): Primary y SecondaryContainer, CornerFull.
+     - internal/CircularWavyProgressModifiers.kt (@acea2f5c1f): la pista y la onda (contornos en
+       circular-wavy-data.ts), updateDrawPaths (la pista empieza y termina a 2 · extremo +
+       separación del indicador, menos si el indicador todavía es corto), el desplazamiento de la
+       onda (el trazo gira hacia atrás mientras el guion avanza: una onda por segundo, 9 s por
+       vuelta) y el indeterminado (barrido, giro y giro base de 90°).
+     - ProgressIndicator.kt (@080d2b3e53): el indeterminado de 6000 ms (CircularAnimationProgress
+       Duration): barrido de 0,1 a 0,87 y de vuelta (keyframes: lineal la ida y EasingStandard la
+       vuelta, porque `using` fija el easing del tramo que empieza en ese fotograma), 1080° de giro
+       lineal y cuatro giros de 90° de 300 ms (lineales por la misma regla) cada 1500 ms.
+     - WavyProgressIndicator.kt (@76990c62ac): la onda solo entre 10 % y 95 %, el cambio de
+       amplitud (DurationLong2: EasingStandard al crecer, EasingEmphasizedAccelerate al aplanarse) y
+       ProgressAnimationSpec (DurationLong2, EasingLinear) para animar el valor.
+
+   Unidades: el viewBox mide lo mismo que el indicador, centrado en el origen (1 unidad = 1 px), y
+   todo se escribe en px: Firefox descarta un calc() sin unidades en stroke-dasharray (comprobado
+   el 2026-11-25).
+   La pista lleva pathLength = su largo (los guiones se miden en dp) y el indicador pathLength =
+   100 (se mide en fracciones del trazo, como en Compose). Los guiones tienen período igual al
+   largo del trazo, así dan la vuelta al pasar por las 12 (el repeatPath de Compose). */
+
+@property --_cpi-value {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+
+@layer matekit.components {
+  .mk-circular-progress-indicator {
+    --_size: 40px;
+    --_thickness: 4px;
+    --_cap: calc(var(--_thickness) / 2);
+    --_gap: 4px;
+
+    display: inline-block;
+    flex: none;
+    vertical-align: middle;
+    box-sizing: border-box;
+    width: var(--_size);
+    height: var(--_size);
+    color: var(--md-sys-color-primary);
+    transition: --_cpi-value var(--md-sys-motion-duration-long2) var(--md-sys-motion-easing-linear);
+  }
+
+  .mk-circular-progress-indicator[data-thickness='8'] {
+    --_size: 44px;
+    --_thickness: 8px;
+  }
+
+  .mk-circular-progress-indicator[data-wavy] {
+    --_size: 48px;
+  }
+
+  .mk-circular-progress-indicator[data-wavy][data-thickness='8'] {
+    --_size: 52px;
+  }
+
+  .mk-circular-progress-indicator-svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  .mk-circular-progress-indicator-track,
+  .mk-circular-progress-indicator-active {
+    fill: none;
+    stroke-linecap: round;
+  }
+
+  /* --- Pista: desde el final del indicador más la separación hasta el inicio menos la separación --- */
+  .mk-circular-progress-indicator-track {
+    --_length: calc(var(--_cpi-track-length) * 1px);
+    --_reach: calc(var(--_cpi-value) * var(--_length));
+    --_spacing: calc(2 * min(var(--_reach), var(--_cap)) + min(var(--_reach), var(--_gap)));
+    --_len: max(0px, var(--_length) * (1 - var(--_cpi-value)) - 2 * var(--_spacing));
+    stroke: var(--md-sys-color-secondary-container);
+    /* Un guion de largo 0 dibujaría un punto: sin largo, grosor 0. */
+    stroke-width: clamp(0px, var(--_len) * 1000, var(--_thickness));
+    stroke-dasharray: var(--_len) calc(var(--_length) - var(--_len));
+    stroke-dashoffset: calc(-1 * (var(--_reach) + var(--_spacing)));
+  }
+
+  .mk-circular-progress-indicator-track-inner {
+    display: none;
+  }
+
+  /* --- Indicador: de las 12 al valor --- */
+  .mk-circular-progress-indicator-active {
+    stroke: currentColor;
+    stroke-width: clamp(0px, var(--_cpi-value) * 1000000px, var(--_thickness));
+    stroke-dasharray: calc(var(--_cpi-value) * 100px) calc(100px - var(--_cpi-value) * 100px);
+    /* El cambio de amplitud (círculo ↔ estrella) donde existe la propiedad `d`. */
+    transition: d var(--md-sys-motion-duration-long2) var(--md-sys-motion-easing-emphasized-accelerate);
+  }
+
+  .mk-circular-progress-indicator[data-wave] .mk-circular-progress-indicator-active {
+    transition-timing-function: var(--md-sys-motion-easing-standard);
+  }
+
+  /* --- Animaciones --- */
+
+  /* La onda se desplaza una longitud de onda por segundo: el trazo gira hacia atrás y el guion
+     avanza lo mismo, así el arco queda en su lugar (9 ondas: 9 s por vuelta). */
+  .mk-circular-progress-indicator[data-wavy] .mk-circular-progress-indicator-active {
+    animation: mk-cpi-wave 9000ms var(--md-sys-motion-easing-linear) infinite; /* lint-css-allow: 1 s por onda × 9 ondas (CircularWavyProgressModifiers.kt, startOffsetAnimation) */
+  }
+
+  /* Indeterminado: barrido y giros en un ciclo de 6000 ms; el giro base de 90° lleva el inicio
+     del arco a las 3, como el arco plano de Compose (startAngle 0). */
+  .mk-circular-progress-indicator[data-indeterminate] {
+    animation: mk-cpi-sweep 6000ms var(--md-sys-motion-easing-linear) infinite; /* lint-css-allow: CircularAnimationProgressDuration (ProgressIndicator.kt) */
+  }
+
+  .mk-circular-progress-indicator[data-indeterminate] .mk-circular-progress-indicator-rotor {
+    animation: mk-cpi-spin 6000ms var(--md-sys-motion-easing-linear) infinite; /* lint-css-allow: CircularAnimationProgressDuration (ProgressIndicator.kt) */
+  }
+
+  .mk-circular-progress-indicator[data-indeterminate] .mk-circular-progress-indicator-step {
+    animation: mk-cpi-step 6000ms var(--md-sys-motion-easing-linear) infinite; /* lint-css-allow: CircularAnimationProgressDuration (ProgressIndicator.kt) */
+  }
+
+  /* Movimiento reducido: sin giros ni desplazamiento de la onda, el valor y la amplitud cambian
+     sin transición, y el indeterminado queda quieto en un cuarto de vuelta desde las 12 con el
+     indicador latiendo en opacidad (un efecto, no un desplazamiento). */
+  @media (prefers-reduced-motion: reduce) {
+    .mk-circular-progress-indicator,
+    .mk-circular-progress-indicator-active,
+    .mk-circular-progress-indicator[data-wave] .mk-circular-progress-indicator-active {
+      transition: none;
+    }
+
+    .mk-circular-progress-indicator[data-indeterminate],
+    .mk-circular-progress-indicator[data-indeterminate] .mk-circular-progress-indicator-rotor,
+    .mk-circular-progress-indicator[data-indeterminate] .mk-circular-progress-indicator-step,
+    .mk-circular-progress-indicator[data-wavy] .mk-circular-progress-indicator-active {
+      animation: none;
+    }
+
+    .mk-circular-progress-indicator[data-indeterminate] {
+      --_cpi-value: 0.25;
+    }
+
+    .mk-circular-progress-indicator[data-indeterminate] .mk-circular-progress-indicator-active {
+      animation: mk-cpi-pulse var(--md-sys-motion-duration-extra-long4) var(--md-sys-motion-easing-standard) infinite alternate;
+    }
+  }
+
+  /* --- Alto contraste (forced-colors) ---
+     El indicador, macizo en CanvasText; la pista, hueca: un trazo CanvasText con otro Canvas 2 dp
+     más fino encima (un borde de 1 dp), así se distinguen por la forma con cualquier tema. */
+  @media (forced-colors: active) {
+    .mk-circular-progress-indicator {
+      forced-color-adjust: none;
+      color: CanvasText;
+    }
+
+    .mk-circular-progress-indicator-track {
+      stroke: CanvasText;
+    }
+
+    .mk-circular-progress-indicator-track-inner {
+      display: inline;
+      stroke: Canvas;
+      stroke-width: clamp(0px, var(--_len) * 1000, var(--_thickness) - 2px);
+    }
+  }
+
+  @keyframes mk-cpi-wave {
+    from {
+      rotate: 0deg;
+      stroke-dashoffset: 0px;
+    }
+    to {
+      rotate: -360deg;
+      stroke-dashoffset: -100px;
+    }
+  }
+
+  @keyframes mk-cpi-sweep {
+    0% {
+      --_cpi-value: 0.1;
+    }
+    50% {
+      --_cpi-value: 0.87;
+      animation-timing-function: cubic-bezier(0.2, 0, 0, 1); /* lint-css-allow: --md-sys-motion-easing-standard; var() no se resuelve en un @keyframes */
+    }
+    100% {
+      --_cpi-value: 0.1;
+    }
+  }
+
+  /* 1080° en 6 s más el giro base de 90°. */
+  @keyframes mk-cpi-spin {
+    from {
+      rotate: 90deg;
+    }
+    to {
+      rotate: 1170deg;
+    }
+  }
+
+  /* +90° en 300 ms a los 0, 1500, 3000 y 4500 ms. */
+  @keyframes mk-cpi-step {
+    0% {
+      rotate: 0deg;
+    }
+    5%,
+    25% {
+      rotate: 90deg;
+    }
+    30%,
+    50% {
+      rotate: 180deg;
+    }
+    55%,
+    75% {
+      rotate: 270deg;
+    }
+    80%,
+    100% {
+      rotate: 360deg;
+    }
+  }
+
+  @keyframes mk-cpi-pulse {
+    to {
+      opacity: 0.4;
+    }
+  }
+}

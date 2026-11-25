@@ -576,6 +576,54 @@ entre icono y etiqueta, Label Large. Colores: indicador `secondary-container`, i
 | Rail contraído flotante | No existe (Floating solo en el expandido) | El modal contraído usa la forma del docked | matekit acepta `variant="floating"` contraído y lo dibuja como el docked; el fondo aparece al expandir. |
 | Separación entre destinos expandidos | No la anota | 0 | Compose (el kit la confirma indirectamente con el alto de 224). |
 
+## Indicadores de progreso (lineal y circular)
+
+Revisión del 2026-11-25. Archivos (en `compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/`):
+`tokens/LinearProgressIndicatorTokens.kt`, `tokens/CircularProgressIndicatorTokens.kt`,
+`tokens/ProgressIndicatorTokens.kt`, `tokens/MeasurementTokens.kt` y `WavyProgressIndicator.kt`
+(commit `76990c62ac`, 2026-11-24); `ProgressIndicator.kt` (`080d2b3e53`, 2026-07-24);
+`internal/LinearWavyProgressModifiers.kt` e `internal/CircularWavyProgressModifiers.kt`
+(`acea2f5c1f`, 2026-11-04); `internal/ShapeUtil.kt` (`e6d33dd5d0`). Ejemplos de grosor 8:
+`samples/.../ProgressIndicatorSamples.kt` (`acea2f5c1f`). El kit trae el circular como vectores
+rellenos (`05-medidas.md` § Indicadores de progreso), así que grosor, separación, onda y todas
+las animaciones salen de acá.
+
+### Lo que confirma
+
+Grosor 4 (`ActiveThickness`, `TrackThickness`), separación 4 (`TrackActiveSpace` = `Space50`),
+punto final de 4 (`StopSize`) a `(grosor - 4) / 2` del final como máximo 6
+(`StopIndicatorTrailingSpace`): 0 con grosor 4 y 2 con grosor 8, como el kit. Pista
+`SecondaryContainer`, indicador y punto `Primary`, formas `CornerFull` (`ProgressIndicatorTokens`).
+Longitud de onda del lineal 40 y 20 en el indeterminado; circular de 40 (plano) y 48 (con onda),
+y 44 y 52 con grosor 8 en los ejemplos, igual que el kit.
+
+### Datos nuevos (el kit no los trae)
+
+| Dato | Fuente |
+|---|---|
+| Onda del lineal: cuadráticas alternadas con el control a `height - stroke` (6) del centro; la curva llega a 3 (`ActiveWaveAmplitude`). La primera baja | `LinearProgressDrawingCache.updateFullPaths` |
+| La onda se desplaza **una longitud de onda por segundo**, hacia el inicio | `waveSpeed = wavelength`; `updateDrawPaths` (`getSegment` desde cola + desfase y traslado de vuelta) |
+| Amplitud del determinado: **0 hasta el 10 % y desde el 95 %**, 1 en el medio; el cambio dura 500 ms (`DurationLong2`), con `EasingStandard` al crecer y `EasingEmphasizedAccelerate` al aplanarse | `indicatorAmplitude`, `IncreasingAmplitudeAnimationSpec`, `DecreasingAmplitudeAnimationSpec` |
+| Cerca de 0, la separación se achica (`min(cabeza - extremo, 4)`) y no se cuentan los extremos redondos hasta que la cabeza pasa el primero | `updateDrawPaths` (`adjustedTrackGapSize`, `adaptiveTrackSpacing`) |
+| El punto final se achica cuando la cabeza lo alcanza y desaparece al 100 % | `drawStopIndicator` (lineal ondulado) |
+| Compose no anima los cambios de valor; recomienda `WavyProgressIndicatorDefaults.ProgressAnimationSpec` (500 ms, lineal) | KDoc de `LinearWavyProgressIndicator` |
+| Lineal indeterminado: ciclo de 1750 ms con dos líneas; cabeza y cola con demoras 0/250 (primera, 1000 ms) y 650/900 (segunda, 850 ms), `EasingEmphasizedAccelerate` | `ProgressIndicator.kt` (constantes `LinearAnimationDuration`, `First/SecondLine*`) |
+| Circular indeterminado: ciclo de 6000 ms; barrido de 0,1 a 0,87 y de vuelta; 1080° de giro lineal; cuatro giros de 90° de 300 ms cada 1500 ms; con onda, giro base de 90° (el arco empieza a las 3, como el plano) | `circularIndeterminate*AnimationSpec`, `CircularIndeterminateBaseRotation` |
+| En los `keyframes` de Compose, `using` fija el easing del tramo que **empieza** en ese fotograma (por defecto, lineal). Por eso en el circular la subida del barrido y los giros de 90° son lineales y solo la bajada del barrido usa `EasingStandard` | `AnimationSpec.kt` (`KeyframeEntity`, easing por defecto `LinearEasing`; KDoc de `using`: "for the next interval") |
+| Circular con onda: estrella de `round(2π · 22 / 15)` = **9 puntas** (`innerRadius` 0,75), escalada a `size - stroke` = 44 en los dos grosores; la pista es un círculo de 9 vértices de radio 21,45. La onda mide 1,58 de amplitud, el `ActiveWaveAmplitude` de 1,6 (el código no usa ese token: sale de la estrella) | `CircularShapes.update`; generado con `pnpm shapes` en `src/molecules/ProgressIndicator/circular-wavy-data.ts` |
+| La onda del circular se desplaza girando el trazo hacia atrás mientras el tramo avanza lo mismo: 1 s por onda, 9 s por vuelta | `startOffsetAnimation`, `updateDrawPaths` |
+| Con las animaciones del sistema apagadas, el indeterminado se detiene (no hay versión propia) | `animateIndeterminateCycle` (`MotionDurationScale`) |
+
+### Conflictos y decisiones
+
+| Tema | Kit | Compose | Decisión |
+|---|---|---|---|
+| Alto del lineal | Contenedor de 12 (14 con onda y grosor 8) | El grosor (4 u 8) plano; 10 (`LargeHeight`) y 14 con onda | Compose: el elemento mide lo que se dibuja (una barra plana de 4 no reserva 8 de aire). El 12 del kit parece un marco común a las variantes (14 coincide con Compose). |
+| Alto de la onda del lineal | "Onda de 12 de alto, medida del trazado" | Curva de ±3 (6 de alto) con los controles de las cuadráticas a ±6 | Compose. Hipótesis, sin verificar: el 12 del kit es el alto de los puntos de control (±6), no de la curva; con 12 de curva no entraría en su propio contenedor de 14 con grosor 8. |
+| Separación del circular plano | 4 (los dos grosores, `TrackActiveSpace`) | `CircularProgressIndicator` convierte la separación a ángulo con el **diámetro exterior**: se ven 3,2 (grosor 4) y 1,8 (grosor 8). El ondulado la mide sobre el trazo y da 4 exactos | 4 exactos en los dos, con el cálculo del ondulado. |
+| Pista del circular indeterminado plano | El conjunto (pista e indicador) gira | `circularIndeterminateTrackColor = Transparent` (sin pista); el ondulado sí la tiene | Con pista, como el kit y el ondulado. |
+| Paso de indeterminado a determinado | — | Las líneas terminan de salir y el valor crece desde 0 (lineal), o el arco gira hasta las 12 (circular) | Sin transición: necesitaría estado (cliente). Pendiente si hace falta. |
+
 ## No revisado
 
 La tipografía (`TypeScaleTokens.kt`, descargado pero sin comparar).

@@ -27,6 +27,8 @@ import {
   DialogHeadline,
   IconButton,
   LoadingIndicator,
+  LinearProgressIndicator,
+  CircularProgressIndicator,
   Menu,
   MenuContent,
   MenuItem,
@@ -349,6 +351,35 @@ for (const scheme of SCHEMES) {
       for (const sel of ['.plain', '.box', '.det', '.det-box']) {
         const el = q(c, sel)
         expect(contrastRatio(cs(q(el, 'svg')).fill, effectiveBackground(el)), sel).toBeGreaterThanOrEqual(NON_TEXT)
+      }
+    })
+
+    // Indicadores de progreso (1.4.11): el indicador comunica el valor y el punto final marca dónde
+    // termina el rango, así que los dos van a 3:1 contra la superficie (la separación de 4 deja ver
+    // la superficie entre el indicador y la pista: es lo que los rodea). La pista no: es el fondo
+    // del recorrido, su borde lo marca el punto (Compose, WavyProgressIndicator.kt: "the stop
+    // indicator is required if the track has a contrast below 3:1"), y en el circular el recorrido
+    // es la vuelta entera.
+    test('Indicadores de progreso: indicador y punto final sobre la superficie', async () => {
+      const c = await render(
+        <Themed scheme={scheme}>
+          <div style={{ width: 200 }}>
+            <LinearProgressIndicator label="a" value={0.5} className="lin" />
+            <LinearProgressIndicator label="b" wavy className="lin-ind" />
+          </div>
+          <CircularProgressIndicator label="c" value={0.5} className="cir" />
+          <CircularProgressIndicator label="d" wavy className="cir-ind" />
+        </Themed>,
+      )
+      for (const sel of ['.lin', '.lin-ind']) {
+        const el = q(c, sel)
+        expect(contrastRatio(cs(q(el, '.mk-linear-progress-indicator-active')).stroke, effectiveBackground(el)), sel).toBeGreaterThanOrEqual(NON_TEXT)
+      }
+      const stop = q(c, '.lin .mk-linear-progress-indicator-stop')
+      expect(contrastRatio(cs(stop).backgroundColor, effectiveBackground(q(c, '.lin'))), 'punto final').toBeGreaterThanOrEqual(NON_TEXT)
+      for (const sel of ['.cir', '.cir-ind']) {
+        const el = q(c, sel)
+        expect(contrastRatio(cs(q(el, '.mk-circular-progress-indicator-active')).stroke, effectiveBackground(el)), sel).toBeGreaterThanOrEqual(NON_TEXT)
       }
     })
 

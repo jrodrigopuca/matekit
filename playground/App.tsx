@@ -12,6 +12,7 @@ import { LoadingIndicatorPage } from './pages/LoadingIndicatorPage.tsx'
 import { MenuPage } from './pages/MenuPage.tsx'
 import { NavigationBarPage } from './pages/NavigationBarPage.tsx'
 import { NavigationRailPage } from './pages/NavigationRailPage.tsx'
+import { ProgressIndicatorPage } from './pages/ProgressIndicatorPage.tsx'
 import { RadioButtonPage } from './pages/RadioButtonPage.tsx'
 import { ShapesPage } from './pages/ShapesPage.tsx'
 import { SwitchPage } from './pages/SwitchPage.tsx'
@@ -41,6 +42,7 @@ const PAGES = {
   'navigation-bar': { label: 'NavigationBar', Page: NavigationBarPage },
   'navigation-rail': { label: 'NavigationRail', Page: NavigationRailPage },
   'loading-indicator': { label: 'LoadingIndicator', Page: LoadingIndicatorPage },
+  'progress-indicator': { label: 'Progreso', Page: ProgressIndicatorPage },
   divider: { label: 'Divider', Page: DividerPage },
   examples: { label: 'Ejemplos', Page: ExamplesPage },
   icons: { label: 'Iconos', Page: IconsPage },
