@@ -1,5 +1,13 @@
-// Tipos de los comandos de navegador definidos en vitest.config.ts.
+// Tipos de los comandos de navegador y de los valores provistos (provide) en vitest.config.ts.
+import 'vitest'
 import 'vitest/browser'
+
+declare module 'vitest' {
+  interface ProvidedContext {
+    /** true con MK_SERIAL=1: los archivos de prueba corren de a uno. */
+    serial: boolean
+  }
+}
 
 declare module 'vitest/browser' {
   interface BrowserCommands {

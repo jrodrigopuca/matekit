@@ -134,6 +134,16 @@ jobs:
         env:
           MK_BROWSERS: ${{ matrix.engine }}
 
+      # Los arrastres del Slider fallan en Firefox cuando otros archivos de prueba corren en
+      # paralelo (causa sin encontrar; ver src/molecules/Slider/Slider.test.tsx): en el paso
+      # anterior se saltean, y acá corren con los archivos de a uno (MK_SERIAL=1).
+      - name: Arrastres del Slider en serie (firefox)
+        if: matrix.engine == 'firefox'
+        run: pnpm test:browser src/molecules/Slider
+        env:
+          MK_BROWSERS: firefox
+          MK_SERIAL: '1'
+
       - name: Capturas de las pruebas fallidas
         if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

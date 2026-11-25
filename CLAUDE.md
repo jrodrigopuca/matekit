@@ -133,7 +133,11 @@ No llamar al conector de Figma salvo que falte un dato imprescindible: tiene lí
 
 - Pruebas en navegador real (`*.test.tsx` junto al componente) con `render`, `style` y
   `roleColor` de `src/test/render.tsx`, `userEvent` de `vitest/browser`, y los comandos
-  `commands.pressDown(selector)` / `commands.pressUp()` para el estado presionado.
+  `commands.pressDown(selector)` / `commands.pressUp()` para el estado presionado. Para el
+  puntero en un punto del elemento (x, y desde su esquina superior izquierda):
+  `commands.moveTo(selector, x, y)`, `commands.pressAt(selector, x, y)` (mueve y aprieta) y
+  `commands.dragThrough(selector, puntos)` (aprieta en el primero y pasa por los demás sin
+  soltar; después, `pressUp`). Están en `vitest.config.ts` y sus tipos en `src/test/commands.d.ts`.
 - Probar: estructura y accesibilidad (roles, nombres, `aria-*`), teclado, medidas contra la
   fuente, colores por estado con `roleColor`, deshabilitado, y que las props nativas y `ref`
   lleguen al elemento.
@@ -166,6 +170,19 @@ No llamar al conector de Figma salvo que falte un dato imprescindible: tiene lí
     conducta de Safari y se saltea en las pruebas.
   - Firefox: un segundo `commands.pressDown` en la misma prueba no activa `:active`
     (comprobado el 2026-11-25); una prueba por presionado.
+  - `<input type="range">` (Slider, comprobado el 2026-11-25): en RTL, WebKit invierte las
+    flechas izquierda y derecha; en vertical (`writing-mode: vertical-lr`), Firefox invierte la
+    flecha derecha. El Slider resuelve las flechas en esos dos casos. WebKit no enfoca un
+    `range` con el clic: el Slider lo enfoca al soltar el puntero.
+  - Firefox, arrastres del Slider: pasan con los archivos de prueba de a uno y fallan cuando
+    otros archivos corren en paralelo (ni el primer movimiento llega; el clic sí funciona; causa
+    sin encontrar). En la corrida normal se saltean en Firefox; `MK_SERIAL=1` corre los
+    archivos de a uno y los habilita (`inject('serial')`), y el CI los corre así en un paso
+    aparte: `MK_BROWSERS=firefox MK_SERIAL=1 pnpm test:browser src/molecules/Slider`.
+  - Una animación que sigue corriendo (por ejemplo el latido de movimiento reducido de los
+    indicadores) cambia los píxeles según el instante: congelarla (`pause()` y `currentTime`)
+    antes de leer píxeles o colores calculados. El circular fallaba de vez en cuando en Firefox
+    por eso.
   - Animación SVG nativa (SMIL, LoadingIndicator): `begin` negativo, `accumulate="sum"` en
     `<animateTransform>`, `calcMode="spline"` en `d` y `visibility` discreta funcionan igual en
     los tres. Para probarla, congelar el reloj del `<svg>` con `pauseAnimations()` y

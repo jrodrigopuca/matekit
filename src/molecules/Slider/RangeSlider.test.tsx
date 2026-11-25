@@ -1,5 +1,5 @@
 import { createRef, useState } from 'react'
-import { describe, expect, test, vi } from 'vitest'
+import { describe, expect, inject, test, vi } from 'vitest'
 import { commands, page, server, userEvent } from 'vitest/browser'
 import { RangeSlider, RangeSliderEnd, RangeSliderStart, type RangeSliderProps, type RangeSliderValue } from './RangeSlider.tsx'
 import { render, roleColor, style } from '../../test/render.tsx'
@@ -14,9 +14,10 @@ const rect = (el: Element) => el.getBoundingClientRect()
 // otros archivos de prueba corren en paralelo (comprobado el 2026-11-25, varias veces: ni el primer
 // movimiento llega, también en el Slider simple, donde solo actúa el arrastre nativo del range; el
 // clic sí funciona). No se encontró la causa (no es la emulación compartida, y traer la página al
-// frente o esperar cuadros no cambió nada). Se saltean en Firefox; para revisarlos, quitar el skipIf
-// y correr MK_BROWSERS=firefox pnpm exec vitest run src/molecules/Slider --no-file-parallelism
-const skipDragInFirefox = server.browser === 'firefox'
+// frente o esperar cuadros no cambió nada). En Firefox corren solo con MK_SERIAL=1 (archivos de a
+// uno), como en el paso del CI que los corre así:
+// MK_BROWSERS=firefox MK_SERIAL=1 pnpm exec vitest run src/molecules/Slider
+const skipDragInFirefox = server.browser === 'firefox' && !inject('serial')
 const W = 312
 const at = (f: number) => 6 + f * (W - 12)
 

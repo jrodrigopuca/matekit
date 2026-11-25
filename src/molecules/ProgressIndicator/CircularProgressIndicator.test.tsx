@@ -243,7 +243,11 @@ describe('CircularProgressIndicator', () => {
       expect(names(c.querySelector('.mk-circular-progress-indicator-rotor')!)).toEqual([])
       expect(names(active(c))).toEqual(['mk-activity-pulse'])
       expect(Number(style(root(c)).getPropertyValue('--_cpi-value'))).toBeCloseTo(0.25, 5)
-      // Quieto de las 12 a las 3.
+      // Quieto de las 12 a las 3. El latido se congela en su inicio (opacidad 1): los píxeles se
+      // leen en un instante cualquiera y, cerca de la opacidad 0,4, el arco ya no es primary
+      // (fallaba de vez en cuando en Firefox con la suite completa; comprobado el 2026-11-25
+      // congelándolo en 1000 ms, donde falla siempre).
+      freeze(root(c), 0)
       const p = await pixelsOf(root(c))
       const primary = rgb(roleColor('primary'))
       expect([18.7, 19.5, 20.3, 21.1].some((r) => near(p.at(...at(48, r, 45)), primary))).toBe(true)

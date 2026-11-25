@@ -67,12 +67,19 @@ if (unknown.length) {
   throw new Error(`MK_BROWSERS: motor desconocido (${unknown.join(', ')}); opciones: ${Object.keys(ENGINES).join(', ')}`)
 }
 
+// MK_SERIAL=1 corre los archivos de prueba de a uno (sin paralelismo entre archivos) y lo avisa a
+// las pruebas con inject('serial'). Lo usa el CI para los arrastres del Slider en Firefox, que
+// fallan cuando otros archivos corren en paralelo (ver src/molecules/Slider/Slider.test.tsx).
+const serial = process.env['MK_SERIAL'] === '1'
+
 // Pruebas de componentes en un navegador real: los estados de los átomos (hover, foco,
 // presionado) son CSS y solo se pueden comprobar con un motor de navegador.
 export default defineConfig({
   plugins: [react()],
   test: {
     include: ['src/**/*.test.tsx'],
+    fileParallelism: !serial,
+    provide: { serial },
     browser: {
       enabled: true,
       headless: true,
