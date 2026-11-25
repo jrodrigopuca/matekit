@@ -96,7 +96,7 @@ export interface NavigationRailProps extends HTMLAttributes<HTMLElement> {
  *       shape="square"
  *       onClick={() => setExpanded(!expanded)}
  *     >
- *       <MenuIcon />
+ *       {expanded ? <MenuOpenIcon /> : <MenuIcon />}
  *     </IconButton>
  *     <ExtendedFab expanded={expanded}><EditIcon />Redactar</ExtendedFab>
  *   </NavigationRailHeader>

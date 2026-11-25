@@ -8,6 +8,7 @@ import {
   HomeIcon,
   IconButton,
   MenuIcon,
+  MenuOpenIcon,
   NavigationRail,
   NavigationRailHeader,
   NavigationRailItem,
@@ -78,7 +79,7 @@ function Rail({
               shape="square"
               onClick={onToggle}
             >
-              <MenuIcon />
+              {o.expanded ? <MenuOpenIcon /> : <MenuIcon />}
             </IconButton>
           )}
           {/* El mismo booleano que el rail: contraído, queda un FAB de 56. */}

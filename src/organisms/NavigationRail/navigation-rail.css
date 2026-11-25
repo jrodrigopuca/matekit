@@ -33,13 +33,25 @@
      que la etiqueta, así que el indicador (que cubre todas las columnas) crece hasta abrazarla.
    - La etiqueta está siempre en su celda del expandido (al lado del icono). Contraída, se corre
      con `translate` debajo del indicador y centrada (los porcentajes de translate son de su
-     propio ancho), así que va de un lugar al otro en diagonal, sin saltos. Compose, en cambio,
-     la hace desaparecer y reaparecer a mitad de camino.
+     propio ancho). Como Compose, se desvanece en la primera mitad de la transición, cambia de
+     lugar en el medio y reaparece en la segunda: lo maneja --_progress, una propiedad
+     registrada (@property, Chrome 85, Safari 16.4, Firefox 128) de cada etiqueta, que va de 0
+     (contraído) a 1 (expandido) con el mismo resorte que el ancho; la opacidad es max(1 − 2p, 2p − 1) y el
+     lugar cambia con round(p) (Chrome 125, Safari 15.4, Firefox 118). Al cargar no hay cambio
+     de estado, así que no anima.
    - Con prefers-reduced-motion los resortes espaciales duran 0 (tokens/motion.css): el cambio
      es inmediato y solo los colores se funden.
-   Limitación: la insignia grande cambia de lugar sin animarse (sobre el icono en el contraído, en
-   línea después de la etiqueta en el expandido): pasar de posición absoluta a estar en la grilla
-   no interpola. */
+   - La insignia grande está siempre en su columna de la grilla (después de la etiqueta).
+     Contraída, un margen negativo la saca del ancho del destino y un `translate` la lleva a la
+     esquina del icono. Usa el mismo --_progress que la etiqueta: se desvanece y reaparece en su
+     otro lugar, sin cruzar por encima del texto. */
+
+/* Progreso de la transición: registrada para que interpole y se herede cuadro a cuadro. */
+@property --_progress {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
 
 @layer matekit.components {
   .mk-navigation-rail {
@@ -181,22 +193,28 @@
     justify-self: start;
     width: max-content;
     max-width: max(100%, 88px);
-    translate: calc(-12px - 50%) 28px;
+    /* El progreso vive en la etiqueta, que es la única que lo usa: en WebKit, sumarlo a las
+       transiciones del rail cortaba la animación del ancho (comprobado el 2026-11-25).
+       --_step: 0 en la primera mitad de la transición (lugar del contraído), 1 en la segunda. */
+    --_progress: 0;
+    --_step: round(var(--_progress));
+    translate: calc((1 - var(--_step)) * (-12px - 50%)) calc((1 - var(--_step)) * 28px);
+    opacity: max(1 - 2 * var(--_progress), 2 * var(--_progress) - 1);
     font-family: var(--md-sys-typescale-label-medium-font);
     font-size: var(--md-sys-typescale-label-medium-size);
     line-height: var(--md-sys-typescale-label-medium-line-height);
     font-weight: var(--md-sys-typescale-label-medium-weight);
     letter-spacing: var(--md-sys-typescale-label-medium-tracking);
     text-align: center;
+    /* translate y opacity no llevan transición: salen de --_progress, que es lo que anima. */
     transition:
-      translate var(--_spatial),
+      --_progress var(--_spatial),
       font-size var(--_spatial),
       line-height var(--_spatial),
-      letter-spacing var(--_spatial),
-      opacity var(--_effects);
+      letter-spacing var(--_spatial);
   }
   .mk-navigation-rail-item-label:dir(rtl) {
-    translate: calc(12px + 50%) 28px;
+    translate: calc((1 - var(--_step)) * (12px + 50%)) calc((1 - var(--_step)) * 28px);
   }
 
   /* Insignias sobre la esquina del icono, como en la barra (Badge.kt, BadgedBox): la pequeña a 6
@@ -208,9 +226,26 @@
     inset-inline-start: 18px;
     top: 0;
   }
+  /* La grande va en su columna (la 6, después de la etiqueta) en los dos estados. Contraída, el
+     margen negativo hace que no sume ancho (la columna auto queda en 0) y el translate la lleva
+     a la esquina del icono: de x = 40 (16 + 24) a 28 (kit), y de y = 4 (centrada en la fila de
+     24) a −2. Como la etiqueta, se desvanece, cambia de lugar en el medio de la transición y
+     reaparece (si se deslizara, cruzaría por encima de la etiqueta). */
   .mk-navigation-rail-item > .mk-badge[data-size='large'] {
-    inset-inline-start: 12px;
-    top: -2px;
+    --_progress: 0;
+    --_step: round(var(--_progress));
+    position: static;
+    grid-column: 6;
+    grid-row: 2;
+    align-self: center;
+    justify-self: start;
+    margin-inline-end: calc((1 - var(--_step)) * -48px);
+    translate: calc((1 - var(--_step)) * -12px) calc((1 - var(--_step)) * -6px);
+    opacity: max(1 - 2 * var(--_progress), 2 * var(--_progress) - 1);
+    transition: --_progress var(--_spatial);
+  }
+  .mk-navigation-rail-item > .mk-badge[data-size='large']:dir(rtl) {
+    translate: calc((1 - var(--_step)) * 12px) calc((1 - var(--_step)) * -6px);
   }
 
   /* --- Contraído sin etiquetas ("Show label" = False): indicador 56 × 56 (radio 28) con el
@@ -222,9 +257,12 @@
     grid-template-rows: 16px 24px 16px 0px 0px;
     padding-block: 4px;
   }
-  .mk-navigation-rail[data-collapsed-labels='hidden']:not([data-expanded='true']) .mk-navigation-rail-item-label {
-    opacity: 0;
+  .mk-navigation-rail[data-collapsed-labels='hidden'] .mk-navigation-rail-item-label {
+    /* Sin lugar en el contraído: no se mueve, aparece en la segunda mitad al expandir. */
     translate: 0 0;
+    opacity: max(0, 2 * var(--_progress) - 1);
+  }
+  .mk-navigation-rail[data-collapsed-labels='hidden']:not([data-expanded='true']) .mk-navigation-rail-item-label {
     font-family: var(--md-sys-typescale-label-large-font);
     font-size: var(--md-sys-typescale-label-large-size);
     line-height: var(--md-sys-typescale-label-large-line-height);
@@ -257,13 +295,10 @@
     grid-template-columns: 16px 0px 0px minmax(0, 1fr) 8px auto 16px;
   }
   .mk-navigation-rail[data-expanded='true'] .mk-navigation-rail-item > .mk-badge[data-size='large'] {
-    position: static;
-    grid-column: 6;
-    grid-row: 2;
-    align-self: center;
+    --_progress: 1;
   }
   .mk-navigation-rail[data-expanded='true'] .mk-navigation-rail-item-label {
-    translate: 0 0;
+    --_progress: 1;
     text-align: start;
     font-family: var(--md-sys-typescale-label-large-font);
     font-size: var(--md-sys-typescale-label-large-size);

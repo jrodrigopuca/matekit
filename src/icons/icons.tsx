@@ -140,6 +140,18 @@ export function MenuIcon({ filled: _filled, ...props }: FillableIconProps) {
   )
 }
 
+/** Material Symbols "menu_open". No tiene versión rellena distinta: `filled` no lo cambia. */
+export function MenuOpenIcon({ filled: _filled, ...props }: FillableIconProps) {
+  return (
+    <Icon {...props}>
+      <svg viewBox={VIEWBOX} focusable="false">
+        <path className="mk-icon-grade-0" d={'M120-240v-80h520v80H120Zm664-40L584-480l200-200 56 56-144 144 144 144-56 56ZM120-440v-80h400v80H120Zm0-200v-80h520v80H120Z'} />
+        <path className="mk-icon-grade-n25" d={'M130-250v-75h505.5v75H130Zm648-39L584-480l194-191 52 52-141 139 141 138.5-52 52.5ZM130-443v-75h388v75H130Zm0-192v-75h505.5v75H130Z'} />
+      </svg>
+    </Icon>
+  )
+}
+
 /** Material Symbols "share". Con `filled`, la versión rellena (estado activo o seleccionado). */
 export function ShareIcon({ filled = false, ...props }: FillableIconProps) {
   return (
@@ -421,6 +433,7 @@ export const ICONS: ReadonlyArray<{
   { name: 'settings', component: SettingsIcon, group: 'Acciones', fillable: true },
   { name: 'more_vert', component: MoreVertIcon, group: 'Acciones', fillable: false },
   { name: 'menu', component: MenuIcon, group: 'Acciones', fillable: false },
+  { name: 'menu_open', component: MenuOpenIcon, group: 'Acciones', fillable: false },
   { name: 'share', component: ShareIcon, group: 'Acciones', fillable: true },
   { name: 'download', component: DownloadIcon, group: 'Acciones', fillable: false },
   { name: 'refresh', component: RefreshIcon, group: 'Acciones', fillable: false },

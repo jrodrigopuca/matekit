@@ -635,7 +635,47 @@ describe('NavigationRail: transición entre contraído y expandido', () => {
     expect(durationOf(t.item[0] ?? '', t.item[1] ?? '', 'grid-template-columns')).toBeCloseTo(spatial, 3)
     expect(durationOf(t.item[0] ?? '', t.item[1] ?? '', 'grid-template-rows')).toBeCloseTo(spatial, 3)
     expect(durationOf(t.item[0] ?? '', t.item[1] ?? '', 'color')).toBeCloseTo(effects, 3)
-    expect(durationOf(t.label[0] ?? '', t.label[1] ?? '', 'translate')).toBeCloseTo(spatial, 3)
+    // La etiqueta no anima por su cuenta: su lugar y su opacidad salen de --_progress, que el
+    // rail anima con el resorte espacial.
+    expect(durationOf(t.label[0] ?? '', t.label[1] ?? '', '--_progress')).toBeCloseTo(spatial, 3)
+    expect(t.label[0]).not.toContain('translate')
+    expect(t.label[0]).not.toContain('opacity')
+  })
+
+  test('como Compose, la etiqueta se desvanece, cambia de lugar en el medio y reaparece', async () => {
+    const c = await render(<Rail />)
+    const lb = label(q(c, '.favs'))
+    const at = (p: number) => {
+      lb.style.setProperty('--_progress', String(p))
+      return { opacity: Number(style(lb).opacity), translate: style(lb).translate }
+    }
+    const start = at(0)
+    expect(start.opacity).toBe(1)
+    expect(start.translate).not.toBe('none') // debajo del indicador
+    expect(at(0.25).opacity).toBeCloseTo(0.5, 2)
+    expect(at(0.25).translate).toBe(start.translate) // primera mitad: lugar del contraído
+    expect(at(0.5).opacity).toBeCloseTo(0, 2)
+    const second = at(0.75)
+    expect(second.opacity).toBeCloseTo(0.5, 2)
+    expect(second.translate).toMatch(/^(none|0(px|%)?( 0(px|%)?)?)$/) // segunda mitad: al lado del icono
+    expect(at(1).opacity).toBe(1)
+  })
+
+  test('la insignia grande, como la etiqueta, se desvanece y reaparece en su otro lugar', async () => {
+    const c = await render(<Rail />)
+    const badge = q(q(c, '.search'), '.mk-badge')
+    expect(style(badge).position).toBe('static') // en la grilla en los dos estados
+    expect(withMotion(() => style(badge).transitionProperty)).toContain('--_progress')
+    const at = (p: number) => {
+      badge.style.setProperty('--_progress', String(p))
+      return { opacity: Number(style(badge).opacity), translate: style(badge).translate }
+    }
+    const start = at(0)
+    expect(start.opacity).toBe(1)
+    expect(start.translate).not.toMatch(/^(none|0(px)?( 0(px)?)?)$/) // en la esquina del icono
+    expect(at(0.5).opacity).toBeCloseTo(0, 2)
+    expect(at(0.75).translate).toMatch(/^(none|0(px)?( 0(px)?)?)$/) // después de la etiqueta
+    expect(at(1).opacity).toBe(1)
   })
 
   test('con prefers-reduced-motion, el cambio es inmediato', async () => {
