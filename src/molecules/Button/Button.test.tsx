@@ -1,3 +1,4 @@
+import { createRef } from 'react'
 import { describe, expect, test } from 'vitest'
 import { commands, userEvent } from 'vitest/browser'
 import { Button, type ButtonSize, type ButtonVariant } from './Button.tsx'
@@ -68,6 +69,22 @@ describe('Button: estructura y accesibilidad', () => {
     )
     await userEvent.click(button(c), { force: true })
     expect(clicks).toBe(0)
+  })
+
+  test('ref, className, style y props nativas llegan al <button>', async () => {
+    const ref = createRef<HTMLButtonElement>()
+    const c = await render(
+      <Button ref={ref} className="mio" style={{ marginTop: 7 }} id="b1" name="accion" data-foo="bar">
+        Guardar
+      </Button>,
+    )
+    const b = button(c)
+    expect(ref.current).toBe(b)
+    expect(b.className).toBe('mk-button mio')
+    expect(b.style.marginTop).toBe('7px')
+    expect(b.id).toBe('b1')
+    expect(b.name).toBe('accion')
+    expect(b.dataset['foo']).toBe('bar')
   })
 })
 

@@ -3,7 +3,7 @@
 // Contiene la onda (Ripple), que es un átomo cliente: un componente universal puede
 // renderizar uno cliente, así que Button sigue sirviendo desde un Server Component.
 
-import type { ButtonHTMLAttributes } from 'react'
+import type { ButtonHTMLAttributes, Ref } from 'react'
 import { FocusRing } from '../../atoms/FocusRing/FocusRing.tsx'
 import { Ripple } from '../../atoms/Ripple/Ripple.tsx'
 import { StateLayer } from '../../atoms/StateLayer/StateLayer.tsx'
@@ -24,6 +24,8 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
    * El estilo `text` no tiene versión toggle en Material 3.
    */
   selected?: boolean | undefined
+  /** Referencia al `<button>`. */
+  ref?: Ref<HTMLButtonElement> | undefined
 }
 
 /**
