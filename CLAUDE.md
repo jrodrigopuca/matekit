@@ -20,7 +20,7 @@ Antes de decidir algo que cueste revertir, leer `docs/adr/README.md` y aplicar l
 | `pnpm typecheck` | Verificación de tipos |
 | `pnpm lint:css` | Revisa que el CSS de componentes use tokens para color, movimiento y tipografía |
 | `pnpm test` | Pruebas de tokens (Node) y de componentes (Vitest en Chrome) |
-| `pnpm test:browser` | Solo las pruebas de componentes |
+| `pnpm test:browser` | Solo las pruebas de componentes, en el Chrome del sistema; `MK_BROWSERS=firefox` o `webkit` (separados por coma) los corre en esos motores, que el CI prueba en cada push |
 | `pnpm tokens` | Regenera `src/tokens/*.css` y `src/tokens/palettes/*.css` desde `tokens/*.json` (paletas: ADR-0008) |
 | `pnpm icons` / `pnpm icons:fetch` | Regenera los iconos (ver ADR-0006) |
 

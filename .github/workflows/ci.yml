@@ -1,5 +1,5 @@
 # Integración continua: tipos, archivos generados al día y pruebas (tokens en Node y
-# componentes en Chrome). Corre en cada push a main y en cada pull request.
+# componentes en Chrome, Firefox y WebKit). Corre en cada push a main y en cada pull request.
 #
 # Las acciones están fijadas por commit (no por etiqueta, que se puede mover); el comentario
 # indica la versión. Para actualizarlas, buscar el commit de la nueva versión.
@@ -70,6 +70,72 @@ jobs:
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: capturas-pruebas-fallidas
+          path: .vitest/attachments/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  # Las mismas pruebas de componentes en Firefox y en WebKit (el motor de Safari), con los
+  # navegadores de Playwright: matekit usa CSS y APIs recientes (light-dark(), anchor
+  # positioning, Popover, @starting-style) que llegaron a esos motores después que a Chrome.
+  # Un trabajo por motor, para ver en cuál falla algo. Localmente se corre con
+  # `MK_BROWSERS=firefox pnpm test:browser` (vitest.config.ts).
+  engines:
+    name: Pruebas en ${{ matrix.engine }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [firefox, webkit]
+    steps:
+      - name: Obtener el código
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Node 24
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+
+      - name: pnpm
+        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+        with:
+          cache: true
+
+      - name: Instalar dependencias
+        run: pnpm install --frozen-lockfile
+
+      # El navegador depende de la versión de Playwright: va en la clave de la caché.
+      - name: Versión de Playwright
+        id: playwright
+        run: echo "version=$(pnpm exec playwright --version | cut -d' ' -f2)" >> "$GITHUB_OUTPUT"
+
+      - name: Caché del navegador
+        id: browser-cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ steps.playwright.outputs.version }}-${{ matrix.engine }}
+
+      # Las bibliotecas del sistema que necesita el navegador no van en la caché: se instalan
+      # siempre; el navegador, solo si no estaba.
+      - name: Instalar ${{ matrix.engine }}
+        run: |
+          if [ "${{ steps.browser-cache.outputs.cache-hit }}" = "true" ]; then
+            pnpm exec playwright install-deps ${{ matrix.engine }}
+          else
+            pnpm exec playwright install --with-deps ${{ matrix.engine }}
+          fi
+
+      - name: Pruebas de componentes (${{ matrix.engine }})
+        run: pnpm test:browser
+        env:
+          MK_BROWSERS: ${{ matrix.engine }}
+
+      - name: Capturas de las pruebas fallidas
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: capturas-pruebas-fallidas-${{ matrix.engine }}
           path: .vitest/attachments/
           if-no-files-found: ignore
           retention-days: 7

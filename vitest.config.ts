@@ -25,9 +25,26 @@ const prefersContrast: BrowserCommand<[on: boolean]> = async (ctx, on) => {
   await ctx.page.emulateMedia({ contrast: on ? 'more' : null })
 }
 
+// Motores donde corren las pruebas, elegidos con la variable MK_BROWSERS (separados por coma):
+// - chrome (por defecto): el Chrome instalado en el sistema (channel: 'chrome'), sin descargar
+//   navegadores. Es lo que corre en local.
+// - firefox y webkit: los navegadores de Playwright (`pnpm exec playwright install firefox
+//   webkit`). Los usa el CI, en un trabajo por motor; WebKit es el motor de Safari.
+const ENGINES = {
+  chrome: { browser: 'chromium', provider: playwright({ launchOptions: { channel: 'chrome' } }) },
+  firefox: { browser: 'firefox', provider: playwright() },
+  webkit: { browser: 'webkit', provider: playwright() },
+} as const
+type Engine = keyof typeof ENGINES
+
+const requested = (process.env['MK_BROWSERS'] ?? 'chrome').split(',').map((s) => s.trim())
+const unknown = requested.filter((name) => !(name in ENGINES))
+if (unknown.length) {
+  throw new Error(`MK_BROWSERS: motor desconocido (${unknown.join(', ')}); opciones: ${Object.keys(ENGINES).join(', ')}`)
+}
+
 // Pruebas de componentes en un navegador real: los estados de los átomos (hover, foco,
 // presionado) son CSS y solo se pueden comprobar con un motor de navegador.
-// Usa el Chrome instalado en el sistema (channel: 'chrome'), sin descargar navegadores.
 export default defineConfig({
   plugins: [react()],
   test: {
@@ -35,8 +52,8 @@ export default defineConfig({
     browser: {
       enabled: true,
       headless: true,
-      provider: playwright({ launchOptions: { channel: 'chrome' } }),
-      instances: [{ browser: 'chromium' }],
+      provider: playwright(),
+      instances: requested.map((name) => ({ ...ENGINES[name as Engine] })),
       commands: { pressDown, pressUp, reduceMotion, forcedColors, prefersContrast },
     },
   },
