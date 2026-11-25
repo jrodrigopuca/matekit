@@ -1,8 +1,14 @@
 import { createRef, useState, type ReactNode } from 'react'
 import { afterEach, describe, expect, test } from 'vitest'
-import { commands, page, userEvent } from 'vitest/browser'
+import { commands, page, server, userEvent } from 'vitest/browser'
 import { Switch } from './Switch.tsx'
 import { render, roleColor, style, withMotion } from '../../test/render.tsx'
+
+// En Firefox (con Playwright), presionar un <input type="checkbox"> nativo después de haber
+// presionado otro no siempre activa :active, y pasa igual con HTML puro, sin matekit
+// (comprobado el 2026-11-25): las pruebas que presionan dos interruptores seguidos se saltean
+// en Firefox. El estado presionado se sigue probando en Chrome y WebKit.
+const pressSkippedHere = server.browser === 'firefox'
 
 const input = (c: Element) => c.querySelector('input') as HTMLInputElement
 const control = (c: Element) => c.querySelector('.mk-switch-control') as HTMLElement
@@ -158,7 +164,7 @@ describe('Switch: handle', () => {
     expect(centerX(c, handle(c))).toBe(16)
   })
 
-  test('al presionar crece a 28, activado o no, sin moverse del centro', async () => {
+  test.skipIf(pressSkippedHere)('al presionar crece a 28, activado o no, sin moverse del centro', async () => {
     const c = await render(
       <div>
         <Switch className="a" />
@@ -300,7 +306,7 @@ describe('Switch: colores por estado', () => {
     expect(Number(style(layer(c)).opacity)).toBeCloseTo(0.1)
   })
 
-  test('presionado: activado handle primary-container y onda primary; desactivado on-surface-variant y onda on-surface', async () => {
+  test.skipIf(pressSkippedHere)('presionado: activado handle primary-container y onda primary; desactivado on-surface-variant y onda on-surface', async () => {
     const c = await render(
       <div>
         <Switch className="a" />

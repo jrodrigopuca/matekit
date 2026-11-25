@@ -62,9 +62,26 @@ async function pointerAway() {
   spot.remove()
 }
 
+/**
+ * Deja el foco al principio de la página de la prueba, sin ningún elemento enfocado. Firefox, si
+ * una prueba anterior dejó el foco fuera del documento de la prueba (que corre en un iframe),
+ * hace que el primer Tab no entre al documento (pasaba al azar según el orden). Enfocar un
+ * elemento propio y quitarlo devuelve el foco al documento.
+ */
+function focusAway() {
+  const spot = document.createElement('button')
+  spot.style.cssText = 'position: fixed; left: 0; top: 0; width: 1px; height: 1px; opacity: 0;'
+  document.body.prepend(spot)
+  spot.focus()
+  spot.remove()
+}
+
 // Cada prueba empieza aislada de la anterior: sin componentes montados (un diálogo abierto
-// dejaría la página sin scroll) y con el puntero lejos.
-beforeEach(pointerAway)
+// dejaría la página sin scroll), con el puntero lejos y sin foco.
+beforeEach(async () => {
+  await pointerAway()
+  focusAway()
+})
 afterEach(cleanup)
 
 export async function render(ui: ReactNode): Promise<HTMLElement> {

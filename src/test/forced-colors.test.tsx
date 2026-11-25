@@ -3,7 +3,7 @@
 // forma y distinguir sus estados con esos colores.
 
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { commands, userEvent } from 'vitest/browser'
+import { commands, server, userEvent } from 'vitest/browser'
 import {
   Badge,
   Button,
@@ -29,6 +29,12 @@ import {
   TextFieldLabel,
 } from '../index.ts'
 import { render, style } from './render.tsx'
+
+// WebKit activa la consulta forced-colors pero no reemplaza los colores por los del sistema
+// (comprobado el 2026-11-25 con HTML puro: un texto rojo sigue rojo; Safari no tiene ese modo).
+// Lo que matekit define a mano en sus bloques @media se prueba en todos los motores; lo que
+// depende del reemplazo automático del navegador, solo donde existe.
+const autoForced = server.browser !== 'webkit'
 
 beforeEach(() => commands.forcedColors(true))
 afterEach(() => commands.forcedColors(false))
@@ -206,7 +212,7 @@ describe('Menu', () => {
     const c = await render(menu())
     expect(style(q(c, '.on')).backgroundColor).toBe(systemColor('Highlight'))
     expect(style(q(c, '.on')).color).toBe(systemColor('HighlightText'))
-    expect(style(q(c, '.plain')).color).toBe(systemColor('CanvasText'))
+    if (autoForced) expect(style(q(c, '.plain')).color).toBe(systemColor('CanvasText'))
   })
 
   test('deshabilitado en GrayText, también si está seleccionado', async () => {

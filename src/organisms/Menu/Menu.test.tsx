@@ -461,7 +461,14 @@ describe('Menu: colores por estado (Standard)', () => {
 
   test('hover 8 %, foco de teclado 10 %, presionado 8 % con onda', async () => {
     const c = await render(<Basic />)
-    await openWithKeyboard(c)
+    // Al disparador se llega con Tab, como una persona: Firefox no muestra el foco visible en
+    // un elemento enfocado por script si el foco anterior no era de teclado (por ejemplo, tras
+    // un clic de una prueba anterior), y el elemento del menú hereda ese criterio.
+    await userEvent.tab() // botón "Antes"
+    await userEvent.tab()
+    expect(document.activeElement).toBe(trigger(c))
+    await userEvent.keyboard('{ArrowDown}')
+    await expect.poll(() => isOpen(c)).toBe(true)
     expect(layer(item(c, 'Editar'))).toBe('0.1')
     await userEvent.hover(item(c, 'Compartir'))
     expect(layer(item(c, 'Compartir'))).toBe('0.08')

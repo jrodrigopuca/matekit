@@ -124,11 +124,25 @@ describe('tema claro y oscuro con light-dark()', () => {
   })
 })
 
+/**
+ * Emula prefers-contrast y vuelve a evaluar las hojas de estilo ya cargadas: con la emulación de
+ * Playwright, Firefox actualiza matchMedia pero no siempre las reglas @media de las hojas que ya
+ * estaban (comprobado: el CSS aplica en cuanto se reevalúan). Con la preferencia del sistema,
+ * que se lee al cargar la página, no hace falta.
+ */
+async function emulateContrast(on: boolean) {
+  await commands.prefersContrast(on)
+  for (const sheet of [...document.styleSheets]) {
+    sheet.disabled = true
+    sheet.disabled = false
+  }
+}
+
 describe('prefers-contrast: more', () => {
-  afterEach(() => commands.prefersContrast(false))
+  afterEach(() => emulateContrast(false))
 
   test('elige el nivel alto donde nadie fijó data-contrast', async () => {
-    await commands.prefersContrast(true)
+    await emulateContrast(true)
     const c = await render(
       <>
         <div id="a" />

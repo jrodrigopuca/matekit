@@ -318,10 +318,12 @@ describe('NavigationBar: medidas (kit y Compose)', () => {
     const lb = rect(label(item))
     expect(ind.height).toBe(40)
     expect(style(indicator(item)).borderRadius).toBe('20px')
-    expect(ic.left - ind.left).toBe(16)
-    expect(ic.top - ind.top).toBe(8)
-    expect(lb.left - ic.right).toBe(4)
-    expect(ind.right - lb.right).toBe(16)
+    // Diferencias de posiciones con tolerancia de centésimas: Firefox ubica en subpíxeles
+    // (16.000015 en vez de 16) según el ancho de la etiqueta.
+    expect(ic.left - ind.left).toBeCloseTo(16, 2)
+    expect(ic.top - ind.top).toBeCloseTo(8, 2)
+    expect(lb.left - ic.right).toBeCloseTo(4, 2)
+    expect(ind.right - lb.right).toBeCloseTo(16, 2)
     expect(ind.width).toBeCloseTo(16 + 24 + 4 + lb.width + 16, 0)
     expect((ind.top + ind.bottom) / 2).toBeCloseTo((rect(item).top + rect(item).bottom) / 2, 0)
     expect((lb.top + lb.bottom) / 2).toBeCloseTo((ic.top + ic.bottom) / 2, 0)
