@@ -31,12 +31,12 @@ import {
   type ReactElement,
   type ReactNode,
   type Ref,
-  type RefCallback,
   type RefObject,
 } from 'react'
 import { FocusRing } from '../../atoms/FocusRing/FocusRing.tsx'
 import { Ripple } from '../../atoms/Ripple/Ripple.tsx'
 import { StateLayer } from '../../atoms/StateLayer/StateLayer.tsx'
+import { mergeRefs } from '../../internal/merge-refs.ts'
 import { fallbackPosition, observedPlacement, supportsAnchorPositioning } from './position.ts'
 
 /** Elemento que recibe el foco al abrir. */
@@ -72,23 +72,6 @@ function useMenu(part: string): MenuContextValue {
 }
 
 const cx = (base: string, extra: string | undefined) => (extra ? `${base} ${extra}` : base)
-
-/** Une varias referencias (objeto o función, con la limpieza de React 19) en una sola. */
-function mergeRefs<T>(...refs: Array<Ref<T> | undefined>): RefCallback<T> {
-  return (node) => {
-    const cleanups = refs.map((ref) => {
-      if (typeof ref === 'function') {
-        const cleanup = ref(node)
-        return () => (typeof cleanup === 'function' ? cleanup() : ref(null))
-      }
-      if (ref) ref.current = node
-      return () => {
-        if (ref) ref.current = null
-      }
-    })
-    return () => cleanups.forEach((c) => c())
-  }
-}
 
 const ITEM_SELECTOR = '[role="menuitem"], [role="menuitemradio"], [role="menuitemcheckbox"]'
 

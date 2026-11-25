@@ -12,7 +12,6 @@
 import {
   createContext,
   use,
-  useCallback,
   useId,
   useLayoutEffect,
   useMemo,
@@ -24,9 +23,9 @@ import {
   type MouseEvent,
   type PointerEvent,
   type Ref,
-  type RefCallback,
   type SyntheticEvent,
 } from 'react'
+import { mergeRefs } from '../../internal/merge-refs.ts'
 
 interface DialogContextValue {
   headlineId: string
@@ -44,31 +43,6 @@ function useDialog(part: string): DialogContextValue {
 }
 
 const cx = (base: string, extra: string | undefined) => (extra ? `${base} ${extra}` : base)
-
-/** Une la referencia interna con la del usuario (objeto o función, con limpieza de React 19). */
-function useMergedRef<T>(ref: Ref<T> | undefined): [{ current: T | null }, RefCallback<T>] {
-  const inner = useRef<T | null>(null)
-  const merged = useCallback<RefCallback<T>>(
-    (node) => {
-      inner.current = node
-      if (typeof ref === 'function') {
-        const cleanup = ref(node)
-        return () => {
-          inner.current = null
-          if (typeof cleanup === 'function') cleanup()
-          else ref(null)
-        }
-      }
-      if (ref) ref.current = node
-      return () => {
-        inner.current = null
-        if (ref) ref.current = null
-      }
-    },
-    [ref],
-  )
-  return [inner, merged]
-}
 
 /** El punto del evento cae fuera de la caja del diálogo: el clic fue en el fondo (::backdrop). */
 function onScrim(dialog: HTMLDialogElement, e: { target: EventTarget; clientX: number; clientY: number }) {
@@ -202,7 +176,9 @@ export function Dialog({
   onPointerDown,
   ...props
 }: DialogProps) {
-  const [dialogRef, setDialogRef] = useMergedRef(ref)
+  // La referencia propia al <dialog> se asigna primero y se limpia primero, como antes.
+  const dialogRef = useRef<HTMLDialogElement | null>(null)
+  const setDialogRef = useMemo(() => mergeRefs(dialogRef, ref), [ref])
   const generatedId = useId()
   const [headlineId, setHeadlineId] = useState<string | undefined>(undefined)
   const [contentId, setContentId] = useState<string | undefined>(undefined)
