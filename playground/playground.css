@@ -424,3 +424,60 @@ body {
 .pg-shape-cell code {
   color: var(--md-sys-color-on-surface);
 }
+
+/* Cabecera del formulario: forma decorativa con icono, título y bajada. */
+.pg-example-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.pg-example-subtitle {
+  margin: 2px 0 0;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: var(--md-sys-typescale-body-medium-size);
+  line-height: var(--md-sys-typescale-body-medium-line-height);
+}
+.pg-example-badge {
+  --mk-icon-size: 24px;
+  flex: none;
+  width: 56px;
+  height: 56px;
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+}
+.pg-example-badge-done {
+  width: 72px;
+  height: 72px;
+  --mk-icon-size: 32px;
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+}
+
+.pg-example-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.pg-example-label {
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: var(--md-sys-typescale-body-large-size);
+}
+
+.pg-example-sending {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.pg-example-done {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  padding: 24px 0 8px;
+  text-align: center;
+}
+.pg-example-done p {
+  margin: 0;
+}
