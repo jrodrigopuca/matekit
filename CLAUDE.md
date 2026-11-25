@@ -23,6 +23,7 @@ Antes de decidir algo que cueste revertir, leer `docs/adr/README.md` y aplicar l
 | `pnpm test:browser` | Solo las pruebas de componentes, en el Chrome del sistema; `MK_BROWSERS=firefox` o `webkit` (separados por coma) los corre en esos motores, que el CI prueba en cada push |
 | `pnpm tokens` | Regenera `src/tokens/*.css` y `src/tokens/palettes/*.css` desde `tokens/*.json` (paletas: ADR-0008) |
 | `pnpm icons` / `pnpm icons:fetch` | Regenera los iconos (ver ADR-0006) |
+| `pnpm shapes` | Regenera las 35 formas decorativas (`shapes/material-shapes.json`, `src/atoms/Shape/shapes.ts` y `shape-masks.css`) con la portación de `scripts/lib/shapes/` (ADR-0011) |
 
 ## Estructura y capas (ADR-0002)
 
@@ -30,8 +31,12 @@ Antes de decidir algo que cueste revertir, leer `docs/adr/README.md` y aplicar l
 tokens/          datos de origen de los tokens (JSON) y su física (spring.ts)
 scripts/lib/     color-schemes.ts, palette-css.ts y css.ts: generador de paletas, futuro
                  @matekit/theme (ADR-0009); no importan React, componentes ni tokens/
+scripts/lib/shapes/  portación a TypeScript de androidx.graphics.shapes y MaterialShapes.kt
+                 (Apache 2.0, con el aviso y el commit de origen en cada archivo; ADR-0011);
+                 mismas reglas que scripts/lib/
+shapes/          contornos SVG generados de las 35 formas decorativas (pnpm shapes)
 src/tokens/      CSS generado: no editar a mano
-src/atoms/       primitivas: StateLayer, FocusRing, Ripple, Icon
+src/atoms/       primitivas: StateLayer, FocusRing, Ripple, Icon, Shape
 src/molecules/   controles: Button, Checkbox, …
 src/organisms/   combinan controles: Dialog, Menu, NavigationBar, …
 src/icons/       iconos generados

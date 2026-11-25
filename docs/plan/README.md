@@ -22,6 +22,7 @@ siguiente. Convenciones en [`CLAUDE.md`](../../CLAUDE.md).
 | FAB y FAB extendido | molécula | universales; FAB 56/80/96 y extendido 56/80/96 (sin el FAB de 40, obsoleto), seis colores, `lowered`; el extendido se contrae con `expanded` (grilla de 0fr a 1fr); enlaces o `render` (ADR-0010, lógica compartida con NavigationBar en `src/internal/interactive.tsx`); medidas y colores del kit; resuelto por agente y revisado el 2026-11-25 |
 | NavigationRail | organismo | universal; contraído (96) y expandido (220, ajustable hasta 360), docked y floating, alineación top y middle, etiquetas ocultas en el contraído; transición con resortes en CSS (grilla de pistas interpoladas); destino compartido con NavigationBar (`src/internal/navigation-item.tsx` y la base de `navigation-bar.css`); resuelto por agente y revisado el 2026-11-25 |
 | 32 iconos | icons | ADR-0006 |
+| Formas decorativas (entrega 1): portación de `androidx.graphics.shapes`, 35 formas y átomo Shape | átomo | ADR-0011; universal, recorta con `mask-image` (se estira al tamaño del elemento); `pnpm shapes` genera `shapes/material-shapes.json`, el tipo `ShapeName`, `SHAPES` y las máscaras; resuelto por agente el 2026-11-25 |
 
 ## Orden y motivo
 
@@ -222,18 +223,18 @@ Lists, Tabs, Snackbar, Tooltip, Sheets, compilación y publicación del paquete,
 dinámico (ADR-0004). Al publicar: crear `@matekit/theme` con el generador de `scripts/lib/` y
 su comando (ADR-0009).
 
-**Formas decorativas (pendiente, con ADR propio cuando se encare).** Las 35 formas de
-Expressive (`03-tokens.md` § Formas decorativas; Compose `MaterialShapes.kt` sobre
-`androidx.graphics.shapes`):
+**Formas decorativas (ADR-0011).** Las 35 formas de Expressive (`03-tokens.md` § Formas
+decorativas; Compose `MaterialShapes.kt` sobre `androidx.graphics.shapes`):
 
-- Átomo `Shape` que recorte su contenido con una de las 35 formas (avatares, imágenes,
-  fondos de iconos), con `clip-path: path()` (soportado en los tres navegadores).
-- Contornos generados al compilar, como los iconos, a partir de una portación a TypeScript de
-  `RoundedPolygon` (Apache 2.0: conservar el aviso de licencia); sin cálculo en el navegador
-  ni dependencia del conector de Figma.
-- Indicador de carga de Expressive, que anima entre formas: contornos con la misma cantidad de
-  puntos para poder interpolarlos, con `shape()` (Chrome 135, Safari 18.4, Firefox 148) o
-  pasos intermedios calculados al compilar.
+- [x] Átomo `Shape` que recorta su contenido con una de las 35 formas (avatares, imágenes,
+  fondos de iconos). Se hizo con `mask-image` y no con `clip-path: path()`, que no se adapta
+  al tamaño del elemento (ADR-0011).
+- [x] Contornos generados al compilar (`pnpm shapes`), como los iconos, a partir de una
+  portación a TypeScript de `RoundedPolygon` en `scripts/lib/shapes/` (Apache 2.0, con el aviso
+  de licencia); sin cálculo en el navegador ni dependencia del conector de Figma.
+- [ ] Indicador de carga de Expressive (entrega 2 del ADR-0011): `Morph` y lo que necesita,
+  pasos de transición entre las 7 formas precalculados y animados con `<animate>`, y versión
+  estática con `prefers-reduced-motion`.
 - Cambio de forma por posición (esquinas interiores más chicas) en grupos de botones
   conectados, botón dividido y botones segmentados, cuando se hagan.
 - No se adopta `corner-shape` (esquinas superelípticas): Material 3 usa esquinas circulares.

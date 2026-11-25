@@ -15,3 +15,4 @@ nueva la reemplaza y la anterior pasa a "superseded by".
 | [0008](0008-paletas-y-niveles-de-contraste.md) | Paletas opcionales y niveles de contraste generados al compilar, con `light-dark()` | accepted |
 | [0009](0009-paquete-matekit-theme.md) | Generador de paletas como paquete aparte, `@matekit/theme`, que trabaja al compilar con un solo color | accepted |
 | [0010](0010-enlaces-y-enrutadores-con-render.md) | Destinos de navegación como `<a>`, `<button>` o el elemento de `render`, sin depender del enrutador | accepted |
+| [0011](0011-formas-decorativas-portando-graphics-shapes.md) | Formas decorativas e indicador de carga, portando `androidx.graphics.shapes` como herramienta de compilación | accepted |

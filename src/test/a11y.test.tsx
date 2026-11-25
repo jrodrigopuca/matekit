@@ -50,6 +50,7 @@ import {
   TextFieldSupporting,
   TextFieldTrailing,
   Icon,
+  Shape,
 } from '../index.ts'
 import { a11yViolations } from './a11y.ts'
 import { render } from './render.tsx'
@@ -230,6 +231,19 @@ const GALLERIES: Record<string, ReactNode> = {
     <>
       <Icon label="Favorito"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /></svg></Icon>
       <span><Icon><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /></svg></Icon> Decorativo</span>
+    </>
+  ),
+  // Shape es decoración: un avatar lleva el texto alternativo en la imagen, o role="img" con
+  // nombre en la forma; un fondo de icono deja el icono decorativo.
+  Shape: (
+    <>
+      <Shape shape="cookie-9-sided" style={{ width: 48, height: 48 }}>
+        <img alt="Ana" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" />
+      </Shape>
+      <Shape shape="heart" role="img" aria-label="Favorito" style={{ width: 48, height: 48, background: 'var(--md-sys-color-primary)' }} />
+      <Shape shape="sunny" style={{ width: 48, height: 48, background: 'var(--md-sys-color-primary-container)', color: 'var(--md-sys-color-on-primary-container)' }}>
+        <StarIcon />
+      </Shape>
     </>
   ),
 }

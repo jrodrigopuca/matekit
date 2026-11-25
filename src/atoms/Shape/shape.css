@@ -1,0 +1,37 @@
+/* Shape: recorta el contenido con una forma decorativa (ADR-0011). La máscara de cada forma
+   está en shape-masks.css (generado), en --_shape-mask, según data-shape. */
+
+@layer matekit.atoms {
+  .mk-shape {
+    display: inline-grid;
+    place-items: center;
+    vertical-align: middle;
+    /* El SVG trae preserveAspectRatio='none' y se estira al tamaño del elemento, como Compose
+       escala la forma por el ancho y el alto. */
+    mask-image: var(--_shape-mask);
+    mask-size: 100% 100%;
+    mask-repeat: no-repeat;
+    mask-position: center;
+  }
+
+  /* Imágenes y videos llenan la forma sin deformarse. */
+  .mk-shape > :is(img, video, canvas, picture) {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* Alto contraste: la máscara no es un color, así que el navegador no la toca y la forma sigue
+     recortando: una imagen recortada conserva su forma. Un fondo de color, en cambio, lo
+     reemplaza el navegador por el del sistema (Canvas) y la forma deja de distinguirse del
+     fondo de la página; el contenido (un icono, en CanvasText) se sigue viendo. Es decoración
+     y no transmite información, así que no se fuerza un color propio: un relleno de CanvasText
+     taparía el icono y cambiaría las imágenes con transparencias. Se repite la máscara para
+     dejar explícito que se conserva. */
+  @media (forced-colors: active) {
+    .mk-shape {
+      mask-image: var(--_shape-mask);
+    }
+  }
+}

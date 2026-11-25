@@ -10,6 +10,7 @@ import { IconsPage } from './pages/IconsPage.tsx'
 import { MenuPage } from './pages/MenuPage.tsx'
 import { NavigationBarPage } from './pages/NavigationBarPage.tsx'
 import { NavigationRailPage } from './pages/NavigationRailPage.tsx'
+import { ShapesPage } from './pages/ShapesPage.tsx'
 import { SwitchPage } from './pages/SwitchPage.tsx'
 import { TextFieldPage } from './pages/TextFieldPage.tsx'
 import { TokensPage } from './pages/TokensPage.tsx'
@@ -37,6 +38,7 @@ const PAGES = {
   'navigation-rail': { label: 'NavigationRail', Page: NavigationRailPage },
   examples: { label: 'Ejemplos', Page: ExamplesPage },
   icons: { label: 'Iconos', Page: IconsPage },
+  shapes: { label: 'Formas', Page: ShapesPage },
   tokens: { label: 'Tokens', Page: TokensPage },
 } as const
 type PageId = keyof typeof PAGES

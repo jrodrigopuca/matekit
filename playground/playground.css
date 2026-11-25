@@ -390,3 +390,37 @@ body {
   grid-template-columns: repeat(auto-fill, minmax(520px, 1fr));
   gap: 24px;
 }
+
+/* Formas decorativas */
+.pg-shapes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(max(var(--pg-shape-size), 120px), 1fr));
+  gap: 24px 16px;
+}
+
+.pg-shape-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.pg-shape-sample {
+  width: var(--pg-shape-size);
+  height: var(--pg-shape-size);
+}
+
+.pg-shape-cell figcaption {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: var(--md-sys-typescale-label-medium-size);
+  text-align: center;
+}
+
+.pg-shape-cell code {
+  color: var(--md-sys-color-on-surface);
+}

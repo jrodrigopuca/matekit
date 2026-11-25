@@ -18,6 +18,7 @@ import {
   NavigationRailItemIcon,
   NavigationRailItemLabel,
   Checkbox,
+  Shape,
   Dialog,
   EditIcon,
   ExtendedFab,
@@ -37,6 +38,7 @@ import {
   TextFieldLabel,
 } from '../index.ts'
 import { render, style } from './render.tsx'
+import { near, pixelsOf } from './pixels.ts'
 
 // WebKit activa la consulta forced-colors pero no reemplaza los colores por los del sistema
 // (comprobado el 2026-11-25 con HTML puro: un texto rojo sigue rojo; Safari no tiene ese modo).
@@ -372,5 +374,42 @@ describe('NavigationRail', () => {
       expect(style(q(c, sel)).backgroundColor, sel).toBe(systemColor('CanvasText'))
     }
     expect(style(q(c, '.on .mk-badge')).color).toBe(systemColor('Canvas'))
+  })
+})
+
+describe('Shape', () => {
+  // La máscara no es un color: el modo no la toca y la forma sigue recortando. El contenido es un
+  // canvas rojo (el modo no cambia lo que dibuja un canvas ni una imagen). Un fondo de color, en
+  // cambio, lo reemplaza el navegador por Canvas: la forma deja de verse contra la página y el
+  // icono que tenga encima sigue visible (decisión documentada en shape.css).
+  test('la máscara sigue recortando: la esquina de un circle no muestra el contenido', async () => {
+    const canvas = document.createElement('canvas')
+    canvas.width = canvas.height = 8
+    const ctx = canvas.getContext('2d')!
+    ctx.fillStyle = 'rgb(255, 0, 0)'
+    ctx.fillRect(0, 0, 8, 8)
+    const c = await render(
+      <div className="stage" style={{ display: 'inline-block', lineHeight: 0 }}>
+        <Shape shape="circle" style={{ width: 100, height: 100 }}>
+          <img src={canvas.toDataURL()} alt="" />
+        </Shape>
+      </div>,
+    )
+    await (c.querySelector('img') as HTMLImageElement).decode()
+    expect(style(q(c, '.mk-shape')).maskImage).toContain('data:image/svg+xml')
+    const px = await pixelsOf(q(c, '.stage'))
+    expect(near(px.at(50, 50), [255, 0, 0])).toBe(true)
+    expect(near(px.at(3, 3), [255, 0, 0]), `esquina: ${px.at(3, 3)}`).toBe(false)
+    expect(near(px.at(96, 96), [255, 0, 0])).toBe(false)
+  })
+
+  test.skipIf(!autoForced)('un fondo de color pasa a Canvas y el icono encima queda en CanvasText', async () => {
+    const c = await render(
+      <Shape shape="sunny" style={{ width: 80, height: 80, background: 'var(--md-sys-color-primary-container)' }}>
+        <StarIcon />
+      </Shape>,
+    )
+    expect(style(q(c, '.mk-shape')).backgroundColor).toBe(systemColor('Canvas'))
+    expect(style(q(c, '.mk-icon svg')).fill).toBe(systemColor('CanvasText'))
   })
 })
