@@ -351,8 +351,9 @@ variante de error.
 | Disabled | `On Surface` al 38 % | — | `On Surface` al 38 % | — |
 
 Al presionar, la capa toma el color del estado de destino (al revés que en hover y foco):
-`On Surface` sobre el seleccionado y `Primary` sobre el sin seleccionar. Confirmar contra
-`RadioButtonTokens.kt` de Compose.
+`On Surface` sobre el seleccionado y `Primary` sobre el sin seleccionar. Compose no lo define
+(ya no trae colores de capa); lo confirman los tokens de `@material/web`: ver
+[07-jetpack-compose.md § RadioButton](07-jetpack-compose.md#radiobutton).
 
 ## Divider
 

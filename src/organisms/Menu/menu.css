@@ -20,7 +20,7 @@
        (DropdownMenuItemDefaultMinWidth/MaxWidth); 48 de margen con los bordes de la ventana
        (MenuVerticalMargin); animación de escala 0,8 → 1 con FastSpatial y opacidad con
        FastEffects, desde el borde del disparador.
-     - tokens/DividerTokens.kt: divisor de 1 en Outline Variant.
+     - El divisor es el átomo Divider (tokens/DividerTokens.kt, citado en divider.css).
      Tipografía: Label Large, confirmado en el kit ("Menu item/Standard", M3/label/large). El
      Body Large de SegmentedMenuTokens es el del menú anterior; ver
      docs/research/07-jetpack-compose.md § Menu.
@@ -255,30 +255,22 @@
   }
 
   /* --- Divisor ---
-     Ni el kit (que agrupa) ni Compose (que separa grupos con espacio) dan el margen del
-     divisor: 6 + los 2 del elemento dejan 8 a cada lado, como el divisor del menú anterior. */
+     La línea es el átomo Divider (src/atoms/Divider/divider.css, también en alto contraste);
+     acá solo el margen. Ni el kit (que agrupa) ni Compose (que separa grupos con espacio) lo
+     dan: 6 + los 2 del elemento dejan 8 a cada lado, como el divisor del menú anterior. */
   .mk-menu-divider {
-    flex-shrink: 0;
-    box-sizing: content-box;
-    height: 1px;
-    margin: 6px 0;
-    border: none;
-    background-color: var(--md-sys-color-outline-variant);
+    margin-block: 6px;
   }
 
   /* --- Alto contraste (forced-colors) ---
      El navegador quita el fondo y la sombra, con lo que el menú se confunde con la página: un
-     contorno CanvasText marca su borde. El divisor es un fondo, así que pasa a borde. El
+     contorno CanvasText marca su borde (el divisor ya pasa a borde en el átomo Divider). El
      seleccionado se marca con Highlight y el deshabilitado con GrayText, sin opacidad; para eso
      esos elementos salen del ajuste automático (forced-color-adjust: none, que se hereda) y
      usan colores del sistema también en los iconos y el anillo de foco. */
   @media (forced-colors: active) {
     .mk-menu {
       outline: 1px solid CanvasText;
-    }
-    .mk-menu-divider {
-      height: 0;
-      border-top: 1px solid CanvasText;
     }
     .mk-menu-item[aria-checked='true'] {
       forced-color-adjust: none;

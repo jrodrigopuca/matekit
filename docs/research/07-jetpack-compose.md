@@ -159,6 +159,44 @@ con el presionado del kit; Compose no la define en `SwitchTokens.kt`.
 No se buscó una tercera fuente: las diferencias son de uno o dos puntos de opacidad o de tono
 y no se ven a simple vista, así que no justifican apartarse del kit.
 
+## RadioButton
+
+Leído el 2026-11-25: `tokens/RadioButtonTokens.kt` (versión de tokens `41.1.19`, commit
+`76990c62ac` del 2026-11-24) y `RadioButton.kt` (commit `de12189a63` del 2026-11-11), en
+`compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/`.
+
+### Lo que confirma
+
+Capa de estado de 40 (`StateLayerSize`), dibujo de 20 (`IconSize`), icono `primary`
+seleccionado en todos los estados, `on-surface-variant` sin seleccionar y `on-surface` sin
+seleccionar con hover, foco y presionado; deshabilitado `on-surface` al 38 % (seleccionado y
+sin seleccionar).
+
+### Datos nuevos (el kit no los trae)
+
+| Dato | Compose |
+|---|---|
+| Trazo del anillo | 2 (`RadioStrokeWidth`), dibujado en un círculo de radio 10 − 1: borde exterior en 20 |
+| Punto | radio animado de 0 a 6 (`RadioButtonDotSize / 2`), dibujado con radio − 1: **10 de diámetro** |
+| Animación del punto | `animateDpAsState` con el resorte **FastSpatial** (rebota) |
+| Animación del color | `animateColorAsState` con **DefaultEffects**; deshabilitado, sin animación ("snap") |
+
+matekit escala un punto de 10 (`scale` de 0 a 1 con el mismo resorte). Compose anima el radio
+antes de restarle el medio trazo, así que su punto empieza a verse algo más tarde y su rebote
+llega a 11,1 en vez de 10,9: menos de 0,2 px de diferencia, que no se distingue.
+
+### Conflictos y decisiones
+
+| Tema | Kit | Compose | Decisión |
+|---|---|---|---|
+| Capa de estado al presionar | `On Surface` 10 % seleccionado, `Primary` 10 % sin seleccionar (al revés que hover y foco) | `RadioButtonTokens.kt` no tiene colores de capa (las versiones `v0_*` desde 2022 tampoco); el `ripple()` de `RadioButton.kt` no recibe color, así que usa el del contenido en todos los estados | **Kit**. Tercera fuente: los tokens de `@material/web` (`tokens/versions/latest/sass/_md-comp-radio-button.scss`, versión `34.0.21`, consultado el 2026-11-25) traen `selected.pressed.state-layer.color = on-surface` y `unselected.pressed.state-layer.color = primary`, iguales al kit. La onda usa el mismo color que la capa. |
+
+`@material/web` (`docs/components/radio.md`, consultado el 2026-11-25), para comportamiento: los
+radios forman grupo por `name`; el grupo va en `role="radiogroup"` con nombre visible
+(`aria-label` o `aria-labelledby`). Su aviso de no envolver el radio en un `<label>` es propio
+de su elemento personalizado (`md-radio`, con shadow DOM); con un `<input type="radio">` nativo
+dentro del `<label>`, como hace matekit, el lector de pantalla cuenta la posición en el grupo.
+
 ## IconButton
 
 Leído el 2026-11-24 (último cambio en la carpeta de tokens: commit `ac364f3c7f`, del

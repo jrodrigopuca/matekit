@@ -11,6 +11,7 @@
 // `TextFieldTrailing`. El texto del elemento no necesita parte: va como hijo de `MenuItem`.
 
 import type { HTMLAttributes, Ref } from 'react'
+import { Divider, type DividerProps } from '../../atoms/Divider/Divider.tsx'
 
 const cx = (base: string, extra: string | undefined) => (extra ? `${base} ${extra}` : base)
 
@@ -49,15 +50,16 @@ export function MenuItemTrailing({ className, ...props }: MenuItemTrailingProps)
   return <span {...props} className={cx('mk-menu-item-trailing', className)} />
 }
 
-export interface MenuDividerProps extends HTMLAttributes<HTMLHRElement> {
-  ref?: Ref<HTMLHRElement> | undefined
-}
+// Sin orientation ni decorative: en un menú el divisor es siempre horizontal y separa grupos
+// que el lector de pantalla tiene que poder distinguir.
+export type MenuDividerProps = Omit<DividerProps, 'orientation' | 'decorative'>
 
 /**
- * Divisor entre grupos de elementos (`role="separator"`): una línea de 1 px en
- * `outline-variant`. No se enfoca. Para un grupo de `type="radio"`, separarlo del resto con
- * divisores, como pide APG.
+ * Divisor entre grupos de elementos (`role="separator"`): el átomo `Divider` con 6 px de
+ * margen arriba y abajo. No se enfoca. Para un grupo de `type="radio"`, separarlo del resto
+ * con divisores, como pide APG.
  */
 export function MenuDivider({ className, ...props }: MenuDividerProps) {
-  return <hr role="separator" {...props} className={cx('mk-menu-divider', className)} />
+  // El rol explícito repite el implícito del <hr>, como antes de usar el átomo.
+  return <Divider role="separator" {...props} className={cx('mk-menu-divider', className)} />
 }

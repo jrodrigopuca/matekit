@@ -1,0 +1,93 @@
+/* Divider: línea de 1 px en Outline Variant, horizontal o vertical, con sangría opcional.
+
+   Fuentes:
+   - Kit de Figma (docs/research/05-medidas.md § Divider): línea de 1 en Outline Variant;
+     horizontal Full-width, Inset (16 al inicio) y Middle-inset (16 a ambos lados); vertical
+     igual arriba y abajo. "Divider with subhead": 16 a ambos lados, la línea y debajo, con
+     separación 4, el subtítulo en Title Small y On Surface Variant (25 de alto).
+   - Jetpack Compose (compose/material3/material3/src/commonMain/kotlin/androidx/compose/
+     material3/): tokens/DividerTokens.kt (commit 76990c62ac, 2026-11-24) confirma el grosor
+     (Thickness 1.0.dp) y el color (OutlineVariant); Divider.kt (commit 080d2b3e53,
+     2026-07-24) da el tamaño: HorizontalDivider llena el ancho (fillMaxWidth) y
+     VerticalDivider el alto (fillMaxHeight). Compose no tiene sangrías: se ponen con padding.
+
+   Sangría con direcciones lógicas: "al inicio" es margin-inline-start (a la derecha en RTL) y,
+   en la vertical, margin-block-start (arriba). --mk-divider-inset la cambia (por ejemplo, para
+   alinear con el texto de una lista que tiene icono).
+
+   Dentro de flex o grid, align-self y justify-self: stretch hacen que la horizontal llene el
+   ancho y la vertical el alto del contenedor aunque este centre sus hijos (align-items o
+   place-items: center), y la sangría se descuenta del largo. La vertical fuera de flex o grid
+   no tiene alto propio: ponérselo con style o con block-size. */
+
+@layer matekit.atoms {
+  .mk-divider {
+    --_inset: var(--mk-divider-inset, 16px);
+
+    /* El <hr> del navegador trae margen automático a los lados, borde en relieve y color gris. */
+    flex-shrink: 0;
+    align-self: stretch;
+    justify-self: stretch;
+    box-sizing: content-box;
+    width: auto;
+    height: 1px;
+    margin: 0;
+    border: none;
+    background-color: var(--md-sys-color-outline-variant);
+  }
+
+  .mk-divider[aria-orientation='vertical'] {
+    width: 1px;
+    height: auto;
+  }
+
+  .mk-divider[data-inset] {
+    margin-inline-start: var(--_inset);
+  }
+  .mk-divider[data-inset='both'] {
+    margin-inline-end: var(--_inset);
+  }
+  .mk-divider[aria-orientation='vertical'][data-inset] {
+    margin-inline: 0;
+    margin-block-start: var(--_inset);
+  }
+  .mk-divider[aria-orientation='vertical'][data-inset='both'] {
+    margin-block-end: var(--_inset);
+  }
+
+  /* --- Divisor con subtítulo --- */
+  .mk-divider-subhead {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding-inline: 16px;
+    color: var(--md-sys-color-on-surface-variant);
+  }
+  /* El título es un elemento del usuario (<h3>, …): se le quita el margen y el estilo del
+     navegador. :where() deja la especificidad de .mk-divider-subhead, para que una clase propia
+     lo pueda cambiar. */
+  .mk-divider-subhead > :where(:not(.mk-divider)) {
+    margin: 0;
+    font-family: var(--md-sys-typescale-title-small-font);
+    font-size: var(--md-sys-typescale-title-small-size);
+    line-height: var(--md-sys-typescale-title-small-line-height);
+    font-weight: var(--md-sys-typescale-title-small-weight);
+    letter-spacing: var(--md-sys-typescale-title-small-tracking);
+  }
+
+  /* --- Alto contraste (forced-colors) ---
+     El navegador reemplaza el fondo por Canvas, con lo que la línea desaparece: pasa a ser un
+     borde CanvasText del mismo grosor. */
+  @media (forced-colors: active) {
+    .mk-divider {
+      height: 0;
+      border-top: 1px solid CanvasText;
+    }
+    .mk-divider[aria-orientation='vertical'] {
+      width: 0;
+      height: auto;
+      border-top: none;
+      border-inline-start: 1px solid CanvasText;
+    }
+  }
+}
