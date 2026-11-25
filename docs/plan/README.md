@@ -210,6 +210,12 @@ Fuente: `05-medidas.md` § Navigation rail; Compose `NavigationRailCollapsedToke
 
 ## Fuera de este plan
 
+**XR (decidido el 2026-11-25).** El kit trae componentes y variantes para XR (por ejemplo
+`XR Navigation Rail` y su elemento). No se implementan por ahora: se dejan para una etapa
+posterior, cuando la librería tenga versiones estables y haya un proyecto para XR. Mientras
+tanto, al extraer datos del kit se ignoran las variantes XR. Revisar si aparece un proyecto
+que lo necesite.
+
 Chips,
 Lists, Tabs, Snackbar, Tooltip, Sheets, compilación y publicación del paquete, color
 dinámico (ADR-0004). Al publicar: crear `@matekit/theme` con el generador de `scripts/lib/` y
