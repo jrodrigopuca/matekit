@@ -1,6 +1,7 @@
 // Átomo universal (ADR-0003): sin estado, efectos, contexto ni eventos; no lleva 'use client'.
-// La forma es CSS: shape-masks.css (generado con pnpm shapes, ADR-0011) define la máscara de
-// cada forma y shape.css la aplica.
+// La forma es CSS: la hoja opcional src/shapes.css (generada con pnpm shapes, ADR-0011) define
+// la máscara de cada forma y shape.css la aplica. Hay que importarla además de styles.css:
+// `import '@matekit/react/styles.css'` y `import '@matekit/react/shapes.css'`.
 
 import type { HTMLAttributes, Ref } from 'react'
 import type { ShapeName } from './shapes.ts'

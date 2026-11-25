@@ -1,7 +1,8 @@
 /* Hoja de estilos única de matekit: se importa una vez en la aplicación.
    El orden de las capas permite que cualquier estilo propio (fuera de @layer) gane.
    Las paletas opcionales (src/tokens/palettes/*.css, ADR-0008) se importan aparte y van en
-   matekit.palettes, después de los tokens base. */
+   matekit.palettes, después de los tokens base. Las máscaras de las formas decorativas
+   (src/shapes.css, ADR-0011) también son una hoja opcional. */
 
 @layer matekit.tokens, matekit.palettes, matekit.atoms, matekit.components;
 
@@ -11,7 +12,6 @@
 @import './atoms/FocusRing/focus-ring.css';
 @import './atoms/Ripple/ripple.css';
 @import './atoms/Shape/shape.css';
-@import './atoms/Shape/shape-masks.css';
 @import './molecules/Button/button.css';
 /* Después de button.css: usa su base común y la sobrescribe por orden. */
 @import './molecules/IconButton/icon-button.css';

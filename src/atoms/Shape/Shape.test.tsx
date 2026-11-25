@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest'
+import '../../shapes.css'
 import { createRef } from 'react'
 import { Shape } from './Shape.tsx'
 import { SHAPES } from './shapes.ts'

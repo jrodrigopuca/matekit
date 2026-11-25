@@ -1,5 +1,6 @@
 /* Shape: recorta el contenido con una forma decorativa (ADR-0011). La máscara de cada forma
-   está en shape-masks.css (generado), en --_shape-mask, según data-shape. */
+   está en la hoja opcional src/shapes.css (generada), en --_shape-mask, según data-shape. Sin
+   esa hoja, --_shape-mask no está definida, mask-image no aplica y el contenido se ve entero. */
 
 @layer matekit.atoms {
   .mk-shape {

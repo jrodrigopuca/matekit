@@ -148,8 +148,10 @@ describe('Datos de las formas', () => {
     }
   })
 
-  test('la máscara CSS de cada forma está en shape-masks.css', () => {
-    const css = read('src', 'atoms', 'Shape', 'shape-masks.css')
+  test('la máscara CSS de cada forma está en la hoja opcional shapes.css, no en styles.css', () => {
+    const css = read('src', 'shapes.css')
+    assert.ok(css.includes('@layer matekit.tokens, matekit.palettes, matekit.atoms, matekit.components;'), 'orden de capas')
+    assert.doesNotMatch(read('src', 'styles.css'), /@import[^;]*(shapes\.css|shape-masks)/)
     for (const s of data.shapes) {
       assert.ok(css.includes(`.mk-shape[data-shape='${s.name}']`), s.name)
       assert.ok(css.includes(`d='${s.path}'`), `${s.name}: contorno distinto del JSON`)

@@ -2,7 +2,8 @@
 // androidx.graphics.shapes de scripts/lib/shapes/:
 // - shapes/material-shapes.json: el contorno SVG de cada forma, en un viewBox de 0 a 100;
 // - src/atoms/Shape/shapes.ts: el tipo con los nombres y la lista para catálogos (SHAPES);
-// - src/atoms/Shape/shape-masks.css: la máscara de cada forma, para el átomo Shape.
+// - src/shapes.css: la máscara de cada forma, para el átomo Shape. Es una hoja opcional (se
+//   importa aparte de styles.css, como las paletas): pesa unos 30 KB y no todos usan formas.
 // Uso: pnpm shapes   (sin conexión; determinista: dos corridas dan los mismos archivos)
 
 import { mkdirSync, writeFileSync } from 'node:fs'
@@ -113,7 +114,7 @@ ${shapes.map((s) => `  { name: '${s.name}', label: '${s.label}', compose: '${s.c
 mkdirSync(join(root, 'src', 'atoms', 'Shape'), { recursive: true })
 writeFileSync(join(root, 'src', 'atoms', 'Shape', 'shapes.ts'), ts)
 
-// --- src/atoms/Shape/shape-masks.css ---
+// --- src/shapes.css (hoja opcional) ---
 // SVG sin colores: el trazo se rellena con el negro opaco por defecto, que en una máscara
 // (mask-mode: match-source -> alpha) deja ver el contenido. preserveAspectRatio='none' estira la
 // forma al tamaño del elemento, como Compose escala x e y por separado.
@@ -129,15 +130,22 @@ const dataUrl = (d: string) =>
     .replace(/%3D/g, '=')
     .replace(/%27/g, "'")}")`
 
+// Declara el orden de capas completo, como las paletas: así se puede importar antes o después de
+// styles.css sin cambiar a qué capa pertenece.
+const LAYER_ORDER = '@layer matekit.tokens, matekit.palettes, matekit.atoms, matekit.components;'
 const css = `/* Generado por scripts/build-shapes.ts. No editar a mano.
    Fuente: ${SOURCE}
-   La máscara de cada forma, en --_shape-mask; shape.css la aplica. */
+   Hoja opcional de las formas decorativas (ADR-0011): importarla, además de styles.css, para
+   usar el átomo Shape. Define la máscara de cada forma en --_shape-mask; shape.css la aplica.
+   Sin esta hoja, Shape no recorta: muestra su contenido completo. */
+
+${LAYER_ORDER}
 
 @layer matekit.atoms {
 ${shapes.map((s) => `  .mk-shape[data-shape='${s.name}'] {\n    --_shape-mask: ${dataUrl(s.path)};\n  }`).join('\n')}
 }
 `
-writeFileSync(join(root, 'src', 'atoms', 'Shape', 'shape-masks.css'), css)
+writeFileSync(join(root, 'src', 'shapes.css'), css)
 
 const bytes = shapes.reduce((sum, s) => sum + s.path.length, 0)
 console.log(`Generadas ${shapes.length} formas (${(bytes / 1024).toFixed(1)} KiB de contornos, ${PRECISION} decimales)`)

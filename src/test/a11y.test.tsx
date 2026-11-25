@@ -54,6 +54,7 @@ import {
 } from '../index.ts'
 import { a11yViolations } from './a11y.ts'
 import { render } from './render.tsx'
+import '../shapes.css'
 
 const THEMES = ['light', 'dark'] as const
 

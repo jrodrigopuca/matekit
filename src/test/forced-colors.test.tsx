@@ -39,6 +39,7 @@ import {
 } from '../index.ts'
 import { render, style } from './render.tsx'
 import { near, pixelsOf } from './pixels.ts'
+import '../shapes.css'
 
 // WebKit activa la consulta forced-colors pero no reemplaza los colores por los del sistema
 // (comprobado el 2026-11-25 con HTML puro: un texto rojo sigue rojo; Safari no tiene ese modo).

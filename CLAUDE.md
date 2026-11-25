@@ -23,7 +23,7 @@ Antes de decidir algo que cueste revertir, leer `docs/adr/README.md` y aplicar l
 | `pnpm test:browser` | Solo las pruebas de componentes, en el Chrome del sistema; `MK_BROWSERS=firefox` o `webkit` (separados por coma) los corre en esos motores, que el CI prueba en cada push |
 | `pnpm tokens` | Regenera `src/tokens/*.css` y `src/tokens/palettes/*.css` desde `tokens/*.json` (paletas: ADR-0008) |
 | `pnpm icons` / `pnpm icons:fetch` | Regenera los iconos (ver ADR-0006) |
-| `pnpm shapes` | Regenera las 35 formas decorativas (`shapes/material-shapes.json`, `src/atoms/Shape/shapes.ts` y `shape-masks.css`) con la portación de `scripts/lib/shapes/` (ADR-0011) |
+| `pnpm shapes` | Regenera las 35 formas decorativas (`shapes/material-shapes.json`, `src/atoms/Shape/shapes.ts` y la hoja opcional `src/shapes.css`) con la portación de `scripts/lib/shapes/` (ADR-0011) |
 
 ## Estructura y capas (ADR-0002)
 
