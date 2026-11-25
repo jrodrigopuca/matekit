@@ -1,66 +1,166 @@
-// Molécula universal (ADR-0003): sin estado, efectos, contexto ni eventos propios; no lleva
-// 'use client'.
+'use client'
+// Molécula interactiva (excepción al ADR-0003 registrada en el ADR-0012): el grupo guarda el
+// valor elegido y lo reparte por contexto a sus radios junto con `name`, `disabled` y
+// `required`, así que necesita estado y contexto de React, que solo existen en el cliente.
+// Así lo esperan quienes usan React (MUI, React Aria, Radix y Base UI ponen el valor en el
+// grupo; ver docs/research/10-radio-group-en-librerias.md): `name` automático, controlado desde
+// un solo lugar y `useRadioGroup()` para componer radios propios.
 //
 // El grupo es un <fieldset role="radiogroup"> y no un <div role="radiogroup"> porque el
-// fieldset trae resuelto en HTML lo que el div exigiría programar:
-// - `disabled` en el fieldset deshabilita todos los radios de adentro (:disabled en CSS y en el
-//   árbol de accesibilidad), sin pasar la prop a cada uno.
-// - El nombre accesible sale del <legend> (`RadioGroupLabel`), sin generar ids para
-//   aria-labelledby (que exigirían useId y, con él, 'use client').
+// fieldset trae resuelto en HTML:
+// - `disabled` deshabilita todos los radios de adentro (:disabled en CSS y en el árbol de
+//   accesibilidad), incluidos los que no leen el contexto.
+// - El nombre accesible sale del <legend> (`RadioGroupLabel`).
 // El rol radiogroup (permitido en <fieldset> por ARIA in HTML) es el del patrón APG "Radio
-// Group" y el que pide @material/web (docs/components/radio.md).
+// Group" y el que pide @material/web (docs/components/radio.md). El teclado sigue siendo el del
+// navegador: los radios son <input type="radio"> nativos con el mismo `name`.
 //
-// El grupo NO reparte `name` a sus radios: hacerlo exigiría contexto de React y, con él,
-// 'use client' en RadioGroup y en RadioButton. Recorrer los hijos con cloneElement tampoco
-// sirve: solo alcanza a los hijos directos y se rompe al envolver un radio en otro elemento.
-// Como en HTML, cada radio lleva su `name`. `onChange` en el grupo sí funciona sin contexto: el
-// evento change de los radios sube hasta el fieldset (event.target es el radio elegido).
+// El aviso de cambio es `onValueChange(value, event)` y no `onChange`: el `onChange` del
+// fieldset queda como el del elemento (recibe los change que suben de cualquier control).
 
-import type { BaseSyntheticEvent, ChangeEvent, FieldsetHTMLAttributes, HTMLAttributes, ReactNode, Ref } from 'react'
+import {
+  createContext,
+  use,
+  useId,
+  useMemo,
+  useState,
+  type ChangeEvent,
+  type FieldsetHTMLAttributes,
+  type HTMLAttributes,
+  type ReactNode,
+  type Ref,
+} from 'react'
 
-/** Cambio de selección en el grupo: `target` es el radio elegido y `currentTarget`, el fieldset. */
-export type RadioGroupChangeEvent = BaseSyntheticEvent<Event, EventTarget & HTMLFieldSetElement, HTMLInputElement>
+/** Lo que `useRadioGroup()` expone de un grupo. */
+export interface RadioGroupState {
+  /** `name` compartido por los radios (el de la prop o uno generado). */
+  name: string
+  /** Valor elegido, o `null` si no hay ninguno. */
+  value: string | null
+  /** Si el grupo está deshabilitado. */
+  disabled: boolean
+}
 
-export interface RadioGroupProps extends Omit<FieldsetHTMLAttributes<HTMLFieldSetElement>, 'role' | 'onChange'> {
+interface RadioGroupContextValue extends RadioGroupState {
+  required: boolean
+  onRadioChange: (event: ChangeEvent<HTMLInputElement>) => void
+}
+
+const RadioGroupContext = createContext<RadioGroupContextValue | null>(null)
+
+/** Contexto completo del grupo, para RadioButton (no se exporta desde el índice). */
+export const useRadioGroupContext = (): RadioGroupContextValue | null => use(RadioGroupContext)
+
+/**
+ * Estado del `RadioGroup` que contiene al componente: `{ name, value, disabled }`, o `null`
+ * fuera de un grupo. Sirve para componer radios propios, por ejemplo un elemento de lista que
+ * se resalta cuando su opción está elegida:
+ *
+ * ```tsx
+ * function Opcion({ value, children }: { value: string; children: ReactNode }) {
+ *   const group = useRadioGroup()
+ *   return <div data-selected={group?.value === value || undefined}><RadioButton value={value}>{children}</RadioButton></div>
+ * }
+ * ```
+ */
+export function useRadioGroup(): RadioGroupState | null {
+  const ctx = use(RadioGroupContext)
+  const name = ctx?.name
+  const value = ctx?.value
+  const disabled = ctx?.disabled
+  return useMemo(
+    () => (name === undefined ? null : { name, value: value ?? null, disabled: disabled ?? false }),
+    [name, value, disabled],
+  )
+}
+
+export type RadioGroupOrientation = 'vertical' | 'horizontal'
+
+export interface RadioGroupProps
+  extends Omit<FieldsetHTMLAttributes<HTMLFieldSetElement>, 'role' | 'name' | 'defaultValue'> {
   /** `RadioGroupLabel` (opcional, si se usa `aria-label` o `aria-labelledby`) y los `RadioButton`. */
   children?: ReactNode
-  /**
-   * Se llama cuando cambia la selección de cualquier radio del grupo; `event.target.value` es el
-   * valor elegido. Los cambios de otros controles dentro del grupo no llegan.
-   */
-  onChange?: ((event: RadioGroupChangeEvent) => void) | undefined
+  /** `name` de los radios, para el formulario. Si falta, se genera uno. */
+  name?: string | undefined
+  /** Valor elegido (controlado). `null`: ninguno. */
+  value?: string | null | undefined
+  /** Valor elegido al principio (no controlado). */
+  defaultValue?: string | undefined
+  /** Se llama cuando el usuario elige una opción, con su `value` y el evento del radio. */
+  onValueChange?: ((value: string, event: ChangeEvent<HTMLInputElement>) => void) | undefined
+  /** Deshabilita todas las opciones. */
+  disabled?: boolean | undefined
+  /** Obliga a elegir una opción para enviar el formulario. */
+  required?: boolean | undefined
+  /** Disposición de las opciones: en columna (por defecto) o en fila. Las flechas funcionan igual. */
+  orientation?: RadioGroupOrientation | undefined
   /** Referencia al `<fieldset>`. */
   ref?: Ref<HTMLFieldSetElement> | undefined
 }
 
 /**
- * Grupo de botones de opción: un `<fieldset role="radiogroup">`. Necesita un nombre accesible:
- * `RadioGroupLabel` como primer hijo, o `aria-label` / `aria-labelledby`.
- *
- * `disabled` deshabilita todas las opciones. `onChange` recibe el cambio de cualquiera de
- * ellas (`event.target` es el radio).
+ * Grupo de botones de opción: un `<fieldset role="radiogroup">` que reparte a sus
+ * `RadioButton` el `name`, el valor elegido y el estado deshabilitado. Necesita un nombre
+ * accesible: `RadioGroupLabel` como primer hijo, o `aria-label` / `aria-labelledby`.
  *
  * ```tsx
- * <RadioGroup>
+ * <RadioGroup value={envio} onValueChange={setEnvio}>
  *   <RadioGroupLabel>Envío</RadioGroupLabel>
- *   <RadioButton name="envio" value="retiro" defaultChecked>Retiro en el local</RadioButton>
- *   <RadioButton name="envio" value="domicilio">A domicilio</RadioButton>
+ *   <RadioButton value="retiro">Retiro en el local</RadioButton>
+ *   <RadioButton value="domicilio">A domicilio</RadioButton>
  * </RadioGroup>
  * ```
  *
- * Controlado: `checked={envio === 'retiro'}` y `onChange` en cada radio.
+ * No controlado: `defaultValue="retiro"`. Un radio con `checked`, `defaultChecked` o `name`
+ * propios no toma esos datos del grupo.
  */
-export function RadioGroup({ children, className, onChange, ref, ...props }: RadioGroupProps) {
+export function RadioGroup({
+  children,
+  className,
+  name: nameProp,
+  value: valueProp,
+  defaultValue,
+  onValueChange,
+  disabled = false,
+  required = false,
+  orientation = 'vertical',
+  ref,
+  ...props
+}: RadioGroupProps) {
+  const generatedName = useId()
+  const name = nameProp ?? generatedName
+  const [uncontrolled, setUncontrolled] = useState<string | null>(defaultValue ?? null)
+  const controlled = valueProp !== undefined
+  const value = controlled ? valueProp : uncontrolled
+
+  const context = useMemo<RadioGroupContextValue>(
+    () => ({
+      name,
+      value,
+      disabled,
+      required,
+      onRadioChange(event) {
+        if (!controlled) setUncontrolled(event.target.value)
+        onValueChange?.(event.target.value, event)
+      },
+    }),
+    [name, value, disabled, required, controlled, onValueChange],
+  )
+
   return (
-    <fieldset
-      {...props}
-      onChange={onChange && ((event) => radioChange(event, onChange))}
-      ref={ref}
-      role="radiogroup"
-      className={className ? `mk-radio-group ${className}` : 'mk-radio-group'}
-    >
-      {children}
-    </fieldset>
+    <RadioGroupContext value={context}>
+      <fieldset
+        {...props}
+        ref={ref}
+        role="radiogroup"
+        disabled={disabled}
+        aria-orientation={orientation}
+        data-orientation={orientation}
+        className={className ? `mk-radio-group ${className}` : 'mk-radio-group'}
+      >
+        {children}
+      </fieldset>
+    </RadioGroupContext>
   )
 }
 
@@ -72,16 +172,4 @@ export interface RadioGroupLabelProps extends HTMLAttributes<HTMLLegendElement> 
 /** Título visible del grupo: un `<legend>`, que da el nombre accesible al `RadioGroup`. Va primero. */
 export function RadioGroupLabel({ className, ...props }: RadioGroupLabelProps) {
   return <legend {...props} className={className ? `mk-radio-group-label ${className}` : 'mk-radio-group-label'} />
-}
-
-// El evento change sube desde el radio, pero @types/react (19.3) tipa `target` como el elemento
-// del manejador, el fieldset (su TODO lo reconoce como un error hasta React 20). Se comprueba en
-// tiempo de ejecución que el target es un radio y solo entonces se cambia el tipo.
-// No le quita lo universal (ADR-0003): el manejador envuelve al de quien lo pasa y solo existe si
-// hay uno, y una función solo puede llegar como prop desde un componente cliente.
-function radioChange(event: ChangeEvent<HTMLFieldSetElement>, onChange: (event: RadioGroupChangeEvent) => void) {
-  const target: EventTarget = event.target
-  if (target instanceof HTMLInputElement && target.type === 'radio') {
-    onChange(event as BaseSyntheticEvent<Event, EventTarget & HTMLFieldSetElement> as RadioGroupChangeEvent)
-  }
 }

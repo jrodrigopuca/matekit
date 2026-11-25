@@ -156,6 +156,13 @@ No llamar al conector de Figma salvo que falte un dato imprescindible: tiene lí
     el motivo comprobado en un comentario, nunca en silencio.
   - WebKit en macOS no lleva el foco a los botones con Tab ni con clic (ajuste del sistema):
     en local, esas pruebas fallan; la referencia es el WebKit de Linux del CI.
+  - WebKit con `<input type="radio">` nativos (comprobado el 2026-11-25, también en Linux): las
+    flechas no dan la vuelta en los extremos (en el último, flecha abajo no hace nada; en el
+    primero, flecha arriba tampoco), y el radio al que se llega con flechas pierde
+    `:focus-visible`. `RadioButton` corrige lo segundo con `data-focus-visible`; lo primero es la
+    conducta de Safari y se saltea en las pruebas.
+  - Firefox: un segundo `commands.pressDown` en la misma prueba no activa `:active`
+    (comprobado el 2026-11-25); una prueba por presionado.
   - Animación SVG nativa (SMIL, LoadingIndicator): `begin` negativo, `accumulate="sum"` en
     `<animateTransform>`, `calcMode="spline"` en `d` y `visibility` discreta funcionan igual en
     los tres. Para probarla, congelar el reloj del `<svg>` con `pauseAnimations()` y

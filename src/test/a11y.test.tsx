@@ -139,16 +139,17 @@ const GALLERIES: Record<string, ReactNode> = {
   ),
   RadioButton: (
     <>
-      <RadioGroup>
+      <RadioGroup defaultValue="retiro">
         <RadioGroupLabel>Envío</RadioGroupLabel>
-        <RadioButton name="envio" value="retiro" defaultChecked>Retiro en el local</RadioButton>
-        <RadioButton name="envio" value="domicilio">A domicilio</RadioButton>
-        <RadioButton name="envio" value="correo" disabled>Correo</RadioButton>
+        <RadioButton value="retiro">Retiro en el local</RadioButton>
+        <RadioButton value="domicilio">A domicilio</RadioButton>
+        <RadioButton value="correo" disabled>Correo</RadioButton>
       </RadioGroup>
-      <RadioGroup aria-label="Talle" disabled>
-        <RadioButton name="talle" value="s">Chico</RadioButton>
-        <RadioButton name="talle" value="m" defaultChecked>Mediano</RadioButton>
+      <RadioGroup aria-label="Talle" disabled orientation="horizontal" defaultValue="m">
+        <RadioButton value="s">Chico</RadioButton>
+        <RadioButton value="m">Mediano</RadioButton>
       </RadioGroup>
+      <RadioButton name="suelto" value="si">Suelto</RadioButton>
     </>
   ),
   Switch: (

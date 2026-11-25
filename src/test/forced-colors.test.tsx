@@ -219,8 +219,8 @@ describe('RadioButton', () => {
 
   test('deshabilitado (en el grupo): GrayText sin la opacidad que lo haría casi invisible', async () => {
     const c = await render(
-      <RadioGroup aria-label="g" disabled>
-        <RadioButton name="g" defaultChecked>No</RadioButton>
+      <RadioGroup aria-label="g" disabled defaultValue="no">
+        <RadioButton value="no">No</RadioButton>
       </RadioGroup>,
     )
     expect(style(q(c, '.mk-radio-button-control')).opacity).toBe('1')

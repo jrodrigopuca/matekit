@@ -179,10 +179,10 @@ for (const scheme of SCHEMES) {
     test('RadioButton: título del grupo, etiqueta, anillo sin seleccionar, anillo y punto seleccionados', async () => {
       const c = await render(
         <Themed scheme={scheme}>
-          <RadioGroup>
+          <RadioGroup defaultValue="on">
             <RadioGroupLabel>Envío</RadioGroupLabel>
-            <RadioButton name="e" className="off">Sin seleccionar</RadioButton>
-            <RadioButton name="e" className="on" defaultChecked>Seleccionado</RadioButton>
+            <RadioButton value="off" className="off">Sin seleccionar</RadioButton>
+            <RadioButton value="on" className="on">Seleccionado</RadioButton>
           </RadioGroup>
         </Themed>,
       )

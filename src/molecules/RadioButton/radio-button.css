@@ -31,6 +31,10 @@
     padding: 0;
     border: 0;
   }
+  .mk-radio-group[data-orientation='horizontal'] {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
 
   /* Sin dato del kit para el título del grupo: el texto de los radios en on-surface-variant. */
   .mk-radio-group-label {
@@ -136,11 +140,13 @@
       --_color: var(--md-sys-color-on-surface);
     }
   }
-  .mk-radio-button-control:has(> .mk-radio-button-input:focus-visible) {
+  /* data-focus-visible: el foco llegó por una flecha y WebKit no aplica :focus-visible (ver
+     RadioButton.tsx). */
+  .mk-radio-button-control:has(> .mk-radio-button-input:is(:focus-visible, [data-focus-visible])) {
     --mk-state-layer-opacity: var(--md-sys-state-focus-state-layer-opacity);
     --mk-focus-ring-visible: 1;
   }
-  .mk-radio-button-control:has(> .mk-radio-button-input:focus-visible:not(:checked)) {
+  .mk-radio-button-control:has(> .mk-radio-button-input:is(:focus-visible, [data-focus-visible]):not(:checked)) {
     --_color: var(--md-sys-color-on-surface);
   }
   /* Presionado: la capa toma el color del destino, al revés que en hover y foco. */

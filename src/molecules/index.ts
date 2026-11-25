@@ -26,9 +26,11 @@ export { RadioButton, type RadioButtonProps } from './RadioButton/RadioButton.ts
 export {
   RadioGroup,
   RadioGroupLabel,
-  type RadioGroupChangeEvent,
+  useRadioGroup,
   type RadioGroupLabelProps,
+  type RadioGroupOrientation,
   type RadioGroupProps,
+  type RadioGroupState,
 } from './RadioButton/RadioGroup.tsx'
 export { Switch, type SwitchProps } from './Switch/Switch.tsx'
 export {

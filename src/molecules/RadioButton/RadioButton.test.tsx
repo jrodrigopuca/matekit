@@ -1,8 +1,8 @@
-import { createRef, useState, type ChangeEvent } from 'react'
+import { createRef, useState, type ChangeEvent, type ReactNode } from 'react'
 import { afterEach, describe, expect, test } from 'vitest'
-import { commands, page, userEvent } from 'vitest/browser'
+import { commands, page, server, userEvent } from 'vitest/browser'
 import { RadioButton } from './RadioButton.tsx'
-import { RadioGroup, RadioGroupLabel } from './RadioGroup.tsx'
+import { RadioGroup, RadioGroupLabel, useRadioGroup } from './RadioGroup.tsx'
 import { render, roleColor, style, withMotion } from '../../test/render.tsx'
 
 const q = (c: ParentNode, sel: string) => c.querySelector(sel) as HTMLElement
@@ -12,13 +12,14 @@ const dot = (c: ParentNode) => q(c, '.mk-radio-button-dot')
 const layer = (c: ParentNode) => q(c, '.mk-state-layer')
 const rect = (el: Element) => el.getBoundingClientRect()
 
-function Envio(props: { disabled?: boolean; middleDisabled?: boolean }) {
+// Sin `name` en los radios: lo reparte el grupo.
+function Envio(props: { disabled?: boolean; middleDisabled?: boolean; defaultValue?: string }) {
   return (
-    <RadioGroup disabled={props.disabled}>
+    <RadioGroup disabled={props.disabled} defaultValue={props.defaultValue}>
       <RadioGroupLabel>Envío</RadioGroupLabel>
-      <RadioButton name="envio" value="retiro" className="a">Retiro</RadioButton>
-      <RadioButton name="envio" value="domicilio" className="b" disabled={props.middleDisabled}>A domicilio</RadioButton>
-      <RadioButton name="envio" value="correo" className="c">Correo</RadioButton>
+      <RadioButton value="retiro" className="a">Retiro</RadioButton>
+      <RadioButton value="domicilio" className="b" disabled={props.middleDisabled}>A domicilio</RadioButton>
+      <RadioButton value="correo" className="c">Correo</RadioButton>
     </RadioGroup>
   )
 }
@@ -46,7 +47,7 @@ describe('RadioButton: estructura y accesibilidad', () => {
   test('el grupo acepta aria-label en lugar del legend', async () => {
     await render(
       <RadioGroup aria-label="Talle">
-        <RadioButton name="t" value="s">Chico</RadioButton>
+        <RadioButton value="s">Chico</RadioButton>
       </RadioGroup>,
     )
     expect(page.getByRole('radiogroup', { name: 'Talle' }).element().tagName).toBe('FIELDSET')
@@ -120,7 +121,7 @@ describe('RadioButton: interacción', () => {
     expect(b.checked).toBe(false)
   })
 
-  test('teclado: una sola parada de Tab y las flechas mueven la selección, con vuelta', async () => {
+  test('teclado: una sola parada de Tab y las flechas mueven la selección', async () => {
     const c = await render(
       <>
         <Envio />
@@ -136,16 +137,31 @@ describe('RadioButton: interacción', () => {
     await userEvent.keyboard('{ArrowRight}')
     expect(d.checked).toBe(true)
     expect(b.checked).toBe(false)
-    await userEvent.keyboard('{ArrowDown}')
-    expect(a.checked).toBe(true)
     await userEvent.keyboard('{ArrowUp}')
-    expect(d.checked).toBe(true)
+    expect(b.checked).toBe(true)
+    await userEvent.keyboard('{ArrowLeft}')
+    expect(a.checked).toBe(true)
     // Tab sale del grupo, no recorre los otros radios.
     await userEvent.tab()
     expect(document.activeElement).toBe(q(c, 'button'))
     // Volver con Shift+Tab enfoca el seleccionado.
     await userEvent.tab({ shift: true })
+    expect(document.activeElement).toBe(a)
+  })
+
+  // WebKit no da la vuelta en los extremos con radios nativos: en el último, flecha abajo deja
+  // el foco y la selección donde están; en el primero, flecha arriba tampoco se mueve
+  // (comprobado el 2026-11-25 con radios nativos sueltos, sin matekit). Es la conducta de
+  // Safari y matekit no la reemplaza con teclado propio.
+  test.skipIf(server.browser === 'webkit')('teclado: las flechas dan la vuelta en los extremos', async () => {
+    const c = await render(<Envio defaultValue="correo" />)
+    const [a, , d] = inputs(c) as [HTMLInputElement, HTMLInputElement, HTMLInputElement]
+    await userEvent.tab()
     expect(document.activeElement).toBe(d)
+    await userEvent.keyboard('{ArrowDown}')
+    expect(a.checked).toBe(true)
+    await userEvent.keyboard('{ArrowUp}')
+    expect(d.checked).toBe(true)
   })
 
   test('Espacio selecciona el radio enfocado', async () => {
@@ -166,51 +182,166 @@ describe('RadioButton: interacción', () => {
     expect(d.checked).toBe(true)
   })
 
-  test('controlado: checked y onChange en cada radio', async () => {
+  test('en un formulario envía el value del seleccionado', async () => {
+    const c = await render(
+      <form>
+        <RadioButton name="envio" value="retiro">Retiro</RadioButton>
+        <RadioButton name="envio" value="correo" defaultChecked>Correo</RadioButton>
+      </form>,
+    )
+    expect(new FormData(q(c, 'form') as HTMLFormElement).get('envio')).toBe('correo')
+  })
+})
+
+describe('RadioGroup: estado compartido', () => {
+  test('genera un name y lo comparte con todos sus radios; dos grupos no lo comparten', async () => {
+    const c = await render(
+      <>
+        <Envio />
+        <Envio />
+      </>,
+    )
+    const [first, second] = [...c.querySelectorAll('fieldset')] as HTMLFieldSetElement[]
+    const names = (f: HTMLFieldSetElement) => new Set(inputs(f).map((i) => i.name))
+    const [a] = [...names(first as HTMLFieldSetElement)]
+    expect(names(first as HTMLFieldSetElement).size).toBe(1)
+    expect(a).not.toBe('')
+    expect([...names(second as HTMLFieldSetElement)][0]).not.toBe(a)
+    // El fieldset no lleva el name: si no, entraría en form.elements[name] con los radios.
+    expect(first?.getAttribute('name')).toBeNull()
+  })
+
+  test('name del grupo y formulario: envía el valor elegido', async () => {
+    const c = await render(
+      <form>
+        <RadioGroup name="envio" defaultValue="correo" aria-label="Envío">
+          <RadioButton value="retiro">Retiro</RadioButton>
+          <RadioButton value="correo">Correo</RadioButton>
+        </RadioGroup>
+      </form>,
+    )
+    for (const i of inputs(c)) expect(i.name).toBe('envio')
+    expect(new FormData(q(c, 'form') as HTMLFormElement).get('envio')).toBe('correo')
+  })
+
+  test('no controlado: defaultValue elige al principio y un clic cambia la selección', async () => {
+    const c = await render(<Envio defaultValue="domicilio" />)
+    const [a, b] = inputs(c) as [HTMLInputElement, HTMLInputElement]
+    expect(b.checked).toBe(true)
+    await userEvent.click(a)
+    expect(a.checked).toBe(true)
+    expect(b.checked).toBe(false)
+  })
+
+  test('controlado: value y onValueChange con el valor y el evento del radio', async () => {
+    const calls: [string, string, boolean][] = []
     function Controlado() {
-      const [v, setV] = useState('retiro')
-      const pick = (e: ChangeEvent<HTMLInputElement>) => setV(e.target.value)
+      const [v, setV] = useState<string | null>('retiro')
       return (
         <>
-          <RadioGroup aria-label="Envío">
-            <RadioButton name="e" value="retiro" checked={v === 'retiro'} onChange={pick}>Retiro</RadioButton>
-            <RadioButton name="e" value="correo" checked={v === 'correo'} onChange={pick}>Correo</RadioButton>
+          <RadioGroup
+            aria-label="Envío"
+            value={v}
+            onValueChange={(value, event) => {
+              calls.push([value, event.target.value, event.target.checked])
+              setV(value)
+            }}
+          >
+            <RadioButton value="retiro">Retiro</RadioButton>
+            <RadioButton value="correo">Correo</RadioButton>
           </RadioGroup>
           <output>{v}</output>
+          <button type="button" onClick={() => setV(null)}>ninguno</button>
         </>
       )
     }
     const c = await render(<Controlado />)
-    expect((inputs(c)[0] as HTMLInputElement).checked).toBe(true)
-    await userEvent.click(inputs(c)[1] as HTMLInputElement)
+    const [a, b] = inputs(c) as [HTMLInputElement, HTMLInputElement]
+    expect(a.checked).toBe(true)
+    await userEvent.click(b)
+    expect(calls).toEqual([['correo', 'correo', true]])
     expect(q(c, 'output').textContent).toBe('correo')
+    expect(b.checked).toBe(true)
+    expect(a.checked).toBe(false)
+    // value={null}: ninguno elegido.
+    await userEvent.click(q(c, 'button'))
+    expect(a.checked).toBe(false)
+    expect(b.checked).toBe(false)
+  })
+
+  test('controlado que rechaza el cambio: la selección vuelve al valor del grupo', async () => {
+    const c = await render(
+      <RadioGroup aria-label="Envío" value="retiro" onValueChange={() => {}}>
+        <RadioButton value="retiro">Retiro</RadioButton>
+        <RadioButton value="correo">Correo</RadioButton>
+      </RadioGroup>,
+    )
+    await userEvent.click(inputs(c)[1] as HTMLInputElement)
+    await expect.poll(() => (inputs(c)[0] as HTMLInputElement).checked).toBe(true)
+    expect((inputs(c)[1] as HTMLInputElement).checked).toBe(false)
+  })
+
+  test('compara como texto el valor del grupo con el del radio', async () => {
+    const c = await render(
+      <RadioGroup aria-label="Cantidad" defaultValue="2">
+        <RadioButton value={1}>Uno</RadioButton>
+        <RadioButton value={2}>Dos</RadioButton>
+      </RadioGroup>,
+    )
     expect((inputs(c)[1] as HTMLInputElement).checked).toBe(true)
     expect((inputs(c)[0] as HTMLInputElement).checked).toBe(false)
   })
 
-  test('no controlado con onChange en el grupo: el cambio sube hasta el fieldset', async () => {
-    const seen: string[] = []
+  test('el onChange propio del radio se llama antes que onValueChange del grupo', async () => {
+    const order: string[] = []
     const c = await render(
-      <RadioGroup aria-label="Envío" onChange={(e) => seen.push(e.target.value)}>
-        <RadioButton name="e" value="retiro" defaultChecked>Retiro</RadioButton>
-        <RadioButton name="e" value="correo">Correo</RadioButton>
+      <RadioGroup aria-label="Envío" onValueChange={(v) => order.push(`grupo ${v}`)}>
+        <RadioButton value="retiro" onChange={(e: ChangeEvent<HTMLInputElement>) => order.push(`radio ${e.target.value}`)}>
+          Retiro
+        </RadioButton>
       </RadioGroup>,
     )
-    await userEvent.click(inputs(c)[1] as HTMLInputElement)
-    expect(seen).toEqual(['correo'])
+    await userEvent.click(inputs(c)[0] as HTMLInputElement)
+    expect(order).toEqual(['radio retiro', 'grupo retiro'])
   })
 
-  test('onChange del grupo ignora los cambios de otros controles anidados', async () => {
-    const seen: string[] = []
+  test('checked y name propios ganan sobre el grupo', async () => {
     const c = await render(
-      <RadioGroup aria-label="Envío" onChange={(e) => seen.push(e.target.value)}>
-        <RadioButton name="e" value="otro">Otro</RadioButton>
-        <input aria-label="Cuál" />
+      <RadioGroup aria-label="Envío" name="envio" defaultValue="retiro">
+        <RadioButton value="retiro" checked={false} onChange={() => {}}>Retiro</RadioButton>
+        <RadioButton value="correo" name="otro" checked readOnly>Correo</RadioButton>
       </RadioGroup>,
     )
-    await userEvent.type(q(c, 'input:not([type])'), 'x')
+    const [a, b] = inputs(c) as [HTMLInputElement, HTMLInputElement]
+    expect(a.checked).toBe(false)
+    expect(a.name).toBe('envio')
+    expect(b.checked).toBe(true)
+    expect(b.name).toBe('otro')
+  })
+
+  test('el onChange nativo del fieldset sigue funcionando (recibe el change que sube)', async () => {
+    const seen: string[] = []
+    const c = await render(
+      <RadioGroup aria-label="Envío" onChange={(e) => {
+        const target: EventTarget = e.target
+        if (target instanceof HTMLInputElement) seen.push(target.value)
+      }}>
+        <RadioButton value="retiro">Retiro</RadioButton>
+      </RadioGroup>,
+    )
     await userEvent.click(inputs(c)[0] as HTMLInputElement)
-    expect(seen).toEqual(['otro'])
+    expect(seen).toEqual(['retiro'])
+  })
+
+  test('required del grupo llega a los radios', async () => {
+    const c = await render(
+      <RadioGroup aria-label="Envío" required>
+        <RadioButton value="retiro">Retiro</RadioButton>
+        <RadioButton value="correo">Correo</RadioButton>
+      </RadioGroup>,
+    )
+    for (const i of inputs(c)) expect(i.required).toBe(true)
+    expect((inputs(c)[0] as HTMLInputElement).validity.valueMissing).toBe(true)
   })
 
   test('disabled en el grupo deshabilita todos los radios', async () => {
@@ -220,14 +351,92 @@ describe('RadioButton: interacción', () => {
     expect((inputs(c)[0] as HTMLInputElement).checked).toBe(false)
   })
 
-  test('en un formulario envía el value del seleccionado', async () => {
+  test('orientation: vertical por defecto; horizontal pone las opciones en fila', async () => {
     const c = await render(
-      <form>
-        <RadioButton name="envio" value="retiro">Retiro</RadioButton>
-        <RadioButton name="envio" value="correo" defaultChecked>Correo</RadioButton>
-      </form>,
+      <>
+        <RadioGroup aria-label="v" className="v">
+          <RadioButton value="1">Uno</RadioButton>
+          <RadioButton value="2">Dos</RadioButton>
+        </RadioGroup>
+        <RadioGroup aria-label="h" className="h" orientation="horizontal">
+          <RadioButton value="1">Uno</RadioButton>
+          <RadioButton value="2">Dos</RadioButton>
+        </RadioGroup>
+      </>,
     )
-    expect(new FormData(q(c, 'form') as HTMLFormElement).get('envio')).toBe('correo')
+    const [v1, v2] = [...c.querySelectorAll('.v label')] as HTMLElement[]
+    const [h1, h2] = [...c.querySelectorAll('.h label')] as HTMLElement[]
+    expect(q(c, '.v').getAttribute('aria-orientation')).toBe('vertical')
+    expect(q(c, '.h').getAttribute('aria-orientation')).toBe('horizontal')
+    expect(rect(v2 as HTMLElement).top).toBeGreaterThan(rect(v1 as HTMLElement).top)
+    expect(rect(h2 as HTMLElement).top - rect(h1 as HTMLElement).top).toBeCloseTo(0, 2)
+    expect(rect(h2 as HTMLElement).left).toBeGreaterThan(rect(h1 as HTMLElement).left)
+  })
+})
+
+describe('useRadioGroup', () => {
+  // Radio propio compuesto con el hook, como el ListItem con radio que documenta MUI.
+  function Opcion({ value, children }: { value: string; children: ReactNode }) {
+    const group = useRadioGroup()
+    return (
+      <div className="opcion" data-selected={group?.value === value || undefined} data-disabled={group?.disabled || undefined}>
+        <RadioButton value={value}>{children}</RadioButton>
+      </div>
+    )
+  }
+
+  test('dentro del grupo devuelve name, value y disabled, y se actualiza al elegir', async () => {
+    let seen: ReturnType<typeof useRadioGroup> = null
+    function Espia() {
+      seen = useRadioGroup()
+      return null
+    }
+    const c = await render(
+      <RadioGroup aria-label="Envío" name="envio" defaultValue="retiro">
+        <Opcion value="retiro">Retiro</Opcion>
+        <Opcion value="correo">Correo</Opcion>
+        <Espia />
+      </RadioGroup>,
+    )
+    expect(seen).toEqual({ name: 'envio', value: 'retiro', disabled: false })
+    const [a, b] = [...c.querySelectorAll('.opcion')] as HTMLElement[]
+    expect(a?.dataset['selected']).toBe('true')
+    expect(b?.dataset['selected']).toBeUndefined()
+    await userEvent.click(inputs(c)[1] as HTMLInputElement)
+    expect(seen).toEqual({ name: 'envio', value: 'correo', disabled: false })
+    expect(a?.dataset['selected']).toBeUndefined()
+    expect(b?.dataset['selected']).toBe('true')
+  })
+
+  test('informa el deshabilitado del grupo y, sin elección, value null', async () => {
+    const c = await render(
+      <RadioGroup aria-label="Envío" disabled>
+        <Opcion value="retiro">Retiro</Opcion>
+      </RadioGroup>,
+    )
+    expect(q(c, '.opcion').dataset['disabled']).toBe('true')
+    expect(q(c, '.opcion').dataset['selected']).toBeUndefined()
+  })
+
+  test('fuera de un grupo devuelve null y el radio funciona suelto', async () => {
+    let seen: ReturnType<typeof useRadioGroup> | 'sin llamar' = 'sin llamar'
+    function Espia() {
+      seen = useRadioGroup()
+      return null
+    }
+    const c = await render(
+      <>
+        <Espia />
+        <RadioButton value="a" name="suelto">A</RadioButton>
+        <RadioButton value="b" name="suelto" defaultChecked>B</RadioButton>
+      </>,
+    )
+    expect(seen).toBeNull()
+    const [a, b] = inputs(c) as [HTMLInputElement, HTMLInputElement]
+    expect(b.checked).toBe(true)
+    await userEvent.click(a)
+    expect(a.checked).toBe(true)
+    expect(b.checked).toBe(false)
   })
 })
 
@@ -276,6 +485,34 @@ describe('RadioButton: aspecto', () => {
   // Al presionar, la capa toma el color del destino (al revés que en hover y foco), igual que la
   // onda. Una prueba por estado: en Firefox, un segundo pressDown en la misma prueba no activa
   // :active (comprobado el 2026-11-25: el primero sí, en cualquier orden).
+  // WebKit quita :focus-visible al radio que recibe el foco por flechas; RadioButton lo marca
+  // con data-focus-visible. Se llega con .focus() (no con Tab) para que corra también en el
+  // WebKit de macOS; en Firefox, .focus() no muestra el foco visible del primero (ver CLAUDE.md),
+  // así que solo se miran los radios a los que se llegó con flechas.
+  test('radios sueltos con el mismo name: el foco que llega por flechas se ve; con el puntero, no', async () => {
+    const c = await render(
+      <div>
+        <RadioButton name="suelto" value="1" className="r1">Uno</RadioButton>
+        <RadioButton name="suelto" value="2" className="r2">Dos</RadioButton>
+        <RadioButton name="suelto" value="3" className="r3">Tres</RadioButton>
+      </div>,
+    )
+    ;(inputs(c)[0] as HTMLInputElement).focus()
+    for (const sel of ['.r2', '.r3']) {
+      await userEvent.keyboard('{ArrowDown}')
+      const r = q(c, sel)
+      expect(document.activeElement, sel).toBe(q(r, 'input'))
+      expect(style(q(r, '.mk-focus-ring')).opacity, sel).toBe('1')
+      expect(Number(style(layer(r)).opacity), sel).toBeCloseTo(0.1)
+    }
+    // Al dejarlo, el anterior pierde la marca.
+    expect(style(q(q(c, '.r2'), '.mk-focus-ring')).opacity).toBe('0')
+    // Un clic mueve el foco con el puntero: sin anillo.
+    await userEvent.click(q(c, '.r1 input'))
+    expect(style(q(q(c, '.r1'), '.mk-focus-ring')).opacity).toBe('0')
+    expect(q(c, '.r3 input').hasAttribute('data-focus-visible')).toBe(false)
+  })
+
   test('presionado sin seleccionar: capa primary al 10 %, anillo on-surface y onda primary', async () => {
     const c = await render(<RadioButton name="x" />)
     await commands.pressDown('.mk-radio-button-input')
@@ -308,9 +545,9 @@ describe('RadioButton: aspecto', () => {
 
   test('deshabilitado: on-surface al 38 %, también seleccionado, y la etiqueta al 38 %', async () => {
     const c = await render(
-      <RadioGroup aria-label="g" disabled>
-        <RadioButton name="d" className="off">No</RadioButton>
-        <RadioButton name="d" className="on" defaultChecked>Sí</RadioButton>
+      <RadioGroup aria-label="g" disabled defaultValue="si">
+        <RadioButton value="no" className="off">No</RadioButton>
+        <RadioButton value="si" className="on">Sí</RadioButton>
       </RadioGroup>,
     )
     for (const sel of ['.off', '.on']) {

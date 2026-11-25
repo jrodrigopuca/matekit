@@ -17,6 +17,7 @@ El paquete se publicará como `@matekit/react` (ver
 | [07-jetpack-compose.md](07-jetpack-compose.md) | Jetpack Compose como segunda fuente: confirmaciones, resoluciones y conflictos con el kit |
 | [08-guia-mio.md](08-guia-mio.md) | Lecciones de los componentes `mio-*` de m3.material.io: qué confirma, qué faltaba, qué no aplica |
 | [09-colores-estaticos.md](09-colores-estaticos.md) | Colores estáticos de m3.material.io: baseline oficial en los tres niveles de contraste y método "custom brand" |
+| [10-radio-group-en-librerias.md](10-radio-group-en-librerias.md) | Grupos de radios en MUI, React Aria, Radix y Base UI, y qué tomó matekit (ADR-0012) |
 | [data/color-schemes.csv](data/color-schemes.csv) | Los 49 roles de color, claro y oscuro |
 | [tools/extraccion-pendiente.md](tools/extraccion-pendiente.md) | Ids de nodos consultados y cómo repetir la extracción |
 
