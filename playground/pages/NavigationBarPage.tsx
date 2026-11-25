@@ -15,11 +15,11 @@ import {
 
 /** Destinos de ejemplo. `icon` recibe si está activo, para el icono relleno donde existe. */
 const DESTINATIONS: { id: string; label: string; icon: (active: boolean) => ReactNode }[] = [
-  { id: 'inicio', label: 'Inicio', icon: () => <HomeIcon /> },
+  { id: 'inicio', label: 'Inicio', icon: (a) => <HomeIcon filled={a} /> },
   { id: 'favoritos', label: 'Favoritos', icon: (a) => <StarIcon filled={a} /> },
-  { id: 'buscar', label: 'Buscar', icon: () => <SearchIcon /> },
+  { id: 'buscar', label: 'Buscar', icon: (a) => <SearchIcon filled={a} /> },
   { id: 'guardados', label: 'Guardados', icon: (a) => <BookmarkIcon filled={a} /> },
-  { id: 'ajustes', label: 'Ajustes', icon: () => <SettingsIcon /> },
+  { id: 'ajustes', label: 'Ajustes', icon: (a) => <SettingsIcon filled={a} /> },
 ]
 
 type Badges = 'none' | 'small' | 'large' | 'both'

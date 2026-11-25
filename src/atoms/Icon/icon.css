@@ -14,4 +14,16 @@
     height: 100%;
     fill: currentColor;
   }
+
+  /* Grado según el tema (ADR-0006). La guía de Material ("Applying icons", Grade) pide grado 0
+     para un icono oscuro sobre fondo claro y -25 para uno claro sobre fondo oscuro, que si no
+     se ve más grueso. Los iconos incluidos traen los dos trazos y light-dark() pinta uno y deja
+     transparente el otro, según el color-scheme del elemento: sigue a data-theme aunque esté
+     anidado, sin JavaScript. Un SVG propio, sin estas clases, se dibuja como siempre. */
+  .mk-icon-grade-0 {
+    fill: light-dark(currentColor, transparent);
+  }
+  .mk-icon-grade-n25 {
+    fill: light-dark(transparent, currentColor);
+  }
 }

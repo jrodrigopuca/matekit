@@ -63,7 +63,9 @@ exporta desde el `index.ts` de su capa y su CSS se importa en `src/styles.css`.
   oculto), activar con las variables `--mk-state-layer-opacity` y `--mk-focus-ring-visible`.
   Ejemplo completo: `src/molecules/Checkbox/`.
 - **Iconos:** los de `src/icons/` o cualquier SVG dentro de `<Icon>`. El componente define
-  `--mk-icon-size` para el tamaño.
+  `--mk-icon-size` para el tamaño. Un estado activo o seleccionado rellena el icono con
+  `filled` (todos lo aceptan). El grado -25 en tema oscuro es automático (ADR-0006): no
+  cambiar el `fill` de los trazos `.mk-icon-grade-*` desde un componente.
 
 ## CSS (ADR-0005)
 

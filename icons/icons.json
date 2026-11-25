@@ -3,10 +3,45 @@
   "commit": "10ecc1479061",
   "style": "materialsymbolsoutlined",
   "groups": {
-    "Acciones": ["add", "close", "check", "remove", "delete", "edit", "search", "settings", "more_vert", "menu", "share", "download", "refresh"],
-    "Navegación": ["arrow_back", "arrow_forward", "chevron_left", "chevron_right", "expand_more", "expand_less", "arrow_drop_down", "home", "open_in_new"],
-    "Estado": ["info", "warning", "error", "check_circle", "cancel", "visibility", "visibility_off"],
-    "Con relleno": ["star", "favorite", "bookmark"]
-  },
-  "filled": ["star", "favorite", "bookmark"]
+    "Acciones": [
+      "add",
+      "close",
+      "check",
+      "remove",
+      "delete",
+      "edit",
+      "search",
+      "settings",
+      "more_vert",
+      "menu",
+      "share",
+      "download",
+      "refresh"
+    ],
+    "Navegación": [
+      "arrow_back",
+      "arrow_forward",
+      "chevron_left",
+      "chevron_right",
+      "expand_more",
+      "expand_less",
+      "arrow_drop_down",
+      "home",
+      "open_in_new"
+    ],
+    "Estado": [
+      "info",
+      "warning",
+      "error",
+      "check_circle",
+      "cancel",
+      "visibility",
+      "visibility_off"
+    ],
+    "Favoritos": [
+      "star",
+      "favorite",
+      "bookmark"
+    ]
+  }
 }
