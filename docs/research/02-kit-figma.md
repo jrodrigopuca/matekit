@@ -26,12 +26,12 @@ Los identificadores sirven para volver a consultar cada página con el conector 
 | Chips | 55141:14174 | no |
 | Date & time pickers | 55141:14175 | no |
 | Dialogs | 55141:14176 | sí |
-| Dividers | 55141:14177 | no |
+| Dividers | 55141:14177 | sí |
 | Lists | 55141:14249 | no |
 | Loading & progress | 55141:14252 | no |
 | Menu | 55141:14250 | sí |
 | Navigation | 55141:14251 | sí |
-| Radio button | 55141:14253 | no |
+| Radio button | 55141:14253 | sí |
 | Search | 55141:14254 | no |
 | Sheets | 55141:14170 | no |
 | Sliders | 55141:14255 | no |

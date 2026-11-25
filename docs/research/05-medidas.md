@@ -331,6 +331,39 @@ variantes Steps 1 a 7 y Show container).
   Oval (los mismos que `LoadingIndicatorDefaults` de Compose). La forma de cada paso mide
   unos 30 a 34 dentro del área de 38.
 
+## Radio button
+
+Leído del kit el 2026-11-25 (página Radio button, conjunto `Radio buttons` 51739:4608;
+variantes Selected True/False × State Enabled, Hovered, Focused, Pressed, Disabled). No hay
+variante de error.
+
+- Área exterior 48 × 48; contenedor circular de 40 (radio completo) centrado, que es la capa
+  de estado.
+- Icono de 24 (`radio_button_checked` o `radio_button_unchecked`), dibujo de 20 × 20 centrado
+  (relleno 8 dentro de la capa de 40).
+
+| Estado | Icono, seleccionado | Capa, seleccionado | Icono, sin seleccionar | Capa, sin seleccionar |
+|---|---|---|---|---|
+| Enabled | `Primary` | — | `On Surface Variant` | — |
+| Hovered | `Primary` | `Primary` 8 % | `On Surface` | `On Surface` 8 % |
+| Focused | `Primary` | `Primary` 10 % | `On Surface` | `On Surface` 10 % |
+| Pressed | `Primary` | `On Surface` 10 % | `On Surface` | `Primary` 10 % |
+| Disabled | `On Surface` al 38 % | — | `On Surface` al 38 % | — |
+
+Al presionar, la capa toma el color del estado de destino (al revés que en hover y foco):
+`On Surface` sobre el seleccionado y `Primary` sobre el sin seleccionar. Confirmar contra
+`RadioButtonTokens.kt` de Compose.
+
+## Divider
+
+Leído del kit el 2026-11-25 (página Dividers; componentes sueltos, sin conjunto).
+
+- Línea de 1 en `Outline Variant`.
+- Horizontal: Full-width (sin sangría), Inset (16 al inicio), Middle-inset (16 a ambos
+  lados). Vertical: lo mismo arriba y abajo (Full-width, Inset 16 arriba, Middle-inset 16 y 16).
+- "Divider with subhead" (horizontal): relleno 16 a ambos lados, la línea y debajo, con
+  separación 4, un subtítulo Title Small (14/20, 500) en `On Surface Variant`; 25 de alto.
+
 ## Diferencias con la especificación a revisar
 
 - El indicador con foco del campo de texto mide 3 en el kit. Confirmar en m3.material.io.
