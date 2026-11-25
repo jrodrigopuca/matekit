@@ -14,18 +14,19 @@
     hacer lo mismo y combinarse anidados (por ejemplo, una sección en otra paleta dentro de una
     página en tema oscuro y contraste alto).
 - Decision:
-  - **Generación al compilar.** `pnpm tokens` calcula los esquemas con
+  - **Generación al compilar** (solo para las paletas opcionales). `pnpm tokens` calcula los esquemas con
     `@material/material-color-utilities` 0.4.0 (dependencia de desarrollo; especificación 2021,
     ADR-0004) y los escribe como CSS versionado. Configuración en `tokens/palettes.json`;
     cálculo en `scripts/lib/color-schemes.ts`.
   - **Niveles de contraste:** `contrastLevel` 0 (estándar), 0,5 (medio) y 1 (alto). Se eligen
     con `data-contrast="standard|medium|high"` en cualquier elemento, y
     `prefers-contrast: more` elige el alto donde nadie fijó `data-contrast`.
-  - **Esquema base:** el nivel estándar es el del kit, sin cambios (`tokens/color.json`). El
-    medio y el alto se generan desde las paletas fijas del kit (tono 40 de primario,
-    secundario, terciario y error; neutras con el tono del primario y croma 6 y 8). Esas paletas
-    reproducen el esquema del kit con 1 a 3 unidades de diferencia por canal, salvo los roles de
-    error (hasta 21), porque la paleta de error del kit es anterior al algoritmo actual.
+  - **Esquema base:** no se genera. El nivel estándar es el del kit y el medio y el alto son
+    los valores oficiales de m3.material.io (Styles > Color > Static > Baseline), todos en
+    `tokens/color.json`. El estándar oficial coincide con el kit en los 49 roles. (Decidido el
+    2026-11-25; hasta entonces el medio y el alto se generaban desde las paletas fijas del
+    kit, y diferían de los oficiales en 12 a 25 roles. Ver
+    [../research/09-colores-estaticos.md](../research/09-colores-estaticos.md).)
   - **Paletas opcionales:** `green` (semilla `#4c7a34`), `blue` (`#1b6ef3`) y `orange`
     (`#e8710a`), las tres Tonal Spot. Se eligieron por tono, lejos del violeta y entre sí
     (138°, 269° y 50° en HCT, frente a 299° del base). Cada una es un archivo

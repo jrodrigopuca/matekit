@@ -1,5 +1,5 @@
 /* Generado por scripts/build-tokens.ts desde tokens/. No editar a mano.
-   Fuente: Generadas con @material/material-color-utilities 0.4.0, especificación 2021 (ADR-0004), niveles de contraste 0 (estándar), 0,5 (medio) y 1 (alto). Ver ADR-0008. Paleta "Azul": semilla #1b6ef3, variante tonal-spot. */
+   Fuente: Generadas con @material/material-color-utilities 0.4.0, especificación 2021 (ADR-0004), niveles de contraste 0 (estándar), 0,5 (medio) y 1 (alto). El esquema base no se genera: usa los valores oficiales de tokens/color.json. Ver ADR-0008. Paleta "Azul": semilla #1b6ef3, variante tonal-spot. */
 /* Uso: importar este archivo y poner data-palette="blue" en cualquier elemento. */
 
 @layer matekit.tokens, matekit.palettes, matekit.atoms, matekit.components;

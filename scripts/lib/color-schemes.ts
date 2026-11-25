@@ -24,7 +24,7 @@ registerHooks({
   },
 })
 const mcu: typeof Mcu = await import('@material/material-color-utilities')
-const { DynamicScheme, Hct, MaterialDynamicColors, TonalPalette, Variant, argbFromHex, hexFromArgb } = mcu
+const { Hct, MaterialDynamicColors, argbFromHex, hexFromArgb } = mcu
 
 /** Valores de los 49 roles (`primary`, `on-primary`, …) en claro y oscuro. */
 export interface SchemePair {
@@ -74,35 +74,14 @@ function readRoles(scheme: Mcu.DynamicScheme, roles: readonly string[]): Record<
 }
 
 /**
- * Esquema base: el estándar es el del kit, tal cual; el medio y el alto se calculan desde las
- * paletas fijas del kit, para que los tres niveles sean el mismo color.
+ * Esquema base: no se genera. El estándar es el del kit y el medio y el alto son los valores
+ * oficiales de m3.material.io, todos en tokens/color.json (ADR-0008).
  */
-export function baselineSchemes(config: PaletteTokens, kit: ColorTokens): ContrastSchemes {
-  const roles = Object.keys(kit.light)
-  const b = config.baseline
-  const source = Hct.fromInt(argbFromHex(b.primary))
-  const palette = (hex: string) => TonalPalette.fromInt(argbFromHex(hex))
-  const generate = (contrastLevel: number, isDark: boolean) =>
-    readRoles(
-      new DynamicScheme({
-        sourceColorHct: source,
-        variant: Variant.TONAL_SPOT,
-        contrastLevel,
-        isDark,
-        specVersion: SPEC,
-        primaryPalette: palette(b.primary),
-        secondaryPalette: palette(b.secondary),
-        tertiaryPalette: palette(b.tertiary),
-        errorPalette: palette(b.error),
-        neutralPalette: TonalPalette.fromHueAndChroma(source.hue, b.neutralChroma),
-        neutralVariantPalette: TonalPalette.fromHueAndChroma(source.hue, b.neutralVariantChroma),
-      }),
-      roles,
-    )
+export function baselineSchemes(kit: ColorTokens): ContrastSchemes {
   return {
     standard: { light: kit.light, dark: kit.dark },
-    medium: { light: generate(config.contrast.medium, false), dark: generate(config.contrast.medium, true) },
-    high: { light: generate(config.contrast.high, false), dark: generate(config.contrast.high, true) },
+    medium: kit.contrast.medium,
+    high: kit.contrast.high,
   }
 }
 

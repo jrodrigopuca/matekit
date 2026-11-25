@@ -98,9 +98,9 @@ const palettesConfig = read<PaletteTokens>('palettes.json')
 const kitColor = read<ColorTokens>('color.json')
 
 function buildColor(): string {
-  const schemes = baselineSchemes(palettesConfig, kitColor)
+  const schemes = baselineSchemes(kitColor)
   return (
-    header(`${kitColor.$source} Contraste medio y alto: ${palettesConfig.$source}`) +
+    header(`${kitColor.$source} Contraste medio y alto: ${kitColor.$contrastSource}`) +
     '\n' +
     block(':root', [['color-scheme', 'light dark']]) +
     block('[data-theme="light"]', [['color-scheme', 'light']]) +

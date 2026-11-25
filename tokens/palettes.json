@@ -1,18 +1,25 @@
 {
-  "$source": "Generadas con @material/material-color-utilities 0.4.0, especificación 2021 (ADR-0004), niveles de contraste 0 (estándar), 0,5 (medio) y 1 (alto). Ver ADR-0008.",
-  "contrast": { "standard": 0, "medium": 0.5, "high": 1 },
-  "baseline": {
-    "$notes": "El contraste estándar es el esquema del kit (color.json). Medio y alto se generan desde las paletas fijas del kit (tono 40 de cada una, como PaletteTokens.kt de Compose) y una neutra con el tono del primario y croma 6 y 8. Esas paletas reproducen el esquema del kit con 1 a 3 unidades de diferencia por canal, salvo los roles de error (hasta 21), porque la paleta de error del kit es anterior al algoritmo actual.",
-    "primary": "#6750a4",
-    "secondary": "#625b71",
-    "tertiary": "#7d5260",
-    "error": "#b3261e",
-    "neutralChroma": 6,
-    "neutralVariantChroma": 8
+  "$source": "Generadas con @material/material-color-utilities 0.4.0, especificación 2021 (ADR-0004), niveles de contraste 0 (estándar), 0,5 (medio) y 1 (alto). El esquema base no se genera: usa los valores oficiales de tokens/color.json. Ver ADR-0008.",
+  "contrast": {
+    "standard": 0,
+    "medium": 0.5,
+    "high": 1
   },
   "palettes": {
-    "green": { "seed": "#4c7a34", "variant": "tonal-spot", "label": "Verde (yerba)" },
-    "blue": { "seed": "#1b6ef3", "variant": "tonal-spot", "label": "Azul" },
-    "orange": { "seed": "#e8710a", "variant": "tonal-spot", "label": "Naranja" }
+    "green": {
+      "seed": "#4c7a34",
+      "variant": "tonal-spot",
+      "label": "Verde (yerba)"
+    },
+    "blue": {
+      "seed": "#1b6ef3",
+      "variant": "tonal-spot",
+      "label": "Azul"
+    },
+    "orange": {
+      "seed": "#e8710a",
+      "variant": "tonal-spot",
+      "label": "Naranja"
+    }
   }
 }

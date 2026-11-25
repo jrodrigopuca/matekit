@@ -91,6 +91,15 @@ test('cada paleta tiene los 49 roles en los tres niveles, en claro y oscuro, con
   }
 })
 
+test('el esquema base usa los valores oficiales de color.json en los niveles medio y alto', () => {
+  const base = schemes['baseline']
+  assert.ok(base)
+  for (const level of ['medium', 'high'] as const) {
+    assert.deepEqual(base[level], kit.contrast[level], `base ${level}`)
+    assert.deepEqual(Object.keys(kit.contrast[level].light), ROLES, `color.json ${level}: roles`)
+  }
+})
+
 test('los niveles son distintos entre sí y las paletas, distintas de la base', () => {
   for (const [name, s] of Object.entries(schemes)) {
     assert.notDeepEqual(s.standard, s.medium, `${name}: estándar y medio`)

@@ -5,6 +5,10 @@ export interface ColorTokens {
   $notes?: Record<string, string>
   light: Record<string, string>
   dark: Record<string, string>
+  /** Fuente de los niveles medio y alto (valores oficiales de m3.material.io). */
+  $contrastSource: string
+  /** Niveles de contraste medio y alto del esquema base (ADR-0008). */
+  contrast: Record<'medium' | 'high', { light: Record<string, string>; dark: Record<string, string> }>
 }
 
 export interface TypeStyle {
@@ -78,16 +82,6 @@ export interface PaletteTokens {
   $source: string
   /** Valor de contrastLevel de material-color-utilities para cada nivel (de -1 a 1). */
   contrast: Record<ContrastLevel, number>
-  /** Paletas fijas del esquema base (kit), para generar sus niveles medio y alto. */
-  baseline: {
-    $notes?: string
-    primary: string
-    secondary: string
-    tertiary: string
-    error: string
-    neutralChroma: number
-    neutralVariantChroma: number
-  }
   /** Paletas opcionales, generadas desde un color semilla. La clave es el valor de data-palette. */
   palettes: Record<string, { seed: string; variant: PaletteVariant; label: string }>
 }
