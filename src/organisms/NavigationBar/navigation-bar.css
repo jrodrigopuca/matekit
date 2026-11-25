@@ -29,7 +29,10 @@
    ocupan la celda de 24 × 24 del icono, y la etiqueta la suya. El orden en que se escriban las
    partes no cambia la disposición.
 
-   Activo: [aria-current] (lo pone `active`, o el NavLink de React Router), no una clase. */
+   Activo: [aria-current] (lo pone `active`, o el NavLink de React Router), no una clase.
+
+   Base común con NavigationRail: las reglas con :is(.mk-navigation-bar-item,
+   .mk-navigation-rail-item) valen para los dos (como button.css con el IconButton). */
 
 @layer matekit.components {
   .mk-navigation-bar {
@@ -44,11 +47,11 @@
     background-color: var(--md-sys-color-surface-container);
   }
 
-  .mk-navigation-bar-item {
-    /* Disposición vertical (por defecto); data-layout='horizontal' la cambia. */
-    /* La mitad del alto (32): Large. No anima, pero el ancho sí; un radio fijo de la mitad del
-       alto se ve redondo en todo el recorrido. */
-    --_indicator-radius: var(--md-sys-shape-corner-large);
+  /* --- Base común de los destinos de NavigationBar y NavigationRail ---
+     Colores, átomos, indicador, icono, recorte de la etiqueta, activo y alto contraste valen
+     para los dos (navigation-rail.css se importa después y define solo su disposición y su
+     transición). */
+  :is(.mk-navigation-bar-item, .mk-navigation-rail-item) {
     --_icon: var(--md-sys-color-on-surface-variant);
     --_label: var(--md-sys-color-on-surface-variant);
     --mk-icon-size: 24px;
@@ -56,27 +59,14 @@
     --mk-ripple-color: var(--md-sys-color-on-surface);
 
     display: grid;
-    flex: 1 1 0;
-    /* Indicador de 56: 16 + icono 24 + 16, centrado. */
-    grid-template-columns: minmax(0, 1fr) 16px 24px 16px minmax(0, 1fr);
-    /* Indicador de 32 (4 + 24 + 4), separación 4 y etiqueta. */
-    grid-template-rows: 4px 24px 4px 4px auto;
-    align-content: center;
     box-sizing: border-box;
     min-width: 48px;
     min-height: 48px;
     margin: 0;
-    padding: 6px 0;
     border: none;
     background: none;
     outline: none;
     color: var(--_label);
-    font-family: var(--md-sys-typescale-label-medium-font);
-    font-size: var(--md-sys-typescale-label-medium-size);
-    line-height: var(--md-sys-typescale-label-medium-line-height);
-    font-weight: var(--md-sys-typescale-label-medium-weight);
-    letter-spacing: var(--md-sys-typescale-label-medium-tracking);
-    text-align: center;
     text-decoration: none;
     cursor: pointer;
     user-select: none;
@@ -85,18 +75,42 @@
       var(--md-sys-motion-spring-default-effects-easing);
   }
 
+  .mk-navigation-bar-item {
+    /* Disposición vertical (por defecto); data-layout='horizontal' la cambia. */
+    /* La mitad del alto (32): Large. No anima, pero el ancho sí; un radio fijo de la mitad del
+       alto se ve redondo en todo el recorrido. */
+    --_indicator-radius: var(--md-sys-shape-corner-large);
+
+    flex: 1 1 0;
+    /* Indicador de 56: 16 + icono 24 + 16, centrado. */
+    grid-template-columns: minmax(0, 1fr) 16px 24px 16px minmax(0, 1fr);
+    /* Indicador de 32 (4 + 24 + 4), separación 4 y etiqueta. */
+    grid-template-rows: 4px 24px 4px 4px auto;
+    align-content: center;
+    padding: 6px 0;
+    font-family: var(--md-sys-typescale-label-medium-font);
+    font-size: var(--md-sys-typescale-label-medium-size);
+    line-height: var(--md-sys-typescale-label-medium-line-height);
+    font-weight: var(--md-sys-typescale-label-medium-weight);
+    letter-spacing: var(--md-sys-typescale-label-medium-tracking);
+    text-align: center;
+  }
+
   /* Indicador y átomos: el área del indicador, con su radio. */
+  :is(.mk-navigation-bar-item, .mk-navigation-rail-item)
+    > :is(.mk-navigation-bar-item-indicator, .mk-navigation-rail-item-indicator, .mk-state-layer, .mk-ripple, .mk-focus-ring) {
+    border-radius: var(--_indicator-radius);
+  }
   .mk-navigation-bar-item
     > :is(.mk-navigation-bar-item-indicator, .mk-state-layer, .mk-ripple, .mk-focus-ring) {
     grid-column: 2 / 5;
     grid-row: 1 / 4;
-    border-radius: var(--_indicator-radius);
   }
 
   /* Aparece creciendo a lo ancho desde el centro (NavigationItem.kt), con el resorte espacial
      por defecto; con prefers-reduced-motion su duración es 0 (tokens/motion.css) y aparece sin
      desplazarse. Anima el ancho y no una escala para que el radio no se deforme. */
-  .mk-navigation-bar-item-indicator {
+  :is(.mk-navigation-bar-item-indicator, .mk-navigation-rail-item-indicator) {
     position: absolute;
     inset: 0;
     z-index: -1;
@@ -108,10 +122,8 @@
       var(--md-sys-motion-spring-default-spatial-easing);
   }
 
-  .mk-navigation-bar-item-icon {
+  :is(.mk-navigation-bar-item-icon, .mk-navigation-rail-item-icon) {
     display: inline-flex;
-    grid-column: 3;
-    grid-row: 2;
     width: 24px;
     height: 24px;
     color: var(--_icon);
@@ -119,23 +131,28 @@
       var(--md-sys-motion-spring-default-effects-easing);
   }
 
-  .mk-navigation-bar-item-icon > svg,
-  .mk-navigation-bar-item-icon > .mk-icon {
+  :is(.mk-navigation-bar-item-icon, .mk-navigation-rail-item-icon) > :is(svg, .mk-icon) {
     width: 24px;
     height: 24px;
     fill: currentColor;
   }
+  .mk-navigation-bar-item-icon {
+    grid-column: 3;
+    grid-row: 2;
+  }
 
+  :is(.mk-navigation-bar-item-label, .mk-navigation-rail-item-label) {
+    box-sizing: border-box;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
   .mk-navigation-bar-item-label {
     grid-column: 1 / -1;
     grid-row: 5;
     justify-self: center;
     max-width: 100%;
     padding-inline: 4px;
-    box-sizing: border-box;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
   }
 
   /* Insignia sobre la esquina del icono (Badge.kt, BadgedBox): la pequeña a 6 del borde final
@@ -174,8 +191,8 @@
     padding-inline: 0;
   }
 
-  /* --- Activo --- */
-  .mk-navigation-bar-item:is([aria-current]:not([aria-current='false'])) {
+  /* --- Activo (común) --- */
+  :is(.mk-navigation-bar-item, .mk-navigation-rail-item):is([aria-current]:not([aria-current='false'])) {
     --_icon: var(--md-sys-color-on-secondary-container);
     --_label: var(--md-sys-color-secondary);
   }
@@ -183,8 +200,8 @@
     .mk-navigation-bar-item:is([aria-current]:not([aria-current='false'])) {
     --_label: var(--md-sys-color-on-secondary-container);
   }
-  .mk-navigation-bar-item:is([aria-current]:not([aria-current='false']))
-    > .mk-navigation-bar-item-indicator {
+  :is(.mk-navigation-bar-item, .mk-navigation-rail-item):is([aria-current]:not([aria-current='false']))
+    > :is(.mk-navigation-bar-item-indicator, .mk-navigation-rail-item-indicator) {
     width: 100%;
   }
 
@@ -199,18 +216,18 @@
     .mk-navigation-bar {
       border-top: 1px solid CanvasText;
     }
-    .mk-navigation-bar-item:is([aria-current]:not([aria-current='false']))
-      > .mk-navigation-bar-item-indicator {
+    :is(.mk-navigation-bar-item, .mk-navigation-rail-item):is([aria-current]:not([aria-current='false']))
+      > :is(.mk-navigation-bar-item-indicator, .mk-navigation-rail-item-indicator) {
       forced-color-adjust: none;
       background-color: Highlight;
     }
-    .mk-navigation-bar-item:is([aria-current]:not([aria-current='false']))
-      > .mk-navigation-bar-item-icon {
+    :is(.mk-navigation-bar-item, .mk-navigation-rail-item):is([aria-current]:not([aria-current='false']))
+      > :is(.mk-navigation-bar-item-icon, .mk-navigation-rail-item-icon) {
       forced-color-adjust: none;
       color: HighlightText;
     }
-    .mk-navigation-bar-item:is([aria-current]:not([aria-current='false']))
-      > .mk-navigation-bar-item-label {
+    :is(.mk-navigation-bar-item, .mk-navigation-rail-item):is([aria-current]:not([aria-current='false']))
+      > :is(.mk-navigation-bar-item-label, .mk-navigation-rail-item-label) {
       forced-color-adjust: none;
       color: Highlight;
     }

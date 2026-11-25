@@ -265,6 +265,32 @@ Los colores se completaron con Jetpack Compose y la tipografía queda sin confir
   etiqueta Label Large. Seleccionado: `Secondary Container` y texto e icono
   `On Secondary Container`.
 
+### Variantes y detalles (leídos del kit el 2026-11-25)
+
+- Conjuntos: `Navigation Rail` (contraída: Alignment Top o Middle, Nav items 3 a 6, Show Menu,
+  Show FAB) y `Navigation Rail: Expanded` (lo mismo más Type Docked o Floating). La contraída
+  no tiene variante Floating en el kit.
+- Alineación Middle: los elementos quedan centrados en el alto. En la contraída, el bloque de
+  menú y FAB queda arriba (y = 44) fuera del flujo; en la expandida, el bloque va arriba en el
+  flujo y los elementos se centran en el alto total (en 800 de alto, y = 288 para 224 de
+  elementos).
+- Floating expandida: `Surface Container`, radio 16, sin sombra en el kit.
+- Bloque superior: 116 de alto (menú 56, separación 4, FAB 56).
+- Elemento vertical (contraída), con etiqueta: relleno 6 arriba y abajo, separación 4;
+  indicador 56 × 32, radio 16, `Secondary Container`; icono 24 (relleno 4, 20 a los lados);
+  etiqueta Label Medium (12/16, 500), `On Surface Variant` y activa `Secondary`. Icono
+  `On Surface Variant` y activo `On Secondary Container`. El kit tiene un icono distinto para
+  el seleccionado ("Icon (selected)"): la versión rellena.
+- Elemento vertical sin etiqueta ("Show label" = False): relleno 4, indicador 56 × 56 de radio
+  28 con el icono centrado.
+- Insignia en el elemento vertical: sobre la esquina del icono (grande en x = 28, y = 2 dentro
+  del indicador de 56 × 32), `Error` con texto Label Small `On Error`, 16 de alto, relleno 4.
+- Elemento horizontal (expandida): 56 de alto, radio completo, relleno 16, separación 8 entre
+  icono y etiqueta; etiqueta Label Large (14/20, 500). Activo: fondo `Secondary Container`,
+  icono y etiqueta `On Secondary Container`; inactivo: `On Surface Variant`. La insignia grande
+  va en línea después de la etiqueta (separación 8), no sobre el icono. Tiene "Show icon":
+  el icono puede omitirse.
+
 ## FAB y FAB extendido
 
 Leído del kit el 2026-11-25 (página Buttons, conjuntos `FAB` y `Extended FAB`; variante

@@ -490,7 +490,54 @@ el FAB con solo icono necesita `aria-label`; el extendido usa su texto como nomb
 `lowered`. Es anterior a Expressive (tamaños `small`/`medium`/`large` de 40/56/96): no se usó
 para medidas.
 
+## NavigationRail
+
+Revisión del 2026-11-25. Archivos (en `compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/`):
+`tokens/NavigationRailCollapsedTokens.kt`, `NavigationRailExpandedTokens.kt`,
+`NavigationRailColorTokens.kt`, `NavigationRailVerticalItemTokens.kt`,
+`NavigationRailHorizontalItemTokens.kt` y `NavigationRailBaselineItemTokens.kt` (commit
+`160825094a`, 2026-08-05); `WideNavigationRail.kt` (`de12189a63`, 2026-11-11) y
+`NavigationItem.kt` (`5f1e5af7ea`, 2026-11-03). El rail Expressive que se contrae y se expande es
+`WideNavigationRail` (y `ModalWideNavigationRail`, que se superpone al contenido con un velo);
+el `NavigationRail` de Compose es el anterior, de 80. Medidas y colores mandan los del kit
+(`05-medidas.md` § Navigation rail, ADR-0004).
+
+### Lo que confirma
+
+Contraído de 96 (`ContainerWidth`), 44 arriba (`TopSpace`), 4 entre destinos
+(`ItemVerticalSpace`), 40 entre el bloque superior y los destinos (`HeaderSpaceMinimum`), destino
+vertical de 64 de alto con 6 de relleno (`ContainerHeight`, `ContainerVerticalSpace`), indicador
+56 × 32, 4 entre indicador y etiqueta, Label Medium. Expandido de 220 como mínimo
+(`ContainerWidthMinimum`), destino horizontal de 56 (`ActiveIndicatorHeight`), 16 a los lados y 8
+entre icono y etiqueta, Label Large. Colores: indicador `secondary-container`, icono activo
+`on-secondary-container`, etiqueta activa `secondary` (vertical) y `on-secondary-container`
+(horizontal, `selectedTextColorStartIconPosition = ItemActiveIcon`), inactivos
+`on-surface-variant`. Floating (en Compose, el modal expandido): `surface-container` con
+`CornerLarge` (16). Sin etiqueta: indicador de 56 de alto con el icono centrado
+(`WNRItemNoLabelIndicatorPadding = (56 − 24) / 2`).
+
+### Datos nuevos (el kit no los trae)
+
+| Dato | Fuente |
+|---|---|
+| Ancho expandido **mínimo 220 y máximo 360**; Compose lo ajusta al destino más ancho dentro de ese rango | `ContainerWidthMinimum`, `ContainerWidthMaximum`; `WideNavigationRailLayout` (`widestElementWidth`). matekit usa un ancho fijo (220) ajustable con `--mk-navigation-rail-expanded-width` entre 220 y 360: animar el ancho hasta el contenido (`auto`) no funciona igual en los tres navegadores. |
+| El ancho anima con el resorte **DefaultSpatial** (FastSpatial en el modal) | `animateDpAsState(..., animationSpec = MotionSchemeKeyTokens.DefaultSpatial)`. matekit usa DefaultSpatial para docked y floating, porque su floating no se superpone. |
+| La separación entre destinos pasa de **4 a 0** al expandir, animada | `itemVerticalSpacedBy`. El kit lo confirma: 224 de destinos expandidos son 4 × 56. |
+| El destino expandido **abraza su contenido** (indicador = 16 + icono + 8 + etiqueta + 16) y empieza a 20 del borde; no ocupa todo el ancho | `placeAnimatedLabelAndIcon` (`widthStartIcon`), `WNRItemHorizontalPadding = 20`. |
+| El paso de vertical a horizontal anima con **DefaultSpatial**: el tamaño del indicador y la posición del icono se interpolan; la etiqueta se desvanece hasta la mitad y reaparece en su lugar nuevo (alfa `4 (p − 0,5)²`), y la tipografía cambia de golpe a la mitad | `AnimatedNavigationItem`, `placeAnimatedLabelAndIcon`. matekit interpola también la posición y el tamaño de la etiqueta (sin desvanecerla): se resuelve con CSS sin JavaScript. |
+| `Arrangement.Center` centra los destinos en el **alto total**, no en el lugar debajo del bloque superior | `WideNavigationRailLayout` (comentario "For centered arrangement the items will be centered in the container"). Coincide con el kit (288 en 800 de alto). Compose puede superponer destinos y bloque si no hay lugar; matekit los baja. |
+| Capas de estado `on-secondary-container` (activo e inactivo) | `NavigationRailColorTokens.Item*StateLayer`. **Sin aplicar**: el kit dice que el destino contraído es "igual que el elemento vertical de la barra", cuya capa es `on-surface` 8 %; matekit comparte esa capa con la barra. |
+| Ancho contraído angosto de 80 (`NarrowContainerWidth`) | Sin aplicar: el kit no lo tiene. |
+
+### Conflictos y decisiones
+
+| Tema | Kit | Compose | Decisión |
+|---|---|---|---|
+| Fondo del docked | Sin fondo | `ContainerColor = Surface` | Kit (ADR-0004: manda en lo visual). Sobre una página `surface` se ven igual; sin fondo, el rail toma el de su contenedor. No hay tercera fuente: `@material/web` no tiene rail (`docs/components/`, consultado el 2026-11-25). |
+| Radio del indicador | 16 (vertical), 28 (sin etiqueta y horizontal, "radio completo") | `CornerFull` | Es lo mismo (la mitad del alto). matekit usa `corner-large` y `corner-extra-large`, no `corner-full`, porque el radio anima al expandir. |
+| Rail contraído flotante | No existe (Floating solo en el expandido) | El modal contraído usa la forma del docked | matekit acepta `variant="floating"` contraído y lo dibuja como el docked; el fondo aparece al expandir. |
+| Separación entre destinos expandidos | No la anota | 0 | Compose (el kit la confirma indirectamente con el alto de 224). |
+
 ## No revisado
 
-Los tokens de Navigation rail, y la
-tipografía (`TypeScaleTokens.kt`, descargado pero sin comparar).
+La tipografía (`TypeScaleTokens.kt`, descargado pero sin comparar).

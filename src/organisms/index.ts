@@ -40,3 +40,21 @@ export {
   type NavigationBarLayout,
   type NavigationBarProps,
 } from './NavigationBar/NavigationBar.tsx'
+export {
+  NavigationRail,
+  NavigationRailHeader,
+  NavigationRailItem,
+  NavigationRailItemIcon,
+  NavigationRailItemLabel,
+  type NavigationRailAlign,
+  type NavigationRailCollapsedLabels,
+  type NavigationRailHeaderProps,
+  type NavigationRailItemButtonProps,
+  type NavigationRailItemIconProps,
+  type NavigationRailItemLabelProps,
+  type NavigationRailItemLinkProps,
+  type NavigationRailItemProps,
+  type NavigationRailItemRenderProps,
+  type NavigationRailProps,
+  type NavigationRailVariant,
+} from './NavigationRail/NavigationRail.tsx'

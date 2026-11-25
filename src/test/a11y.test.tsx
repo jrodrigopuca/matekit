@@ -11,6 +11,12 @@ import {
   NavigationBarItem,
   NavigationBarItemIcon,
   NavigationBarItemLabel,
+  NavigationRail,
+  NavigationRailHeader,
+  NavigationRailItem,
+  NavigationRailItemIcon,
+  NavigationRailItemLabel,
+  MenuIcon,
   SettingsIcon,
   Button,
   CancelIcon,
@@ -174,6 +180,51 @@ const GALLERIES: Record<string, ReactNode> = {
         </NavigationBar>
       ))}
     </>
+  ),
+  NavigationRail: (
+    <div style={{ display: 'flex', gap: 16 }}>
+      {[
+        { expanded: false, variant: 'docked', align: 'top', labels: 'visible' },
+        { expanded: false, variant: 'docked', align: 'middle', labels: 'hidden' },
+        { expanded: true, variant: 'docked', align: 'top', labels: 'visible' },
+        { expanded: true, variant: 'floating', align: 'middle', labels: 'visible' },
+      ].map((o, i) => (
+        <div key={i} style={{ height: 640, display: 'flex' }}>
+          <NavigationRail
+            id={`rail-${i}`}
+            aria-label={`Riel ${i + 1}`}
+            expanded={o.expanded}
+            variant={o.variant as 'docked' | 'floating'}
+            align={o.align as 'top' | 'middle'}
+            collapsedLabels={o.labels as 'visible' | 'hidden'}
+          >
+            <NavigationRailHeader>
+              <IconButton label={`Menú ${i + 1}`} size="md" shape="square" aria-expanded={o.expanded} aria-controls={`rail-${i}`}>
+                <MenuIcon />
+              </IconButton>
+              <ExtendedFab expanded={o.expanded}><EditIcon />Redactar {i + 1}</ExtendedFab>
+            </NavigationRailHeader>
+            <NavigationRailItem href="#inicio" active>
+              <NavigationRailItemIcon><HomeIcon filled /></NavigationRailItemIcon>
+              <NavigationRailItemLabel>Inicio</NavigationRailItemLabel>
+            </NavigationRailItem>
+            <NavigationRailItem href="#favoritos">
+              <NavigationRailItemIcon><StarIcon /></NavigationRailItemIcon>
+              <NavigationRailItemLabel>Favoritos</NavigationRailItemLabel>
+              <Badge label="3 nuevos">3</Badge>
+            </NavigationRailItem>
+            <NavigationRailItem href="#buscar">
+              <NavigationRailItemIcon><SearchIcon /></NavigationRailItemIcon>
+              <NavigationRailItemLabel>Buscar</NavigationRailItemLabel>
+              <Badge label="Novedades" />
+            </NavigationRailItem>
+            <NavigationRailItem aria-label="Ajustes">
+              <NavigationRailItemIcon><SettingsIcon /></NavigationRailItemIcon>
+            </NavigationRailItem>
+          </NavigationRail>
+        </div>
+      ))}
+    </div>
   ),
   Icon: (
     <>

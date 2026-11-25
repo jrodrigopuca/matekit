@@ -13,6 +13,10 @@ import {
   NavigationBarItem,
   NavigationBarItemIcon,
   NavigationBarItemLabel,
+  NavigationRail,
+  NavigationRailItem,
+  NavigationRailItemIcon,
+  NavigationRailItemLabel,
   Checkbox,
   Dialog,
   DialogContent,
@@ -245,6 +249,45 @@ for (const scheme of SCHEMES) {
         // el color del icono y la etiqueta; no se le exige 3:1 contra la barra, igual que a los
         // contenedores tonales de los botones.
         expect(contrastRatio(cs(q(c, '.off .mk-badge')).backgroundColor, bar), 'insignia pequeña').toBeGreaterThanOrEqual(NON_TEXT)
+        const large = q(c, '.on .mk-badge')
+        expect(contrastRatio(cs(large).color, effectiveBackground(large)), 'número de la insignia').toBeGreaterThanOrEqual(TEXT)
+      })
+    }
+
+    for (const [expanded, variant] of [[false, 'docked'], [true, 'docked'], [true, 'floating']] as const) {
+      test(`NavigationRail ${expanded ? 'expandido' : 'contraído'} ${variant}: iconos y etiquetas, activo e inactivo, e insignias`, async () => {
+        const c = await render(
+          <Themed scheme={scheme}>
+            <div style={{ height: 300, display: 'flex' }}>
+              <NavigationRail expanded={expanded} variant={variant}>
+                <NavigationRailItem href="#" className="off">
+                  <NavigationRailItemIcon><HomeIcon /></NavigationRailItemIcon>
+                  <NavigationRailItemLabel>Inicio</NavigationRailItemLabel>
+                  <Badge label="Novedades" />
+                </NavigationRailItem>
+                <NavigationRailItem href="#" active className="on">
+                  <NavigationRailItemIcon><StarIcon filled /></NavigationRailItemIcon>
+                  <NavigationRailItemLabel>Favoritos</NavigationRailItemLabel>
+                  <Badge label="3 nuevos">3</Badge>
+                </NavigationRailItem>
+              </NavigationRail>
+            </div>
+          </Themed>,
+        )
+        // Docked sin fondo: el de debajo es surface; floating expandido, surface-container.
+        const rail = effectiveBackground(q(c, 'nav'))
+        for (const sel of ['.off', '.on']) {
+          const item = q(c, sel)
+          const indicator = q(item, ':scope > .mk-navigation-rail-item-indicator')
+          const label = q(item, '.mk-navigation-rail-item-label')
+          // El indicador inactivo mide 0 de ancho: ahí el fondo es el rail. La etiqueta queda
+          // sobre el indicador solo en el expandido.
+          const iconBg = sel === '.on' ? effectiveBackground(indicator) : rail
+          expect(contrastRatio(cs(q(item, 'svg')).fill, iconBg), `${sel} icono`).toBeGreaterThanOrEqual(NON_TEXT)
+          const labelBg = expanded ? iconBg : rail
+          expect(contrastRatio(cs(label).color, labelBg), `${sel} etiqueta`).toBeGreaterThanOrEqual(TEXT)
+        }
+        expect(contrastRatio(cs(q(c, '.off .mk-badge')).backgroundColor, rail), 'insignia pequeña').toBeGreaterThanOrEqual(NON_TEXT)
         const large = q(c, '.on .mk-badge')
         expect(contrastRatio(cs(large).color, effectiveBackground(large)), 'número de la insignia').toBeGreaterThanOrEqual(TEXT)
       })

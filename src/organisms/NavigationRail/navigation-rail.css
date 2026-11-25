@@ -1,0 +1,297 @@
+/* NavigationRail de Material 3 Expressive (el "wide navigation rail" de Compose: contraído y
+   expandido en un mismo componente).
+
+   Fuentes:
+   - Kit de Figma (docs/research/05-medidas.md § Navigation rail, con "Variantes y detalles"):
+     contraído de 96, relleno 44 arriba y 56 abajo, separación 40 entre el bloque superior y los
+     destinos, destinos de 96 × 64 separados 4 (vertical, como la barra), sin fondo. Expandido de
+     220, relleno 44, 20, 20, 20; docked sin fondo, floating Surface Container con radio 16;
+     destinos horizontales de 56 de alto, radio completo, relleno 16, separación 8, icono 24,
+     Label Large, activo Secondary Container con On Secondary Container. Bloque superior de 56 +
+     4 + 56. Alineación Middle: destinos centrados en el alto total, bloque arriba. Sin etiqueta:
+     indicador 56 × 56 con relleno 4. Insignia grande del horizontal en línea después de la
+     etiqueta (separación 8).
+   - Jetpack Compose (compose/material3/material3/src/commonMain/kotlin/androidx/compose/
+     material3/), ver docs/research/07-jetpack-compose.md § NavigationRail:
+     - tokens/NavigationRailExpandedTokens.kt: ancho expandido mínimo 220 y máximo 360
+       (ContainerWidthMinimum / ContainerWidthMaximum).
+     - tokens/NavigationRailColorTokens.kt: etiqueta activa Secondary, icono activo e inactivo,
+       indicador (confirman el kit).
+     - WideNavigationRail.kt: el ancho anima con el resorte DefaultSpatial; la separación entre
+       destinos pasa de 4 (contraído) a 0 (expandido); con Arrangement.Center los destinos se
+       centran en el alto total y no debajo del bloque superior; el destino expandido abraza su
+       contenido (indicador = icono + etiqueta + 16 a cada lado) y empieza a 20 del borde.
+     - NavigationItem.kt (AnimatedNavigationItem): el cambio de icono arriba a icono al costado
+       anima con DefaultSpatial, interpolando el tamaño del indicador y la posición del icono.
+
+   Transición entre contraído y expandido (en Chrome, Firefox y Safari, sin JavaScript):
+   - El rail anima `width` entre dos largos (96 y el ancho expandido), no hacia `auto`.
+   - Cada destino es una grilla con las mismas 7 columnas y 5 filas en los dos estados; solo
+     cambian los tamaños, y una lista de pistas con la misma cantidad y tipo interpola (Chrome
+     107, Firefox 66, Safari 16), como el FAB extendido. La columna de la etiqueta va de
+     minmax(0, 0fr) a minmax(0, 1fr): en un destino de ancho ajustado al contenido, 1fr mide lo
+     que la etiqueta, así que el indicador (que cubre todas las columnas) crece hasta abrazarla.
+   - La etiqueta está siempre en su celda del expandido (al lado del icono). Contraída, se corre
+     con `translate` debajo del indicador y centrada (los porcentajes de translate son de su
+     propio ancho), así que va de un lugar al otro en diagonal, sin saltos. Compose, en cambio,
+     la hace desaparecer y reaparecer a mitad de camino.
+   - Con prefers-reduced-motion los resortes espaciales duran 0 (tokens/motion.css): el cambio
+     es inmediato y solo los colores se funden.
+   Limitación: la insignia grande cambia de lugar sin animarse (sobre el icono en el contraído, en
+   línea después de la etiqueta en el expandido): pasar de posición absoluta a estar en la grilla
+   no interpola. */
+
+@layer matekit.components {
+  .mk-navigation-rail {
+    /* Ancho expandido: el del kit, ajustable entre el mínimo y el máximo de Compose. */
+    --_expanded-width: clamp(220px, var(--mk-navigation-rail-expanded-width, 220px), 360px);
+    --_padding-bottom: 56px;
+    --_spatial: var(--md-sys-motion-spring-default-spatial-duration)
+      var(--md-sys-motion-spring-default-spatial-easing);
+    --_effects: var(--md-sys-motion-spring-default-effects-duration)
+      var(--md-sys-motion-spring-default-effects-easing);
+
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    box-sizing: border-box;
+    flex-shrink: 0;
+    width: 96px;
+    height: 100%;
+    margin: 0;
+    padding: 44px 0 var(--_padding-bottom);
+    /* Si los destinos no entran, se desplaza en vertical; a lo ancho recorta (durante la
+       transición el contenido puede ser más ancho que el rail). */
+    overflow-x: hidden;
+    overflow-y: auto;
+    /* El radio del floating; sin fondo no se ve. */
+    border-radius: var(--md-sys-shape-corner-large);
+    background-color: transparent;
+    transition:
+      width var(--_spatial),
+      padding-bottom var(--_spatial),
+      background-color var(--_effects);
+  }
+  .mk-navigation-rail[data-expanded='true'] {
+    --_padding-bottom: 20px;
+    width: var(--_expanded-width);
+  }
+  .mk-navigation-rail[data-variant='docked'] {
+    border-radius: 0;
+  }
+  .mk-navigation-rail[data-variant='floating'][data-expanded='true'] {
+    background-color: var(--md-sys-color-surface-container);
+  }
+
+  /* --- Bloque superior: menú (56), separación 4, FAB (56); 40 hasta los destinos. Empieza a 20
+     del borde, como los indicadores, en los dos estados. --- */
+  .mk-navigation-rail-header {
+    display: flex;
+    flex: none;
+    flex-direction: column;
+    align-items: flex-start;
+    row-gap: 4px;
+    align-self: stretch;
+    box-sizing: border-box;
+    padding: 0 20px 40px;
+  }
+
+  /* --- Alineación middle: los destinos se centran en el alto total del rail (Compose
+     Arrangement.Center; kit: en 800 de alto, 224 de destinos empiezan en 288), con el bloque
+     arriba. Antes de los destinos crece el bloque (o ::before si no hay bloque) y después,
+     ::after; los dos con la misma proporción. ::after parte de 44 (el relleno de arriba que el
+     bloque ya tiene) y no baja del relleno inferior, así que los destinos quedan centrados en el
+     alto total. Si no hay lugar, el bloque conserva su alto de contenido (mínimo automático de
+     flex) y los destinos bajan en vez de taparlo. --- */
+  .mk-navigation-rail[data-align='middle'] {
+    padding-bottom: 0;
+  }
+  .mk-navigation-rail[data-align='middle'] > .mk-navigation-rail-header,
+  .mk-navigation-rail[data-align='middle']:not(:has(> .mk-navigation-rail-header))::before {
+    flex: 1 1 0;
+  }
+  .mk-navigation-rail[data-align='middle']:not(:has(> .mk-navigation-rail-header))::before,
+  .mk-navigation-rail[data-align='middle']::after {
+    content: '';
+    display: block;
+  }
+  .mk-navigation-rail[data-align='middle']::after {
+    flex: 1 1 44px;
+    min-height: var(--_padding-bottom);
+    transition: min-height var(--_spatial);
+  }
+  /* El bloque parte de su relleno inferior (40, la separación con los destinos): ::after suma lo
+     mismo para que el reparto siga siendo parejo. */
+  .mk-navigation-rail[data-align='middle']:has(> .mk-navigation-rail-header)::after {
+    flex-basis: calc(44px + 40px);
+  }
+
+  /* --- Destino ---
+     Columnas: 16 | icono 24 | separación | etiqueta | separación | insignia grande | 16.
+     Filas: arriba del icono | icono 24 | debajo del icono | separación | etiqueta.
+     Contraído: indicador 56 × 32 (16 + 24 + 16; 4 + 24 + 4), separación 4, etiqueta de 16, y 6
+     de relleno arriba y abajo: 64 de alto. 20 a cada lado: 96 de ancho. */
+  .mk-navigation-rail-item {
+    /* La mitad del alto del indicador (32): Large. Anima (a 28 en el expandido), por eso no es
+       Full. */
+    --_indicator-radius: var(--md-sys-shape-corner-large);
+
+    flex: none;
+    grid-template-columns: 16px 24px 0px minmax(0, 0fr) 0px auto 16px;
+    grid-template-rows: 4px 24px 4px 4px 16px;
+    width: fit-content;
+    max-width: 100%;
+    padding: 6px 20px;
+    transition:
+      color var(--_effects),
+      grid-template-columns var(--_spatial),
+      grid-template-rows var(--_spatial),
+      padding var(--_spatial),
+      margin var(--_spatial);
+  }
+  /* Separación 4 entre destinos en el contraído; 0 en el expandido (Compose). */
+  .mk-navigation-rail-item + .mk-navigation-rail-item {
+    margin-top: 4px;
+  }
+
+  .mk-navigation-rail-item
+    > :is(.mk-navigation-rail-item-indicator, .mk-state-layer, .mk-ripple, .mk-focus-ring) {
+    grid-column: 1 / -1;
+    grid-row: 1 / 4;
+  }
+  .mk-navigation-rail-item > .mk-navigation-rail-item-indicator {
+    transition:
+      width var(--_spatial),
+      border-radius var(--_spatial);
+  }
+
+  .mk-navigation-rail-item-icon {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  /* La etiqueta vive en la celda del expandido. Contraída, se corre debajo del indicador y
+     centrada: su borde inicial está en 20 + 16 + 24 = 60 y el centro del indicador en 48, así
+     que se mueve −12 − la mitad de su ancho; y de la fila del icono (centrada en 10 + 12) a la de
+     la etiqueta (arriba en 42), 28 hacia abajo. Hasta 88 de ancho (96 − 4 a cada lado). */
+  .mk-navigation-rail-item-label {
+    grid-column: 4;
+    grid-row: 2;
+    align-self: center;
+    justify-self: start;
+    width: max-content;
+    max-width: max(100%, 88px);
+    translate: calc(-12px - 50%) 28px;
+    font-family: var(--md-sys-typescale-label-medium-font);
+    font-size: var(--md-sys-typescale-label-medium-size);
+    line-height: var(--md-sys-typescale-label-medium-line-height);
+    font-weight: var(--md-sys-typescale-label-medium-weight);
+    letter-spacing: var(--md-sys-typescale-label-medium-tracking);
+    text-align: center;
+    transition:
+      translate var(--_spatial),
+      font-size var(--_spatial),
+      line-height var(--_spatial),
+      letter-spacing var(--_spatial),
+      opacity var(--_effects);
+  }
+  .mk-navigation-rail-item-label:dir(rtl) {
+    translate: calc(12px + 50%) 28px;
+  }
+
+  /* Insignias sobre la esquina del icono, como en la barra (Badge.kt, BadgedBox): la pequeña a 6
+     del borde final, la grande desde 12 y 2 por encima (kit: x = 28, y = 2 en el indicador). */
+  .mk-navigation-rail-item > .mk-badge {
+    position: absolute;
+    grid-column: 2;
+    grid-row: 2;
+    inset-inline-start: 18px;
+    top: 0;
+  }
+  .mk-navigation-rail-item > .mk-badge[data-size='large'] {
+    inset-inline-start: 12px;
+    top: -2px;
+  }
+
+  /* --- Contraído sin etiquetas ("Show label" = False): indicador 56 × 56 (radio 28) con el
+     icono centrado y 4 de relleno; 64 de alto. La etiqueta queda en su celda del expandido,
+     transparente: sigue siendo el nombre accesible (opacity no la saca del árbol de
+     accesibilidad, a diferencia de visibility o display) y al expandir solo aparece. --- */
+  .mk-navigation-rail[data-collapsed-labels='hidden']:not([data-expanded='true']) .mk-navigation-rail-item {
+    --_indicator-radius: var(--md-sys-shape-corner-extra-large);
+    grid-template-rows: 16px 24px 16px 0px 0px;
+    padding-block: 4px;
+  }
+  .mk-navigation-rail[data-collapsed-labels='hidden']:not([data-expanded='true']) .mk-navigation-rail-item-label {
+    opacity: 0;
+    translate: 0 0;
+    font-family: var(--md-sys-typescale-label-large-font);
+    font-size: var(--md-sys-typescale-label-large-size);
+    line-height: var(--md-sys-typescale-label-large-line-height);
+    font-weight: var(--md-sys-typescale-label-large-weight);
+    letter-spacing: var(--md-sys-typescale-label-large-tracking);
+  }
+
+  /* --- Expandido: destino horizontal de 56 de alto (16 + 24 + 16), radio 28 (la mitad), 16 a
+     los lados, 8 entre icono y etiqueta, Label Large; empieza a 20 del borde. --- */
+  .mk-navigation-rail[data-expanded='true'] .mk-navigation-rail-item {
+    /* La mitad del alto (56): Extra Large. */
+    --_indicator-radius: var(--md-sys-shape-corner-extra-large);
+    grid-template-columns: 16px 24px 8px minmax(0, 1fr) 0px auto 16px;
+    grid-template-rows: 16px 24px 16px 0px 0px;
+    padding-block: 0;
+  }
+  .mk-navigation-rail[data-expanded='true'] .mk-navigation-rail-item + .mk-navigation-rail-item {
+    margin-top: 0;
+  }
+  /* Sin icono ("Show icon" = False del kit): la etiqueta empieza a 16 del borde del indicador. */
+  .mk-navigation-rail[data-expanded='true'] .mk-navigation-rail-item:not(:has(> .mk-navigation-rail-item-icon)) {
+    grid-template-columns: 16px 0px 0px minmax(0, 1fr) 0px auto 16px;
+  }
+  /* Con insignia grande: separación 8 y la insignia en su columna, en línea con la etiqueta. */
+  .mk-navigation-rail[data-expanded='true'] .mk-navigation-rail-item:has(> .mk-badge[data-size='large']) {
+    grid-template-columns: 16px 24px 8px minmax(0, 1fr) 8px auto 16px;
+  }
+  .mk-navigation-rail[data-expanded='true']
+    .mk-navigation-rail-item:not(:has(> .mk-navigation-rail-item-icon)):has(> .mk-badge[data-size='large']) {
+    grid-template-columns: 16px 0px 0px minmax(0, 1fr) 8px auto 16px;
+  }
+  .mk-navigation-rail[data-expanded='true'] .mk-navigation-rail-item > .mk-badge[data-size='large'] {
+    position: static;
+    grid-column: 6;
+    grid-row: 2;
+    align-self: center;
+  }
+  .mk-navigation-rail[data-expanded='true'] .mk-navigation-rail-item-label {
+    translate: 0 0;
+    text-align: start;
+    font-family: var(--md-sys-typescale-label-large-font);
+    font-size: var(--md-sys-typescale-label-large-size);
+    line-height: var(--md-sys-typescale-label-large-line-height);
+    font-weight: var(--md-sys-typescale-label-large-weight);
+    letter-spacing: var(--md-sys-typescale-label-large-tracking);
+  }
+  /* Activo: la etiqueta, dentro del indicador, en On Secondary Container (kit; Compose
+     selectedTextColorStartIconPosition = ItemActiveIcon). */
+  .mk-navigation-rail[data-expanded='true']
+    .mk-navigation-rail-item:is([aria-current]:not([aria-current='false'])) {
+    --_label: var(--md-sys-color-on-secondary-container);
+  }
+
+  /* --- Alto contraste (forced-colors) ---
+     El navegador quita el fondo del floating: el borde del rail se dibuja con un contorno
+     interior (no cambia el ancho). El activo usa la base común (navigation-bar.css): indicador
+     Highlight, icono HighlightText y etiqueta de debajo en Highlight; expandido, la etiqueta
+     queda dentro del indicador y va en HighlightText. */
+  @media (forced-colors: active) {
+    .mk-navigation-rail {
+      outline: 1px solid CanvasText;
+      outline-offset: -1px;
+    }
+    .mk-navigation-rail[data-expanded='true']
+      .mk-navigation-rail-item:is([aria-current]:not([aria-current='false']))
+      > .mk-navigation-rail-item-label {
+      color: HighlightText;
+    }
+  }
+}

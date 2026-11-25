@@ -12,6 +12,11 @@ import {
   NavigationBarItem,
   NavigationBarItemIcon,
   NavigationBarItemLabel,
+  NavigationRail,
+  NavigationRailHeader,
+  NavigationRailItem,
+  NavigationRailItemIcon,
+  NavigationRailItemLabel,
   Checkbox,
   Dialog,
   EditIcon,
@@ -307,6 +312,62 @@ describe('NavigationBar', () => {
 
   test('las insignias se ven: CanvasText con el número en Canvas', async () => {
     const c = await render(bar('vertical'))
+    for (const sel of ['.plain .mk-badge', '.on .mk-badge']) {
+      expect(style(q(c, sel)).backgroundColor, sel).toBe(systemColor('CanvasText'))
+    }
+    expect(style(q(c, '.on .mk-badge')).color).toBe(systemColor('Canvas'))
+  })
+})
+
+describe('NavigationRail', () => {
+  const rail = (expanded: boolean, variant: 'docked' | 'floating' = 'docked') => (
+    <div style={{ height: 400, display: 'flex' }}>
+      <NavigationRail expanded={expanded} variant={variant}>
+        <NavigationRailItem href="#" className="plain">
+          <NavigationRailItemIcon><HomeIcon /></NavigationRailItemIcon>
+          <NavigationRailItemLabel>Inicio</NavigationRailItemLabel>
+          <Badge label="Novedades" />
+        </NavigationRailItem>
+        <NavigationRailItem href="#" active className="on">
+          <NavigationRailItemIcon><StarIcon filled /></NavigationRailItemIcon>
+          <NavigationRailItemLabel>Favoritos</NavigationRailItemLabel>
+          <Badge label="3 nuevos">3</Badge>
+        </NavigationRailItem>
+      </NavigationRail>
+    </div>
+  )
+
+  for (const variant of ['docked', 'floating'] as const) {
+    test(`el rail ${variant} se separa del contenido con un contorno CanvasText`, async () => {
+      const c = await render(rail(true, variant))
+      const nav = style(q(c, 'nav'))
+      expect(nav.outlineStyle).toBe('solid')
+      expect(nav.outlineColor).toBe(systemColor('CanvasText'))
+      expect(q(c, 'nav').getBoundingClientRect().width).toBe(220)
+    })
+  }
+
+  for (const expanded of [false, true]) {
+    test(`activo (${expanded ? 'expandido' : 'contraído'}): indicador en Highlight, icono en HighlightText`, async () => {
+      const c = await render(rail(expanded))
+      const ind = q(c, '.on > .mk-navigation-rail-item-indicator')
+      expect(style(ind).backgroundColor).toBe(systemColor('Highlight'))
+      expect(ind.getBoundingClientRect().width).toBeGreaterThan(0)
+      expect(style(q(c, '.on .mk-navigation-rail-item-icon')).color).toBe(systemColor('HighlightText'))
+      expect(style(q(c, '.on .mk-navigation-rail-item-label')).color).toBe(
+        systemColor(expanded ? 'HighlightText' : 'Highlight'),
+      )
+      expect(q(c, '.plain > .mk-navigation-rail-item-indicator').getBoundingClientRect().width).toBe(0)
+    })
+  }
+
+  test.skipIf(!autoForced)('el inactivo conserva el color de enlace que fuerza el navegador', async () => {
+    const c = await render(rail(true))
+    expect(style(q(c, '.plain .mk-navigation-rail-item-label')).color).toBe(systemColor('LinkText'))
+  })
+
+  test('las insignias se ven, también la grande en línea del expandido', async () => {
+    const c = await render(rail(true))
     for (const sel of ['.plain .mk-badge', '.on .mk-badge']) {
       expect(style(q(c, sel)).backgroundColor, sel).toBe(systemColor('CanvasText'))
     }

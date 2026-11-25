@@ -9,6 +9,7 @@ import { IconButtonPage } from './pages/IconButtonPage.tsx'
 import { IconsPage } from './pages/IconsPage.tsx'
 import { MenuPage } from './pages/MenuPage.tsx'
 import { NavigationBarPage } from './pages/NavigationBarPage.tsx'
+import { NavigationRailPage } from './pages/NavigationRailPage.tsx'
 import { SwitchPage } from './pages/SwitchPage.tsx'
 import { TextFieldPage } from './pages/TextFieldPage.tsx'
 import { TokensPage } from './pages/TokensPage.tsx'
@@ -33,6 +34,7 @@ const PAGES = {
   dialog: { label: 'Dialog', Page: DialogPage },
   menu: { label: 'Menu', Page: MenuPage },
   'navigation-bar': { label: 'NavigationBar', Page: NavigationBarPage },
+  'navigation-rail': { label: 'NavigationRail', Page: NavigationRailPage },
   examples: { label: 'Ejemplos', Page: ExamplesPage },
   icons: { label: 'Iconos', Page: IconsPage },
   tokens: { label: 'Tokens', Page: TokensPage },

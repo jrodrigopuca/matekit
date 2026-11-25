@@ -21,19 +21,18 @@
 // Enlaces y enrutadores (ADR-0010): con `href`, un `<a>`; sin `href`, un `<button>`; con
 // `render={<Link href="/" />}`, el elemento que se pase, clonado con las clases, `aria-current`
 // y las partes como hijos. Así sirve el `Link` de Next.js o el de React Router sin depender de
-// ninguno. La lógica vive en src/internal/interactive.tsx, compartida con los FAB.
+// ninguno. La lógica vive en src/internal/interactive.tsx, compartida con los FAB, y la del
+// destino (aria-current, indicador y átomos), en src/internal/navigation-item.tsx, compartida
+// con NavigationRailItem.
 
-import type { HTMLAttributes, ReactNode, Ref } from 'react'
-import { FocusRing } from '../../atoms/FocusRing/FocusRing.tsx'
-import { Ripple } from '../../atoms/Ripple/Ripple.tsx'
-import { StateLayer } from '../../atoms/StateLayer/StateLayer.tsx'
+import type { HTMLAttributes, Ref } from 'react'
 import {
   cx,
-  interactiveElement,
   type ButtonElementProps,
   type LinkElementProps,
   type RenderElementProps,
 } from '../../internal/interactive.tsx'
+import { navigationItem, type NavigationItemOwnProps } from '../../internal/navigation-item.tsx'
 
 export type NavigationBarLayout = 'vertical' | 'horizontal'
 
@@ -73,16 +72,8 @@ export function NavigationBar({ layout = 'vertical', className, ...props }: Navi
   return <nav {...props} className={cx('mk-navigation-bar', className)} data-layout={layout} />
 }
 
-interface NavigationBarItemOwnProps {
-  /**
-   * Destino actual: pone `aria-current="page"` y muestra el indicador. Lo decide la
-   * aplicación (por ejemplo, comparando con la ruta actual). Si el elemento que se pasa en
-   * `render` ya pone `aria-current` (el `NavLink` de React Router), no hace falta.
-   */
-  active?: boolean | undefined
-  /** Icono (`NavigationBarItemIcon`), etiqueta (`NavigationBarItemLabel`) y, si hace falta, `Badge`. */
-  children?: ReactNode
-}
+/** `active` y los hijos: icono (`NavigationBarItemIcon`), etiqueta (`NavigationBarItemLabel`) y `Badge`. */
+type NavigationBarItemOwnProps = NavigationItemOwnProps
 
 /** Con `href`, el elemento es un `<a>`. */
 export type NavigationBarItemLinkProps = NavigationBarItemOwnProps & LinkElementProps
@@ -120,20 +111,7 @@ export type NavigationBarItemProps =
  * ```
  */
 export function NavigationBarItem(props: NavigationBarItemProps) {
-  const { active, className, children, ...rest } = props
-  const current = active ? { 'aria-current': 'page' as const } : {}
-  return interactiveElement(
-    'NavigationBarItem',
-    cx('mk-navigation-bar-item', className),
-    { ...current, ...rest },
-    <>
-      <span className="mk-navigation-bar-item-indicator" aria-hidden="true" />
-      <StateLayer />
-      <Ripple />
-      <FocusRing />
-      {children}
-    </>,
-  )
+  return navigationItem('NavigationBarItem', 'mk-navigation-bar-item', props)
 }
 
 export interface NavigationBarItemIconProps extends HTMLAttributes<HTMLSpanElement> {

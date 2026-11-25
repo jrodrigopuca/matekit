@@ -23,3 +23,5 @@
 @import './organisms/Menu/menu.css';
 /* Después de badge.css: ubica la insignia sobre el icono del elemento. */
 @import './organisms/NavigationBar/navigation-bar.css';
+/* Después de navigation-bar.css: usa su base común de destinos y la sobrescribe por orden. */
+@import './organisms/NavigationRail/navigation-rail.css';

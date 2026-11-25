@@ -356,3 +356,37 @@ body {
   right: 16px;
   bottom: 16px;
 }
+
+/* Marco de tableta para el NavigationRail: el rail a la izquierda, el contenido a la derecha. */
+.pg-tablet {
+  margin: 0;
+  max-width: 100%;
+  padding: 12px;
+  border-radius: 32px;
+  background: var(--md-sys-color-outline-variant);
+}
+
+.pg-tablet-screen {
+  display: flex;
+  overflow: hidden;
+  border-radius: 20px;
+  background: var(--md-sys-color-surface);
+}
+
+.pg-tablet-content {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  min-width: 200px;
+  margin: 12px;
+  border-radius: 16px;
+  background: var(--md-sys-color-surface-container-low);
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: var(--md-sys-typescale-title-medium-size);
+}
+
+.pg-rail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(520px, 1fr));
+  gap: 24px;
+}

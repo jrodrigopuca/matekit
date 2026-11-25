@@ -1,6 +1,7 @@
 // Módulo interno universal (ADR-0003): sin estado, efectos, contexto ni eventos. No se exporta
 // desde src/index.ts; lo usan los componentes que dibujan un `<a>`, un `<button>` o el elemento
-// de `render` (ADR-0010): NavigationBarItem y los FAB.
+// de `render` (ADR-0010): los destinos de NavigationBar y NavigationRail (por
+// src/internal/navigation-item.tsx) y los FAB.
 //
 // cloneElement e isValidElement también existen en la versión de React para Server Components
 // (react.react-server.js), así que esto corre en el servidor.
