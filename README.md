@@ -19,6 +19,14 @@ diseño oficial.
   tokens y medidas.
 - **Tokens primero:** color (claro y oscuro), tipografía, esquinas, elevación y capas de
   estado como variables CSS, antes que cualquier componente.
+- **Paletas y contraste:** además del esquema del kit, paletas opcionales generadas desde un
+  color semilla y tres niveles de contraste, elegidos con atributos en cualquier elemento
+  ([ADR-0008](docs/adr/0008-paletas-y-niveles-de-contraste.md)):
+
+  ```html
+  <!-- import '@matekit/react/styles.css' y, si se usa, la paleta: tokens/palettes/green.css -->
+  <html data-palette="green" data-contrast="high" data-theme="dark">
+  ```
 - **Sin dependencias de comportamiento al inicio:** elementos nativos de HTML, `<dialog>` y
   la API Popover donde alcancen.
 - **API por composición:** las partes de cada componente se arman con subcomponentes

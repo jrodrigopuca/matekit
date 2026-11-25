@@ -14,7 +14,8 @@
     (`mk-state-layer`, `mk-focus-ring`) y las variables propias de componentes, `--mk-`;
     los tokens mantienen los nombres oficiales `--md-sys-*`.
   - Todo el CSS de la librería vive en capas: `@layer matekit.tokens, matekit.atoms,
-    matekit.components`. Un estilo del proyecto fuera de `@layer` gana siempre.
+    matekit.components`. Un estilo del proyecto fuera de `@layer` gana siempre. (Desde el
+    ADR-0008, las paletas opcionales van en `matekit.palettes`, entre tokens y átomos.)
   - Una sola hoja, `src/styles.css`, que la aplicación importa una vez. Los módulos de
     componentes no importan CSS.
   - Las reglas que tocan al padre de un átomo usan `:where()` para quedar con especificidad 0.

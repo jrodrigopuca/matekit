@@ -527,9 +527,11 @@ describe('Menu: tema Vibrant', () => {
     expect(style(item(c, 'Elegido')).backgroundColor).toBe(roleColor('tertiary'))
     expect(style(item(c, 'Elegido')).color).toBe(roleColor('on-tertiary'))
     expect(style(item(c, 'No')).color).toBe(mixColor('on-tertiary-container', 38))
-    // Con hover, el icono inicial pasa a tertiary (VibrantMenuTokens.ItemHoveredLeadingIconColor).
+    // Con hover, Compose pasa el icono a tertiary (VibrantMenuTokens.ItemHoveredLeadingIconColor);
+    // matekit lo deja en on-tertiary-container, que tiene contraste garantizado en todos los
+    // niveles (menu.css, ADR-0008).
     await userEvent.hover(edit)
-    expect(style(q(edit, '.mk-menu-item-leading')).color).toBe(roleColor('tertiary'))
+    expect(style(q(edit, '.mk-menu-item-leading')).color).toBe(roleColor('on-tertiary-container'))
   })
 })
 

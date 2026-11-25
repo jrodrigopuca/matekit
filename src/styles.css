@@ -1,7 +1,9 @@
 /* Hoja de estilos única de matekit: se importa una vez en la aplicación.
-   El orden de las capas permite que cualquier estilo propio (fuera de @layer) gane. */
+   El orden de las capas permite que cualquier estilo propio (fuera de @layer) gane.
+   Las paletas opcionales (src/tokens/palettes/*.css, ADR-0008) se importan aparte y van en
+   matekit.palettes, después de los tokens base. */
 
-@layer matekit.tokens, matekit.atoms, matekit.components;
+@layer matekit.tokens, matekit.palettes, matekit.atoms, matekit.components;
 
 @import './tokens/index.css' layer(matekit.tokens);
 @import './atoms/Icon/icon.css';

@@ -21,7 +21,7 @@ Antes de decidir algo que cueste revertir, leer `docs/adr/README.md` y aplicar l
 | `pnpm lint:css` | Revisa que el CSS de componentes use tokens para color, movimiento y tipografía |
 | `pnpm test` | Pruebas de tokens (Node) y de componentes (Vitest en Chrome) |
 | `pnpm test:browser` | Solo las pruebas de componentes |
-| `pnpm tokens` | Regenera `src/tokens/*.css` desde `tokens/*.json` |
+| `pnpm tokens` | Regenera `src/tokens/*.css` y `src/tokens/palettes/*.css` desde `tokens/*.json` (paletas: ADR-0008) |
 | `pnpm icons` / `pnpm icons:fetch` | Regenera los iconos (ver ADR-0006) |
 
 ## Estructura y capas (ADR-0002)
@@ -66,6 +66,11 @@ exporta desde el `index.ts` de su capa y su CSS se importa en `src/styles.css`.
 - CSS plano. Clases con prefijo `mk-` (`mk-switch`, `mk-switch-track`), variables internas
   con `--_` y variables públicas de personalización con `--mk-`.
 - Todo dentro de `@layer matekit.components` (o `matekit.atoms`).
+- **Color con contraste garantizado (ADR-0008):** combinar solo `on-X` sobre `X`, y el
+  contenido (`on-surface`, `on-surface-variant`, `primary`, `outline`) sobre las superficies.
+  Otro par (por ejemplo `tertiary` sobre `tertiary-container`) puede cumplir en el nivel
+  estándar y fallar en el medio o el alto. `src/test/contrast.test.tsx` mide cada componente
+  en todas las paletas, niveles y temas.
 - Solo tokens `--md-sys-*` para color, tipografía, forma, elevación, estados y movimiento;
   nada de colores ni duraciones sueltos. `pnpm lint:css` lo verifica (también en CI); una
   excepción justificada lleva `/* lint-css-allow: motivo */` al final de la declaración. Movimiento: resortes
@@ -115,7 +120,8 @@ No llamar al conector de Figma salvo que falte un dato imprescindible: tiene lí
 - Accesibilidad automática: sumar una galería del componente (estados principales) a
   `src/test/a11y.test.tsx`, que corre axe-core (WCAG 2.2 A/AA) en tema claro y oscuro.
 - Contraste: sumar el componente a `src/test/contrast.test.tsx` (4,5:1 texto, 3:1 iconos y
-  bordes que identifican el control). axe no decide el contraste de elementos cubiertos por los
+  bordes que identifican el control), que lo recorre en las 4 paletas, los 3 niveles de
+  contraste y los 2 temas. axe no decide el contraste de elementos cubiertos por los
   átomos (StateLayer, Ripple, FocusRing), por eso existe esta prueba propia.
 - `src/test/render.tsx` aísla cada prueba: desmonta lo renderizado al terminar y deja el
   puntero en una esquina antes de empezar. No repetir eso en cada archivo. Para detectar
@@ -124,7 +130,8 @@ No llamar al conector de Figma salvo que falte un dato imprescindible: tiene lí
 ## Playground
 
 Cada componente suma `playground/pages/NombrePage.tsx` (controles interactivos, matriz de
-estados) y una entrada en `playground/App.tsx`. Revisarlo en tema claro y oscuro.
+estados) y una entrada en `playground/App.tsx`. Revisarlo en tema claro y oscuro (la cabecera
+también elige paleta y nivel de contraste).
 
 Para revisar visualmente, usar el playground que el autor suele tener abierto en
 `http://localhost:5175` (recarga en caliente): comprobar con

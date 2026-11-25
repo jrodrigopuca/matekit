@@ -63,23 +63,19 @@ test('el CSS está bien formado: comentarios y llaves balanceados, sin variables
   }
 })
 
-test('color: los 49 roles en claro y en los dos bloques oscuros, con el valor del kit', () => {
+test('color: los 49 roles del kit en el nivel estándar, con light-dark(claro, oscuro)', () => {
   const src = json<ColorTokens>('color.json')
   const list = blocks(css('color.css'))
-  const light = find(list, ':root,\n[data-theme="light"]')
-  const darkAttr = find(list, '[data-theme="dark"]')
-  const darkMedia = find(list, ':root:not([data-theme="light"])')
+  const base = find(list, ':root,\n[data-palette="baseline"]')
   assert.equal(Object.keys(src.light).length, 49)
-  for (const [role, hex] of Object.entries(src.light)) {
-    assert.equal(light[`--md-sys-color-${role}`], hex, `claro ${role}`)
+  for (const [role, light] of Object.entries(src.light)) {
+    const dark = src.dark[role]
+    const expected = light === dark ? light : `light-dark(${light}, ${dark})`
+    assert.equal(base[`--md-sys-color-${role}`], expected, role)
   }
-  for (const [role, hex] of Object.entries(src.dark)) {
-    assert.equal(darkAttr[`--md-sys-color-${role}`], hex, `oscuro (atributo) ${role}`)
-    assert.equal(darkMedia[`--md-sys-color-${role}`], hex, `oscuro (sistema) ${role}`)
-  }
-  assert.equal(light['color-scheme'], 'light')
-  assert.equal(darkAttr['color-scheme'], 'dark')
-  assert.equal(darkMedia['color-scheme'], 'dark')
+  assert.equal(find(list, ':root')['color-scheme'], 'light dark')
+  assert.equal(find(list, '[data-theme="light"]')['color-scheme'], 'light')
+  assert.equal(find(list, '[data-theme="dark"]')['color-scheme'], 'dark')
 })
 
 test('tipografía: tamaño, interlineado y espaciado en rem equivalen a los px del kit', () => {

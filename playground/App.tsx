@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import paletteTokens from '../tokens/palettes.json' with { type: 'json' }
 import { ButtonPage } from './pages/ButtonPage.tsx'
 import { CheckboxPage } from './pages/CheckboxPage.tsx'
 import { DialogPage } from './pages/DialogPage.tsx'
@@ -11,6 +12,13 @@ import { TokensPage } from './pages/TokensPage.tsx'
 
 type Theme = 'system' | 'light' | 'dark'
 type Motion = 'expressive' | 'standard'
+type Contrast = 'system' | 'standard' | 'medium' | 'high'
+
+// Paletas opcionales (ADR-0008): main.tsx importa su CSS; acá solo se elige con data-palette.
+const PALETTES: Record<string, string> = {
+  baseline: 'Base (kit)',
+  ...Object.fromEntries(Object.entries(paletteTokens.palettes).map(([id, p]) => [id, p.label])),
+}
 
 const PAGES = {
   button: { label: 'Button', Page: ButtonPage },
@@ -35,6 +43,8 @@ export function App() {
   const [page, setPage] = useState<PageId>(readHash)
   const [theme, setTheme] = useState<Theme>('system')
   const [motion, setMotion] = useState<Motion>('expressive')
+  const [palette, setPalette] = useState('baseline')
+  const [contrast, setContrast] = useState<Contrast>('system')
   const { Page } = PAGES[page]
 
   const go = (id: PageId) => {
@@ -46,6 +56,8 @@ export function App() {
     <div
       className="pg"
       {...(theme === 'system' ? {} : { 'data-theme': theme })}
+      {...(contrast === 'system' ? {} : { 'data-contrast': contrast })}
+      data-palette={palette}
       data-motion={motion}
     >
       <header className="pg-header">
@@ -71,6 +83,23 @@ export function App() {
             <option value="system">Sistema</option>
             <option value="light">Claro</option>
             <option value="dark">Oscuro</option>
+          </select>
+        </label>
+        <label className="pg-field">
+          Paleta
+          <select value={palette} onChange={(e) => setPalette(e.target.value)}>
+            {Object.entries(PALETTES).map(([id, label]) => (
+              <option key={id} value={id}>{label}</option>
+            ))}
+          </select>
+        </label>
+        <label className="pg-field">
+          Contraste
+          <select value={contrast} onChange={(e) => setContrast(e.target.value as Contrast)}>
+            <option value="system">Sistema</option>
+            <option value="standard">Estándar</option>
+            <option value="medium">Medio</option>
+            <option value="high">Alto</option>
           </select>
         </label>
         <label className="pg-field">

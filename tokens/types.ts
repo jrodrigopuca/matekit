@@ -61,3 +61,33 @@ export type StateTokens = {
   $source: string
   $notes: Record<string, string>
 } & Record<string, number>
+
+export type ContrastLevel = 'standard' | 'medium' | 'high'
+export type PaletteVariant =
+  | 'tonal-spot'
+  | 'neutral'
+  | 'vibrant'
+  | 'expressive'
+  | 'fidelity'
+  | 'content'
+  | 'monochrome'
+  | 'rainbow'
+  | 'fruit-salad'
+
+export interface PaletteTokens {
+  $source: string
+  /** Valor de contrastLevel de material-color-utilities para cada nivel (de -1 a 1). */
+  contrast: Record<ContrastLevel, number>
+  /** Paletas fijas del esquema base (kit), para generar sus niveles medio y alto. */
+  baseline: {
+    $notes?: string
+    primary: string
+    secondary: string
+    tertiary: string
+    error: string
+    neutralChroma: number
+    neutralVariantChroma: number
+  }
+  /** Paletas opcionales, generadas desde un color semilla. La clave es el valor de data-palette. */
+  palettes: Record<string, { seed: string; variant: PaletteVariant; label: string }>
+}

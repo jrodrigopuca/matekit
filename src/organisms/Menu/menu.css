@@ -13,8 +13,9 @@
        2026-08-05): colores de texto e iconos por estado. Standard: texto On Surface, iconos On
        Surface Variant, seleccionado On Tertiary Container, deshabilitado On Surface al 38 %.
        Vibrant: fondo Tertiary Container, texto e iconos On Tertiary Container, iconos con
-       hover, foco o presionado en Tertiary, seleccionado On Tertiary, deshabilitado On Tertiary
-       Container al 38 %. (MenuTokens.kt es el menú anterior: no se usa.)
+       hover, foco o presionado en Tertiary (matekit no lo aplica: ver la regla Vibrant más
+       abajo), seleccionado On Tertiary, deshabilitado On Tertiary Container al 38 %.
+       (MenuTokens.kt es el menú anterior: no se usa.)
      - Menu.kt (commit 23acf55b06, 2026-10-19): texto Label Large; ancho entre 112 y 280
        (DropdownMenuItemDefaultMinWidth/MaxWidth); 48 de margen con los bordes de la ventana
        (MenuVerticalMargin); animación de escala 0,8 → 1 con FastSpatial y opacidad con
@@ -125,7 +126,10 @@
     --_container: var(--md-sys-color-tertiary-container);
     --_label: var(--md-sys-color-on-tertiary-container);
     --_icon: var(--md-sys-color-on-tertiary-container);
-    --_icon-active: var(--md-sys-color-tertiary);
+    /* Compose pasa los iconos a Tertiary con el puntero o el foco, pero Tertiary sobre
+       Tertiary Container no es un par con contraste garantizado: en los niveles medio y alto
+       (ADR-0008) baja a 2,3:1 y 1,5:1. Se queda en On Tertiary Container, que sí lo es. */
+    --_icon-active: var(--md-sys-color-on-tertiary-container);
     --_selected-container: var(--md-sys-color-tertiary);
     --_selected-content: var(--md-sys-color-on-tertiary);
     --_disabled-base: var(--md-sys-color-on-tertiary-container);
@@ -140,6 +144,9 @@
     --_item-container: transparent;
     --_item-label: var(--_label);
     --_item-icon: var(--_icon);
+    /* Texto final (atajo): no cambia con el puntero ni el foco, a diferencia de los iconos
+       (ItemTrailingSupportingTextColor en StandardMenuTokens y VibrantMenuTokens). */
+    --_item-supporting: var(--_icon);
     --_item-radius: var(--md-sys-shape-corner-extra-small);
     --_disabled: color-mix(
       in srgb,
@@ -191,12 +198,14 @@
   }
   .mk-menu-item-trailing {
     order: 1;
+    color: var(--_item-supporting);
     gap: 8px;
     margin-inline-start: auto;
   }
   :is(.mk-menu-item-leading, .mk-menu-item-trailing) > svg {
     width: 20px;
     height: 20px;
+    color: var(--_item-icon);
     fill: currentColor;
   }
 
@@ -223,6 +232,7 @@
     --_item-container: var(--_selected-container);
     --_item-label: var(--_selected-content);
     --_item-icon: var(--_selected-content);
+    --_item-supporting: var(--_selected-content);
     --_item-radius: var(--md-sys-shape-corner-medium);
   }
 
@@ -231,6 +241,7 @@
   .mk-menu-item[aria-disabled='true'] {
     --_item-label: var(--_disabled);
     --_item-icon: var(--_disabled);
+    --_item-supporting: var(--_disabled);
     cursor: default;
   }
   .mk-menu-item[aria-checked='true'][aria-disabled='true'] {
@@ -273,6 +284,7 @@
       --_item-container: Highlight;
       --_item-label: HighlightText;
       --_item-icon: HighlightText;
+      --_item-supporting: HighlightText;
       --mk-focus-ring-color: HighlightText;
     }
     /* :is() toma la especificidad de su argumento más fuerte (0,3,0): así le gana también a la
@@ -282,6 +294,7 @@
       --_item-container: Canvas;
       --_item-label: GrayText;
       --_item-icon: GrayText;
+      --_item-supporting: GrayText;
       --mk-focus-ring-color: CanvasText;
     }
   }

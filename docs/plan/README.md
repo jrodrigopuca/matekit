@@ -9,6 +9,7 @@ siguiente. Convenciones en [`CLAUDE.md`](../../CLAUDE.md).
 | Componente | Capa | Notas |
 |---|---|---|
 | Tokens (color, tipografía, forma, elevación, estados, movimiento) | tokens | ADR-0004 |
+| Paletas (verde, azul, naranja) y niveles de contraste (estándar, medio, alto) | tokens | ADR-0008; `light-dark()`, `data-palette`, `data-contrast`, `prefers-contrast` |
 | StateLayer, FocusRing, Ripple, Icon | átomos | ADR-0003, ADR-0006 |
 | Button | molécula | universal; incluye toggle |
 | Checkbox | molécula | interactivo (indeterminado) |

@@ -1,13 +1,17 @@
 // Genera las variables CSS de matekit a partir de tokens/*.json.
 // Uso: pnpm tokens  (o: node scripts/build-tokens.ts)
-// Salida: src/tokens/*.css (se versionan; no editar a mano).
-// Sin dependencias ni React: los tokens deben poder separarse en otro paquete (ADR-0001).
+// Salida: src/tokens/*.css y src/tokens/palettes/*.css (se versionan; no editar a mano).
+// Sin React: los tokens deben poder separarse en otro paquete (ADR-0001). La única dependencia
+// es material-color-utilities (de desarrollo), que calcula las paletas y los niveles de
+// contraste (scripts/lib/color-schemes.ts, ADR-0008).
 
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import type {
   ColorTokens,
+  ContrastLevel,
+  PaletteTokens,
   ElevationTokens,
   MotionTokens,
   ShapeTokens,
@@ -16,6 +20,13 @@ import type {
   TypescaleTokens,
 } from '../tokens/types.ts'
 import { springToCss, toLinear } from '../tokens/spring.ts'
+import {
+  CONTRAST_LEVELS,
+  baselineSchemes,
+  paletteSchemes,
+  type ContrastSchemes,
+  type SchemePair,
+} from './lib/color-schemes.ts'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const read = <T>(name: string): T =>
@@ -42,22 +53,78 @@ function block(selector: string, decls: readonly Decl[], indent = ''): string {
 const vars = (obj: Record<string, string | number>, prefix: string): Decl[] =>
   Object.entries(obj).map(([k, v]) => [`--${prefix}${k}`, v] as const)
 
-// Color: claro por defecto, oscuro por preferencia del sistema o por data-theme.
-// data-theme se puede poner en cualquier elemento para tematizar solo esa parte.
-function buildColor(): string {
-  const color = read<ColorTokens>('color.json')
-  const light: Decl[] = [['color-scheme', 'light'], ...vars(color.light, 'md-sys-color-')]
-  const dark: Decl[] = [['color-scheme', 'dark'], ...vars(color.dark, 'md-sys-color-')]
-  return (
-    header(color.$source) +
-    '\n' +
-    block(':root,\n[data-theme="light"]', light) +
-    '\n' +
-    block('[data-theme="dark"]', dark) +
-    '\n@media (prefers-color-scheme: dark) {\n' +
-    block(':root:not([data-theme="light"])', dark, '  ') +
-    '}\n'
+// Color (ADR-0008). Cada rol se escribe una vez con light-dark(claro, oscuro): el navegador
+// elige según el color-scheme del elemento donde se usa la variable, que se hereda. :root sigue
+// al sistema (light dark) y data-theme lo fija en cualquier elemento, así que un data-theme
+// anidado funciona aunque las variables vengan de más arriba.
+//
+// Paleta y contraste se eligen con data-palette y data-contrast, también en cualquier elemento:
+// - nivel estándar: el selector de la paleta;
+// - otro nivel: data-contrast en el mismo elemento que la paleta, en un ancestro o en un
+//   descendiente (este último vuelve a declarar los roles con la paleta de arriba);
+// - prefers-contrast: more elige el nivel alto donde nadie fijó data-contrast.
+// Especificidad: el mismo elemento (0,2,0) le gana al ancestro (0,1,0, por :where); el ancestro
+// le gana al nivel estándar por orden. Límite: dos data-contrast distintos encima de la misma
+// paleta se resuelven por orden (alto > medio > estándar), no por cercanía.
+const colorDecls = ({ light, dark }: SchemePair): Decl[] =>
+  Object.keys(light).map((role) => {
+    const l = light[role] ?? ''
+    const d = dark[role] ?? ''
+    return [`--md-sys-color-${role}`, l === d ? l : `light-dark(${l}, ${d})`] as const
+  })
+
+function schemeRules(selectors: readonly string[], schemes: ContrastSchemes, indent: string): string {
+  const parts = [block(selectors.join(`,\n${indent}`), colorDecls(schemes.standard), indent)]
+  for (const level of CONTRAST_LEVELS) {
+    // :root no tiene ancestros: se omite la regla del ancestro.
+    const sel = selectors.flatMap((s) => [
+      `${s}[data-contrast="${level}"]`,
+      ...(s === ':root' ? [] : [`:where([data-contrast="${level}"]) ${s}`]),
+      `${s} [data-contrast="${level}"]`,
+    ])
+    parts.push(block(sel.join(`,\n${indent}`), colorDecls(schemes[level]), indent))
+  }
+  const auto = `:is(${selectors.join(', ')}):not([data-contrast], [data-contrast] *)`
+  parts.push(
+    `${indent}@media (prefers-contrast: more) {\n` +
+      block(auto, colorDecls(schemes.high), `${indent}  `) +
+      `${indent}}\n`,
   )
+  return parts.join('\n')
+}
+
+const LAYER_ORDER = '@layer matekit.tokens, matekit.palettes, matekit.atoms, matekit.components;'
+const palettesConfig = read<PaletteTokens>('palettes.json')
+const kitColor = read<ColorTokens>('color.json')
+
+function buildColor(): string {
+  const schemes = baselineSchemes(palettesConfig, kitColor)
+  return (
+    header(`${kitColor.$source} Contraste medio y alto: ${palettesConfig.$source}`) +
+    '\n' +
+    block(':root', [['color-scheme', 'light dark']]) +
+    block('[data-theme="light"]', [['color-scheme', 'light']]) +
+    block('[data-theme="dark"]', [['color-scheme', 'dark']]) +
+    '\n' +
+    schemeRules([':root', '[data-palette="baseline"]'], schemes, '')
+  )
+}
+
+// Paletas opcionales: un archivo por paleta, en la capa matekit.palettes, que va después de
+// matekit.tokens. Así le ganan al esquema base sin importar el orden en que se importen.
+function buildPalettes(): Record<string, string> {
+  const roles = Object.keys(kitColor.light)
+  const out: Record<string, string> = {}
+  for (const [name, palette] of Object.entries(palettesConfig.palettes)) {
+    const schemes = paletteSchemes(palette, palettesConfig.contrast, roles)
+    out[`${name}.css`] =
+      header(`${palettesConfig.$source} Paleta "${palette.label}": semilla ${palette.seed}, variante ${palette.variant}.`) +
+      `/* Uso: importar este archivo y poner data-palette="${name}" en cualquier elemento. */\n\n` +
+      `${LAYER_ORDER}\n\n@layer matekit.palettes {\n` +
+      schemeRules([`[data-palette="${name}"]`], schemes, '  ') +
+      '}\n'
+  }
+  return out
 }
 
 function buildTypescale(): string {
@@ -157,6 +224,19 @@ const files: Record<string, string> = {
 }
 for (const [name, css] of Object.entries(files)) writeFileSync(join(outDir, name), css)
 
+const palettes = buildPalettes()
+const paletteDir = join(outDir, 'palettes')
+mkdirSync(paletteDir, { recursive: true })
+for (const [name, css] of Object.entries(palettes)) writeFileSync(join(paletteDir, name), css)
+writeFileSync(
+  join(paletteDir, 'index.css'),
+  header('todas las paletas opcionales') +
+    Object.keys(palettes)
+      .map((f) => `@import './${f}';`)
+      .join('\n') +
+    '\n',
+)
+
 writeFileSync(
   join(outDir, 'index.css'),
   header('todos los archivos de tokens') +
@@ -167,3 +247,4 @@ writeFileSync(
 )
 
 console.log(`Tokens generados en src/tokens/: ${[...Object.keys(files), 'index.css'].join(', ')}`)
+console.log(`Paletas generadas en src/tokens/palettes/: ${[...Object.keys(palettes), 'index.css'].join(', ')}`)

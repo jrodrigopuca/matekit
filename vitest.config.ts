@@ -20,6 +20,10 @@ const reduceMotion: BrowserCommand<[on: boolean]> = async (ctx, on) => {
 const forcedColors: BrowserCommand<[on: boolean]> = async (ctx, on) => {
   await ctx.page.emulateMedia({ forcedColors: on ? 'active' : null })
 }
+// Emular prefers-contrast: more (true) o quitarlo (false).
+const prefersContrast: BrowserCommand<[on: boolean]> = async (ctx, on) => {
+  await ctx.page.emulateMedia({ contrast: on ? 'more' : null })
+}
 
 // Pruebas de componentes en un navegador real: los estados de los átomos (hover, foco,
 // presionado) son CSS y solo se pueden comprobar con un motor de navegador.
@@ -33,7 +37,7 @@ export default defineConfig({
       headless: true,
       provider: playwright({ launchOptions: { channel: 'chrome' } }),
       instances: [{ browser: 'chromium' }],
-      commands: { pressDown, pressUp, reduceMotion, forcedColors },
+      commands: { pressDown, pressUp, reduceMotion, forcedColors, prefersContrast },
     },
   },
 })

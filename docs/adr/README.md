@@ -12,3 +12,4 @@ nueva la reemplaza y la anterior pasa a "superseded by".
 | [0005](0005-estilos-css-con-prefijo-y-capas.md) | Estilos en CSS plano con prefijo `mk-`, capas `@layer` y una hoja única | accepted |
 | [0006](0006-iconos-atomo-y-set-acotado.md) | Átomo `Icon` como contenedor y un set acotado de Material Symbols en SVG | accepted |
 | [0007](0007-menu-popover-y-anchor-positioning.md) | Menús con la API Popover y CSS anchor positioning, con respaldo en JavaScript | accepted |
+| [0008](0008-paletas-y-niveles-de-contraste.md) | Paletas opcionales y niveles de contraste generados al compilar, con `light-dark()` | accepted |

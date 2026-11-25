@@ -1,6 +1,7 @@
-// Contraste de los componentes en los dos temas (WCAG 2.2): 4,5:1 para texto (1.4.3) y 3:1
-// para iconos y para los bordes o rellenos que identifican un control (1.4.11). Los estados
-// deshabilitados están exentos en WCAG y no se revisan.
+// Contraste de los componentes (WCAG 2.2): 4,5:1 para texto (1.4.3) y 3:1 para iconos y para
+// los bordes o rellenos que identifican un control (1.4.11). Los estados deshabilitados están
+// exentos en WCAG y no se revisan. Se revisa cada combinación de paleta (la base y las
+// opcionales), nivel de contraste y tema (ADR-0008).
 
 import type { ReactNode } from 'react'
 import { describe, expect, test } from 'vitest'
@@ -26,16 +27,29 @@ import {
   TextFieldLabel,
   TextFieldSupporting,
 } from '../index.ts'
+import '../tokens/palettes/index.css'
 import { contrastRatio, effectiveBackground, parseColor, textContrast } from './contrast.ts'
 import { render } from './render.tsx'
 
 const TEXT = 4.5
 const NON_TEXT = 3
+const PALETTES = ['baseline', 'green', 'blue', 'orange'] as const
+const LEVELS = ['standard', 'medium', 'high'] as const
 const THEMES = ['light', 'dark'] as const
-const themeName = (t: (typeof THEMES)[number]) => (t === 'light' ? 'claro' : 'oscuro')
+const SCHEMES = PALETTES.flatMap((palette) =>
+  LEVELS.flatMap((contrast) => THEMES.map((theme) => ({ palette, contrast, theme }))),
+)
+type SchemeProps = (typeof SCHEMES)[number]
+const schemeName = ({ palette, contrast, theme }: SchemeProps) =>
+  `paleta ${palette}, contraste ${contrast}, tema ${theme === 'light' ? 'claro' : 'oscuro'}`
 
-const Themed = ({ theme, children }: { theme: string; children: ReactNode }) => (
-  <main data-theme={theme} style={{ background: 'var(--md-sys-color-surface)', padding: 16 }}>
+const Themed = ({ scheme, children }: { scheme: SchemeProps; children: ReactNode }) => (
+  <main
+    data-palette={scheme.palette}
+    data-contrast={scheme.contrast}
+    data-theme={scheme.theme}
+    style={{ background: 'var(--md-sys-color-surface)', padding: 16 }}
+  >
     {children}
   </main>
 )
@@ -52,11 +66,11 @@ test('la fórmula coincide con valores conocidos de WCAG', () => {
   expect(contrastRatio('rgba(0, 0, 0, 0.5)', parseColor('rgb(255, 255, 255)'))).toBeCloseTo(3.95, 1)
 })
 
-for (const theme of THEMES) {
-  describe(`Contraste, tema ${themeName(theme)}`, () => {
+for (const scheme of SCHEMES) {
+  describe(`Contraste, ${schemeName(scheme)}`, () => {
     test('Button: texto de cada estilo y toggle sobre su fondo', async () => {
       const c = await render(
-        <Themed theme={theme}>
+        <Themed scheme={scheme}>
           {(['filled', 'tonal', 'outlined', 'elevated', 'text'] as const).map((v) => (
             <Button key={v} variant={v}>{v}</Button>
           ))}
@@ -73,7 +87,7 @@ for (const theme of THEMES) {
 
     test('IconButton: icono de cada estilo y toggle sobre su fondo', async () => {
       const c = await render(
-        <Themed theme={theme}>
+        <Themed scheme={scheme}>
           {(['standard', 'filled', 'tonal', 'outlined'] as const).flatMap((v) => [
             <IconButton key={v} variant={v} label={v}><StarIcon /></IconButton>,
             <IconButton key={`${v}-on`} variant={v} label={`${v} sí`} selected><StarIcon filled /></IconButton>,
@@ -89,7 +103,7 @@ for (const theme of THEMES) {
 
     test('Checkbox: etiqueta, borde sin marcar, relleno y marca', async () => {
       const c = await render(
-        <Themed theme={theme}>
+        <Themed scheme={scheme}>
           <Checkbox className="off">Sin marcar</Checkbox>
           <Checkbox className="on" defaultChecked>Marcado</Checkbox>
           <Checkbox className="err" error>Error</Checkbox>
@@ -107,7 +121,7 @@ for (const theme of THEMES) {
 
     test('Switch: etiqueta, borde de la pista, pista activada y handle', async () => {
       const c = await render(
-        <Themed theme={theme}>
+        <Themed scheme={scheme}>
           <Switch className="off">Desactivado</Switch>
           <Switch className="on" defaultChecked>Activado</Switch>
         </Themed>,
@@ -125,7 +139,7 @@ for (const theme of THEMES) {
     for (const variant of ['filled', 'outlined'] as const) {
       test(`TextField ${variant}: texto, etiqueta, ayuda, error e indicador o borde`, async () => {
         const c = await render(
-          <Themed theme={theme}>
+          <Themed scheme={scheme}>
             <TextField variant={variant} className="ok">
               <TextFieldLabel>Nombre</TextFieldLabel>
               <TextFieldInput defaultValue="Ana" />
@@ -156,7 +170,7 @@ for (const theme of THEMES) {
 
     test('Dialog: título y texto sobre el contenedor', async () => {
       const c = await render(
-        <Themed theme={theme}>
+        <Themed scheme={scheme}>
           <Dialog open>
             <DialogHeadline>Título</DialogHeadline>
             <DialogContent>Texto del diálogo</DialogContent>
@@ -170,7 +184,7 @@ for (const theme of THEMES) {
     for (const variant of ['standard', 'vibrant'] as const) {
       test(`Menu ${variant}: texto, iconos y atajo sobre el menú, y seleccionado sobre su fondo`, async () => {
         const c = await render(
-          <Themed theme={theme}>
+          <Themed scheme={scheme}>
             <Menu defaultOpen>
               <MenuTrigger><Button>Abrir</Button></MenuTrigger>
               <MenuContent variant={variant}>
