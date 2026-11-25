@@ -240,3 +240,25 @@ body {
 .pg-icon-cell code {
   font-size: 12px;
 }
+
+/* Lista de opciones dentro de un diálogo (todavía no hay componente de lista). */
+.pg-dialog-list {
+  display: grid;
+}
+
+.pg-dialog-option {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 56px;
+  color: var(--md-sys-color-on-surface);
+  font-size: var(--md-sys-typescale-body-large-size);
+  cursor: pointer;
+}
+
+.pg-dialog-option input {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--md-sys-color-primary);
+}

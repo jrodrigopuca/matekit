@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ButtonPage } from './pages/ButtonPage.tsx'
 import { CheckboxPage } from './pages/CheckboxPage.tsx'
+import { DialogPage } from './pages/DialogPage.tsx'
 import { IconButtonPage } from './pages/IconButtonPage.tsx'
 import { IconsPage } from './pages/IconsPage.tsx'
 import { SwitchPage } from './pages/SwitchPage.tsx'
@@ -16,13 +17,15 @@ const PAGES = {
   checkbox: { label: 'Checkbox', Page: CheckboxPage },
   switch: { label: 'Switch', Page: SwitchPage },
   'text-field': { label: 'TextField', Page: TextFieldPage },
+  dialog: { label: 'Dialog', Page: DialogPage },
   icons: { label: 'Iconos', Page: IconsPage },
   tokens: { label: 'Tokens', Page: TokensPage },
 } as const
 type PageId = keyof typeof PAGES
 
 const readHash = (): PageId => {
-  const id = location.hash.slice(1)
+  // Lo que sigue a "?" son parámetros de la página (por ejemplo #dialog?open=basic).
+  const id = location.hash.slice(1).split('?')[0] ?? ''
   return id in PAGES ? (id as PageId) : 'button'
 }
 

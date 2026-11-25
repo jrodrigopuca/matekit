@@ -107,3 +107,8 @@ No llamar al conector de Figma salvo que falte un dato imprescindible: tiene lí
 
 Cada componente suma `playground/pages/NombrePage.tsx` (controles interactivos, matriz de
 estados) y una entrada en `playground/App.tsx`. Revisarlo en tema claro y oscuro.
+
+Para revisar visualmente, usar el playground que el autor suele tener abierto en
+`http://localhost:5175` (recarga en caliente): comprobar con
+`curl -s -o /dev/null -w "%{http_code}" http://localhost:5175/` y apuntar ahí las capturas.
+Levantar otro servidor solo si ese no responde, y nunca detener el del autor.

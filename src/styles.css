@@ -15,3 +15,4 @@
 @import './molecules/Switch/switch.css';
 /* Después de icon-button.css: ajusta el color de un IconButton dentro del icono final. */
 @import './molecules/TextField/text-field.css';
+@import './organisms/Dialog/dialog.css';

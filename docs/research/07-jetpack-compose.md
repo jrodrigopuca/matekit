@@ -277,8 +277,49 @@ El kit escribe los rellenos como "vertical / horizontal" y "arriba, derecha, aba
 No se buscó una tercera fuente: no hay conflictos de valor, solo datos que el kit no trae y una
 técnica de dibujo.
 
+## Dialog
+
+Leído el 2026-11-24: `tokens/DialogTokens.kt` y `tokens/ScrimTokens.kt` (commit `160825094a`, del
+2026-08-05) y, fuera de `tokens/`, `AlertDialog.kt` (último cambio: commit `080d2b3e53`, del
+2026-07-24). Tercera fuente para comportamiento y para el conflicto de alineación:
+`@material/web` (`docs/components/dialog.md`, `dialog/internal/dialog.ts`, `_dialog.scss` y
+`animations.ts`).
+
+### Lo que confirma
+
+Radio 28 (`CornerExtraLarge`), fondo `surface-container-high`, título Headline Small en
+`on-surface`, texto Body Medium en `on-surface-variant`, icono de 24 en `secondary`, acciones en
+`primary` (Label Large). Rellenos: Compose usa 24 en los cuatro lados (`dialogPadding`), 16 bajo
+el icono y bajo el título (`IconPadding`, `TitlePadding`) y 24 bajo el texto (`textPadding`): lo
+mismo que el kit una vez que se descuenta el área táctil de los botones (ver abajo). Acciones con
+8 de separación (`ButtonsMainAxisSpacing`) y alineadas al final.
+
+El kit mide las acciones con el botón de 48 (su área táctil): 88 = 20 + 48 + 20. El botón visible
+mide 40, así que del texto al botón hay 20 + 4 = 24 y del botón al borde inferior otros 24, como
+en Compose. En matekit el área táctil es un `::before` que no ocupa lugar: la fila lleva 24 de
+relleno vertical y sigue midiendo 88.
+
+### Datos nuevos (el kit no los trae)
+
+| Dato | Fuente |
+|---|---|
+| Ancho mínimo **280** y máximo **560** | `AlertDialog.kt`: `DialogMinWidth = 280.dp`, `DialogMaxWidth = 560.dp` (usados en `sizeIn`). Confirma los valores que se recordaban. |
+| Fondo (scrim) al **32 %** del rol `scrim` | `ScrimTokens.kt`: `ContainerOpacity = 0.32f`. `@material/web` anima el scrim a 0.32. |
+| Sin sombra | `AlertDialogDefaults.TonalElevation = 0.dp` y `Surface` sin `shadowElevation`. `DialogTokens.ContainerElevation` (nivel 3) existe pero `AlertDialog` no lo usa. Coincide con el kit. |
+| Acciones que no entran en una fila | Pasan a la siguiente (`FlowRow`, 8 entre filas). |
+| Margen con la ventana y scroll | `@material/web`: máximo `min(560px, 100% - 48px)` de ancho y `100% - 48px` de alto; solo el contenido se desplaza, el título y las acciones quedan fijos. |
+| Cierre con clic afuera | Compose: `DialogProperties.dismissOnClickOutside = true` por defecto; `@material/web`: el clic en el scrim cancela y cierra. Escape (atrás en Android) también. Ninguna de las dos fuentes cambia esto para las alertas. |
+| Alerta | `@material/web`: `type="alert"` pone `role="alertdialog"`; nada más cambia. |
+| Movimiento | Compose no anima `AlertDialog` (lo hace la ventana de la plataforma). `@material/web` desliza 50 px desde arriba con fundido. matekit usa 48 px con los resortes por defecto al entrar y los rápidos al salir. |
+
+### Conflictos y decisiones
+
+| Tema | Kit | Compose y `@material/web` | Decisión |
+|---|---|---|---|
+| Alineación con icono | "Con icono, todo el contenido se centra" | Se centran el icono y el título; el texto sigue al inicio (`Alignment.Start` en `AlertDialog.kt`; `@material/web` centra solo el título) | **Icono y título centrados, texto al inicio**: dos fuentes contra una, y un párrafo centrado se lee peor. El kit no distingue texto de una línea y de varias; puede que "todo" se refiera al bloque superior. |
+
 ## No revisado
 
-Los tokens de Dialog, Navigation rail y los de color de la barra de navegación
+Los tokens de Navigation rail y los de color de la barra de navegación
 (los nombres de las variables de etiqueta activa no coincidieron con la búsqueda), y la
 tipografía (`TypeScaleTokens.kt`, descargado pero sin comparar).

@@ -1,0 +1,193 @@
+/* Dialog (básico) de Material 3.
+
+   Fuentes:
+   - Kit de Figma (docs/research/05-medidas.md § Dialog): ancho 312, radio 28
+     (Corner/Extra-large), fondo Surface Container High, sin sombra; contenido con relleno
+     24, 24, 0, 24 y separación 16; icono de 24 en Secondary; título Headline Small en
+     On Surface; texto Body Medium en On Surface Variant; acciones de 88 de alto con relleno
+     20, 24, 20, 8 y separación 8, alineadas a la derecha (botones Text Small).
+   - Jetpack Compose, compose/material3/material3/src/commonMain/kotlin/androidx/compose/
+     material3/:
+     - AlertDialog.kt (commit 080d2b3e53, 2026-07-24): ancho mínimo 280 y máximo 560
+       (DialogMinWidth, DialogMaxWidth); con icono, el icono y el título se centran y el texto
+       sigue al inicio (Alignment.Start); acciones en una fila que se parte (FlowRow) con 8 de
+       separación; sin sombra (AlertDialogDefaults.TonalElevation = 0).
+     - tokens/DialogTokens.kt y tokens/ScrimTokens.kt (commit 160825094a, 2026-08-05): los
+       mismos colores, forma y tipografía que el kit; fondo Scrim al 32 % (ContainerOpacity).
+   - @material/web (dialog/internal/_dialog.scss): margen de 24 a cada lado de la ventana
+     (máximo min(560px, 100% - 48px)), título y acciones fijos y solo el contenido con scroll.
+   Ver docs/research/07-jetpack-compose.md § Dialog.
+
+   Medidas de las acciones: el kit mide los botones con su área táctil de 48; acá el botón
+   ocupa 40 (su área táctil de 48 es un ::before que no cuenta en la caja), así que el relleno
+   vertical es 20 + (48 − 40) / 2 = 24 y la fila sigue midiendo 88.
+
+   Movimiento: entrada con @starting-style; salida con data-closing, que pone Dialog.tsx y
+   quita cuando terminan las transiciones, recién ahí llama a close(). La salida no puede ser
+   solo CSS (transition-behavior: allow-discrete con display y overlay): `overlay` no existe
+   en Safari ni en Firefox, y sin él el diálogo sale de la capa superior (top layer) y pierde
+   el ::backdrop en el primer cuadro de la salida. */
+
+@layer matekit.components {
+  .mk-dialog {
+    --_scrim: color-mix(in srgb, var(--md-sys-color-scrim) 32%, transparent);
+    /* Desplazamiento de entrada y salida, como el "slide" de @material/web. */
+    --_offset: 0 -48px;
+
+    box-sizing: border-box;
+    width: var(--mk-dialog-width, 312px);
+    min-width: min(280px, 100% - 48px);
+    max-width: min(560px, 100% - 48px);
+    max-height: calc(100% - 48px);
+    margin: auto;
+    padding: 24px 0 0;
+    border: none;
+    border-radius: var(--md-sys-shape-corner-extra-large);
+    background-color: var(--md-sys-color-surface-container-high);
+    box-shadow: none;
+    color: var(--md-sys-color-on-surface);
+    overflow: hidden;
+    opacity: 0;
+    translate: var(--_offset);
+    transition:
+      opacity var(--md-sys-motion-spring-fast-effects-duration) var(--md-sys-motion-spring-fast-effects-easing),
+      translate var(--md-sys-motion-spring-fast-spatial-duration) var(--md-sys-motion-spring-fast-spatial-easing);
+  }
+
+  /* display solo con [open]: un display propio en .mk-dialog le ganaría al display: none
+     del navegador para el diálogo cerrado. */
+  .mk-dialog[open] {
+    display: flex;
+    flex-direction: column;
+    opacity: 1;
+    translate: none;
+    transition:
+      opacity var(--md-sys-motion-spring-default-effects-duration) var(--md-sys-motion-spring-default-effects-easing),
+      translate var(--md-sys-motion-spring-default-spatial-duration) var(--md-sys-motion-spring-default-spatial-easing);
+  }
+
+  .mk-dialog::backdrop {
+    background-color: var(--_scrim);
+    transition: background-color var(--md-sys-motion-spring-default-effects-duration)
+      var(--md-sys-motion-spring-default-effects-easing);
+  }
+
+  @starting-style {
+    .mk-dialog[open] {
+      opacity: 0;
+      translate: var(--_offset);
+    }
+    .mk-dialog[open]::backdrop {
+      background-color: transparent;
+    }
+  }
+
+  /* Salida (más corta que la entrada: resortes rápidos). */
+  .mk-dialog[open][data-closing] {
+    opacity: 0;
+    translate: var(--_offset);
+    transition:
+      opacity var(--md-sys-motion-spring-fast-effects-duration) var(--md-sys-motion-spring-fast-effects-easing),
+      translate var(--md-sys-motion-spring-fast-spatial-duration) var(--md-sys-motion-spring-fast-spatial-easing);
+  }
+  .mk-dialog[data-closing]::backdrop {
+    background-color: transparent;
+    transition-duration: var(--md-sys-motion-spring-fast-effects-duration);
+    transition-timing-function: var(--md-sys-motion-spring-fast-effects-easing);
+  }
+
+  /* Movimiento reducido: solo fundido, sin desplazamiento (los resortes spatial ya valen 0,
+     pero sin esto la salida saltaría 48 px antes de desvanecerse). */
+  @media (prefers-reduced-motion: reduce) {
+    .mk-dialog {
+      --_offset: none;
+    }
+  }
+
+  /* La página de fondo no se desplaza mientras hay un diálogo modal. Al cerrarse, :has() deja
+     de coincidir y el overflow vuelve a ser el de la página. */
+  :root:has(.mk-dialog:modal) {
+    overflow: hidden;
+  }
+
+  .mk-dialog-icon {
+    --mk-icon-size: 24px;
+
+    display: flex;
+    flex-shrink: 0;
+    align-self: center;
+    margin: 0 24px 16px;
+    color: var(--md-sys-color-secondary);
+  }
+  .mk-dialog-icon > svg {
+    width: 24px;
+    height: 24px;
+    fill: currentColor;
+  }
+
+  .mk-dialog-headline {
+    flex-shrink: 0;
+    margin: 0 0 16px;
+    padding: 0 24px;
+    color: var(--md-sys-color-on-surface);
+    font-family: var(--md-sys-typescale-headline-small-font);
+    font-size: var(--md-sys-typescale-headline-small-size);
+    line-height: var(--md-sys-typescale-headline-small-line-height);
+    font-weight: var(--md-sys-typescale-headline-small-weight);
+    letter-spacing: var(--md-sys-typescale-headline-small-tracking);
+  }
+  .mk-dialog:has(> .mk-dialog-icon) > .mk-dialog-headline {
+    text-align: center;
+  }
+
+  /* Única parte con scroll: el título y las acciones quedan fijos. */
+  .mk-dialog-content {
+    flex: 1 1 auto;
+    min-height: 0;
+    padding: 0 24px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    color: var(--md-sys-color-on-surface-variant);
+    font-family: var(--md-sys-typescale-body-medium-font);
+    font-size: var(--md-sys-typescale-body-medium-size);
+    line-height: var(--md-sys-typescale-body-medium-line-height);
+    font-weight: var(--md-sys-typescale-body-medium-weight);
+    letter-spacing: var(--md-sys-typescale-body-medium-tracking);
+  }
+  /* Con scroll y sin enfocables adentro, Chrome lo hace enfocable con el teclado (y showModal
+     puede darle el foco inicial). Anillo de Material (grosor y color del FocusRing), por
+     dentro para que no lo corte el overflow del diálogo, en lugar del contorno del navegador. */
+  .mk-dialog-content:focus-visible {
+    outline: var(--md-sys-state-focus-indicator-thickness) solid var(--md-sys-color-secondary);
+    outline-offset: calc(-1 * var(--md-sys-state-focus-indicator-thickness));
+  }
+  .mk-dialog-content:focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  .mk-dialog-content > :first-child {
+    margin-top: 0;
+  }
+  .mk-dialog-content > :last-child {
+    margin-bottom: 0;
+  }
+
+  .mk-dialog-actions {
+    display: flex;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 8px;
+    padding: 24px 24px 24px 8px;
+  }
+
+  /* Sin acciones, la última parte deja 24 abajo; sin texto, el título no suma sus 16 a los
+     24 de las acciones. */
+  .mk-dialog > :last-child:not(.mk-dialog-actions) {
+    margin-bottom: 24px;
+  }
+  .mk-dialog-headline:has(+ .mk-dialog-actions) {
+    margin-bottom: 0;
+  }
+}
