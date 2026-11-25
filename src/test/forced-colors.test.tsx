@@ -40,6 +40,10 @@ import {
   MenuTrigger,
   StarIcon,
   Switch,
+  Slider,
+  RangeSlider,
+  RangeSliderStart,
+  RangeSliderEnd,
   TextField,
   TextFieldInput,
   TextFieldLabel,
@@ -252,6 +256,45 @@ describe('Switch', () => {
     const c = await render(<Switch disabled>No</Switch>)
     expect(style(q(c, '.mk-switch-handle')).backgroundColor).toBe(systemColor('GrayText'))
     expect(style(q(c, '.mk-switch-label')).color).toBe(systemColor('GrayText'))
+  })
+})
+
+describe('Slider y RangeSlider', () => {
+  const seg = (c: HTMLElement, name: string) => q(c, `.mk-slider-segment[data-segment="${name}"]`)
+
+  test('pista activa Highlight, inactiva Canvas con contorno CanvasText, handle CanvasText y puntos visibles', async () => {
+    const c = await render(<Slider label="Volumen" step={25} ticks defaultValue={50} />)
+    expect(style(seg(c, 'active')).backgroundColor).toBe(systemColor('Highlight'))
+    const inactive = style(seg(c, 'inactive-end'))
+    expect(inactive.backgroundColor).toBe(systemColor('Canvas'))
+    expect(inactive.outlineColor).toBe(systemColor('CanvasText'))
+    expect(inactive.outlineWidth).toBe('1px')
+    expect(style(q(c, '.mk-slider-handle')).backgroundColor).toBe(systemColor('CanvasText'))
+    expect(style(q(seg(c, 'active'), '.mk-slider-mark')).backgroundColor).toBe(systemColor('HighlightText'))
+    expect(style(q(seg(c, 'inactive-end'), '.mk-slider-mark')).backgroundColor).toBe(systemColor('CanvasText'))
+    const indicator = style(q(c, '.mk-slider-value-indicator'))
+    expect(indicator.backgroundColor).toBe(systemColor('Canvas'))
+    expect(indicator.color).toBe(systemColor('CanvasText'))
+    expect(indicator.outlineColor).toBe(systemColor('CanvasText'))
+  })
+
+  test('range: las dos pistas inactivas con contorno y la activa en Highlight', async () => {
+    const c = await render(
+      <RangeSlider defaultValue={[20, 80]}>
+        <RangeSliderStart aria-label="Desde" />
+        <RangeSliderEnd aria-label="Hasta" />
+      </RangeSlider>,
+    )
+    expect(style(seg(c, 'inactive-start')).outlineColor).toBe(systemColor('CanvasText'))
+    expect(style(seg(c, 'active')).backgroundColor).toBe(systemColor('Highlight'))
+  })
+
+  test('deshabilitado: pista activa, contorno, handle y puntos en GrayText, sin opacidad', async () => {
+    const c = await render(<Slider label="No" disabled defaultValue={50} />)
+    expect(style(seg(c, 'active')).backgroundColor).toBe(systemColor('GrayText'))
+    expect(style(seg(c, 'inactive-end')).outlineColor).toBe(systemColor('GrayText'))
+    expect(style(q(c, '.mk-slider-handle')).backgroundColor).toBe(systemColor('GrayText'))
+    expect(style(q(seg(c, 'inactive-end'), '.mk-slider-mark')).backgroundColor).toBe(systemColor('GrayText'))
   })
 })
 

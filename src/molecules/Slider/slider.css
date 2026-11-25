@@ -1,0 +1,458 @@
+/* Slider de Material 3 Expressive (Slider y RangeSlider, ADR-0014).
+   Medidas y colores del kit (docs/research/05-medidas.md § Slider): pista de 16, 24, 40, 56 o 96
+   con radio exterior 8, 8, 12, 16 o 28 y radio 2 junto al handle; handle de 4 × 44, 44, 52, 68 o
+   108 con radio 2, que se angosta a 2 al presionar (las pistas crecen 1 de cada lado: la
+   separación de 6 se mide desde el borde del handle); punto de parada de 4 a 4 del final; pasos
+   con 4 de margen (sobre la pista activa, `on-primary` de Compose en lugar del
+   `secondary-container` del kit); pista activa `primary`, inactiva `secondary-container`; indicador de valor de
+   48 × 44 `inverse-surface` a 4 por encima del handle; capa `on-primary` al 8 % (hover) y 10 %
+   (presionado) sobre el handle; deshabilitado al 38 % y al 10 %.
+   Lo que el kit no trae sale de Jetpack Compose (androidx/androidx,
+   compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/):
+   - tokens/SliderTokens.kt (commit 76990c62ac del 2026-11-24): FocusHandleWidth 2 (el foco
+     angosta el handle como el presionado), puntos sobre la pista activa en `on-primary`
+     (ActiveStopIndicatorContainerColor) y, deshabilitada, en `inverse-on-surface`;
+   - Slider.kt (commit 1495ff32c4 del 2026-10-22): el anillo de foco del tema InsetRing, que
+     separa 4 más las pistas del handle enfocado (insetFocusRingPadding); los pasos que caen en la
+     separación del handle no se dibujan; el handle cambia de ancho al presionar, arrastrar o
+     enfocar (ThumbContent).
+   Conflictos kit/Compose (posición del handle en los extremos, separación al angostarse, color de
+   los pasos sobre la pista activa, separación del centro en el centrado, opacidad de la pista
+   inactiva deshabilitada): docs/research/07-jetpack-compose.md § Slider.
+
+   Geometría: todas las posiciones son lógicas (inline = a lo largo de la pista). El vertical usa
+   writing-mode: vertical-lr con direction: rtl, así el inicio queda abajo y el mismo CSS sirve
+   para las dos orientaciones y para RTL. El centro del handle va de 6 a L − 6 (L, el largo); el
+   input nativo, con un thumb de 12, ubica el valor en esos mismos puntos en los tres motores.
+   Las fracciones de los valores llegan del componente: --_v1 (inicio del rango) y --_v2 (el
+   valor, o el final del rango). */
+
+/* Ancho del handle (4 o 2) y separación con las pistas (6, o 10 con foco de teclado), por handle:
+   1 para el inicio del rango, 2 para el valor o el final. Registradas para transicionarlas sin
+   animar la posición, que sigue al puntero sin demora. Fuera de las capas porque @property no
+   pertenece a ninguna. */
+@property --_sl-w1 {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 4px;
+}
+@property --_sl-w2 {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 4px;
+}
+@property --_sl-g1 {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 6px;
+}
+@property --_sl-g2 {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 6px;
+}
+
+@layer matekit.components {
+  .mk-slider {
+    --_track: 16px;
+    --_radius: var(--md-sys-shape-corner-small);
+    --_handle: 44px;
+    --_v1: 0;
+    --_v2: 0;
+    --_sl-w1: 4px;
+    --_sl-w2: 4px;
+    --_sl-g1: 6px;
+    --_sl-g2: 6px;
+    --_active: var(--md-sys-color-primary);
+    --_inactive: var(--md-sys-color-secondary-container);
+    --_handle-color: var(--md-sys-color-primary);
+    /* Pasos sobre la pista activa: on-primary (Compose y @material/web; el kit dice
+       secondary-container, que no es un par con contraste garantizado, ADR-0008). */
+    --_mark-on-active: var(--md-sys-color-on-primary);
+    --_mark-on-inactive: var(--md-sys-color-on-secondary-container);
+
+    position: relative;
+    display: block;
+    /* Sin contenido en el flujo: sin ancho mínimo, dentro de un contenedor flex mediría 0. El de
+       @material/web (min-inline-size: 200px). */
+    min-inline-size: 200px;
+    /* Área táctil de 48 (minimumInteractiveComponentSize de Compose) con el handle centrado. */
+    block-size: max(48px, var(--_handle));
+    -webkit-tap-highlight-color: transparent;
+    transition:
+      --_sl-w1 var(--md-sys-motion-spring-fast-spatial-duration) var(--md-sys-motion-spring-fast-spatial-easing),
+      --_sl-w2 var(--md-sys-motion-spring-fast-spatial-duration) var(--md-sys-motion-spring-fast-spatial-easing),
+      --_sl-g1 var(--md-sys-motion-spring-fast-spatial-duration) var(--md-sys-motion-spring-fast-spatial-easing),
+      --_sl-g2 var(--md-sys-motion-spring-fast-spatial-duration) var(--md-sys-motion-spring-fast-spatial-easing);
+  }
+
+  .mk-slider[data-size='sm'] {
+    --_track: 24px;
+  }
+  .mk-slider[data-size='md'] {
+    --_track: 40px;
+    --_radius: var(--md-sys-shape-corner-medium);
+    --_handle: 52px;
+  }
+  .mk-slider[data-size='lg'] {
+    --_track: 56px;
+    --_radius: var(--md-sys-shape-corner-large);
+    --_handle: 68px;
+  }
+  .mk-slider[data-size='xl'] {
+    --_track: 96px;
+    --_radius: var(--md-sys-shape-corner-extra-large);
+    --_handle: 108px;
+  }
+
+  /* Vertical: el mismo dibujo girado, con el mínimo abajo. El largo por defecto es de 200; se
+     cambia con `height` o `block-size`… desde fuera (en este modo de escritura, inline-size). */
+  .mk-slider[data-orientation='vertical'] {
+    writing-mode: vertical-lr;
+    direction: rtl;
+    display: inline-block;
+    vertical-align: middle;
+    min-inline-size: 0;
+    inline-size: 200px;
+  }
+
+  /* --- Input nativo: invisible, cubre el control y recibe puntero, teclado y foco --- */
+  .mk-slider-input {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    box-sizing: border-box;
+    inline-size: 100%;
+    block-size: 100%;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    opacity: 0;
+    background: transparent;
+    appearance: none;
+    cursor: pointer;
+  }
+  .mk-slider-input:disabled {
+    cursor: default;
+  }
+  .mk-slider-input::-webkit-slider-runnable-track {
+    -webkit-appearance: none;
+    block-size: 100%;
+    background: transparent;
+  }
+  .mk-slider-input::-moz-range-track {
+    appearance: none;
+    block-size: 100%;
+    background: transparent;
+  }
+  /* Thumb de 12 a lo largo: su centro va de 6 a L − 6, como el handle dibujado. */
+  .mk-slider-input::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 12px;
+    height: var(--_handle);
+  }
+  .mk-slider-input::-moz-range-thumb {
+    appearance: none;
+    width: 12px;
+    height: var(--_handle);
+    border: 0;
+    border-radius: 0;
+  }
+  .mk-slider[data-orientation='vertical'] > .mk-slider-input::-webkit-slider-thumb {
+    width: var(--_handle);
+    height: 12px;
+  }
+  .mk-slider[data-orientation='vertical'] > .mk-slider-input::-moz-range-thumb {
+    width: var(--_handle);
+    height: 12px;
+  }
+
+  /* --- Pista: tramos que calculan su inicio (--_s) y su fin (--_e) en unidades del contenedor
+     (100cqi es el largo de la pista; las marcas de cada tramo se ubican con él) --- */
+  .mk-slider-track {
+    --_p1: calc(6px + var(--_v1) * (100cqi - 12px));
+    --_p2: calc(6px + var(--_v2) * (100cqi - 12px));
+    --_h1: calc(var(--_sl-w1) / 2 + var(--_sl-g1));
+    --_h2: calc(var(--_sl-w2) / 2 + var(--_sl-g2));
+
+    position: absolute;
+    inset-inline: 0;
+    inset-block-start: calc(50% - var(--_track) / 2);
+    block-size: var(--_track);
+    container-type: inline-size;
+    pointer-events: none;
+  }
+
+  .mk-slider-segment {
+    --_rs: 2px;
+    --_re: 2px;
+    --_mark: var(--_mark-on-inactive);
+
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: var(--_s);
+    inline-size: max(0px, var(--_e) - var(--_s));
+    overflow: hidden;
+    background-color: var(--_inactive);
+    /* Radio exterior en los extremos de la pista y 2 junto al handle (TrackInsideCornerSize de
+       Compose: 2 dp, sin token). */
+    border-start-start-radius: var(--_rs);
+    border-end-start-radius: var(--_rs);
+    border-start-end-radius: var(--_re);
+    border-end-end-radius: var(--_re);
+    transition: background-color var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects-easing);
+  }
+  .mk-slider-segment[data-segment='active'] {
+    --_mark: var(--_mark-on-active);
+    background-color: var(--_active);
+  }
+
+  /* Standard: activa desde el inicio hasta el handle. */
+  .mk-slider-segment[data-segment='active'] {
+    --_s: 0px;
+    --_e: calc(var(--_p2) - var(--_h2));
+    --_rs: var(--_radius);
+  }
+  .mk-slider-segment[data-segment='inactive-end'] {
+    --_s: calc(var(--_p2) + var(--_h2));
+    --_e: 100cqi;
+    --_re: var(--_radius);
+  }
+  .mk-slider-segment[data-segment='inactive-start'] {
+    --_s: 0px;
+    --_rs: var(--_radius);
+  }
+
+  /* Centered: activa entre el centro y el handle; 4 de separación entre la pista inactiva y la
+     activa en el centro (kit). Con min() y max() la misma fórmula sirve a los dos lados. */
+  .mk-slider[data-variant='centered'] .mk-slider-segment[data-segment='inactive-start'] {
+    --_e: min(50cqi - 4px, var(--_p2) - var(--_h2));
+  }
+  .mk-slider[data-variant='centered'] .mk-slider-segment[data-segment='active'] {
+    --_s: min(50cqi, var(--_p2) + var(--_h2));
+    --_e: max(50cqi, var(--_p2) - var(--_h2));
+    --_rs: 2px;
+  }
+  .mk-slider[data-variant='centered'] .mk-slider-segment[data-segment='inactive-end'] {
+    --_s: max(50cqi + 4px, var(--_p2) + var(--_h2));
+  }
+
+  /* Range: activa entre los dos handles. */
+  .mk-slider[data-variant='range'] .mk-slider-segment[data-segment='inactive-start'] {
+    --_e: calc(var(--_p1) - var(--_h1));
+  }
+  .mk-slider[data-variant='range'] .mk-slider-segment[data-segment='active'] {
+    --_s: calc(var(--_p1) + var(--_h1));
+    --_rs: 2px;
+  }
+
+  /* Marcas (puntos de parada y pasos): cada tramo tiene una copia del largo de la pista,
+     desplazada a su origen, y la recorta; así toman el color del tramo y no aparecen en la
+     separación del handle, como en Compose. */
+  .mk-slider-marks {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: calc(-1 * var(--_s));
+    inline-size: 100cqi;
+  }
+  .mk-slider-mark {
+    position: absolute;
+    inset-block-start: calc(50% - 2px);
+    inset-inline-start: calc(6px + var(--_t) * (100cqi - 12px) - 2px);
+    inline-size: 4px;
+    block-size: 4px;
+    border-radius: var(--md-sys-shape-corner-full);
+    background-color: var(--_mark);
+  }
+
+  /* --- Handle --- */
+  .mk-slider-handle {
+    --_v: var(--_v2);
+    --_w: var(--_sl-w2);
+    --_focus-pad: 0px;
+    --mk-state-layer-color: var(--md-sys-color-on-primary);
+
+    position: absolute;
+    inset-block-start: calc(50% - var(--_handle) / 2);
+    inset-inline-start: calc(6px + var(--_v) * (100% - 12px) - var(--_w) / 2);
+    inline-size: var(--_w);
+    block-size: var(--_handle);
+    border-radius: calc(var(--_w) / 2);
+    background-color: var(--_handle-color);
+    pointer-events: none;
+    transition: background-color var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects-easing);
+  }
+  .mk-slider-input[data-thumb='start'] + .mk-slider-handle {
+    --_v: var(--_v1);
+    --_w: var(--_sl-w1);
+  }
+
+  /* Indicador de valor: píldora sobre el handle (a su izquierda en vertical), con el texto
+     horizontal. Aparece con escala (resorte espacial, sin duración con movimiento reducido) y
+     opacidad (resorte de efectos). */
+  .mk-slider-value-indicator {
+    position: absolute;
+    box-sizing: border-box;
+    min-inline-size: 48px;
+    block-size: 44px;
+    padding: 12px 16px;
+    border-radius: var(--md-sys-shape-corner-full);
+    background-color: var(--md-sys-color-inverse-surface);
+    color: var(--md-sys-color-inverse-on-surface);
+    font-family: var(--md-sys-typescale-label-large-font);
+    font-size: var(--md-sys-typescale-label-large-size);
+    line-height: var(--md-sys-typescale-label-large-line-height);
+    font-weight: var(--md-sys-typescale-label-large-weight);
+    letter-spacing: var(--md-sys-typescale-label-large-tracking);
+    text-align: center;
+    white-space: nowrap;
+    writing-mode: horizontal-tb;
+    pointer-events: none;
+    left: 50%;
+    bottom: calc(100% + 4px + var(--_focus-pad));
+    translate: -50% 0;
+    transform-origin: 50% 100%;
+    opacity: 0;
+    scale: 0.6;
+    transition:
+      opacity var(--md-sys-motion-spring-fast-effects-duration) var(--md-sys-motion-spring-fast-effects-easing),
+      scale var(--md-sys-motion-spring-fast-spatial-duration) var(--md-sys-motion-spring-fast-spatial-easing);
+  }
+  .mk-slider[data-orientation='vertical'] .mk-slider-value-indicator {
+    left: auto;
+    top: 50%;
+    bottom: auto;
+    right: calc(100% + 4px + var(--_focus-pad));
+    translate: 0 -50%;
+    transform-origin: 100% 50%;
+  }
+
+  /* --- Range: cada input recibe el puntero de su lado del punto medio entre los handles
+     (clip-path también recorta la zona que recibe clics, en los tres motores); el mismo recurso
+     que @material/web. --- */
+  .mk-slider[data-variant='range'] > .mk-slider-input {
+    --_mid: calc(6px + (var(--_v1) + var(--_v2)) / 2 * (100% - 12px));
+  }
+  .mk-slider[data-variant='range'] > .mk-slider-input[data-thumb='start'] {
+    clip-path: inset(0 calc(100% - var(--_mid)) 0 0);
+  }
+  .mk-slider[data-variant='range'] > .mk-slider-input[data-thumb='end'] {
+    clip-path: inset(0 0 0 var(--_mid));
+  }
+  .mk-slider[data-variant='range']:dir(rtl) > .mk-slider-input[data-thumb='start'] {
+    clip-path: inset(0 0 0 calc(100% - var(--_mid)));
+  }
+  .mk-slider[data-variant='range']:dir(rtl) > .mk-slider-input[data-thumb='end'] {
+    clip-path: inset(0 var(--_mid) 0 0);
+  }
+  .mk-slider[data-variant='range'][data-orientation='vertical'] > .mk-slider-input[data-thumb='start'] {
+    clip-path: inset(calc(100% - var(--_mid)) 0 0 0);
+  }
+  .mk-slider[data-variant='range'][data-orientation='vertical'] > .mk-slider-input[data-thumb='end'] {
+    clip-path: inset(0 0 var(--_mid) 0);
+  }
+
+  /* --- Hover, foco y presionado (por handle) --- */
+  @media (hover: hover) {
+    .mk-slider-input:enabled:hover + .mk-slider-handle {
+      --mk-state-layer-opacity: var(--md-sys-state-hover-state-layer-opacity);
+    }
+  }
+  .mk-slider-input:enabled:focus-visible + .mk-slider-handle {
+    --_focus-pad: 4px;
+    --mk-focus-ring-visible: 1;
+  }
+  .mk-slider-input:enabled:active + .mk-slider-handle {
+    --mk-state-layer-opacity: var(--md-sys-state-pressed-state-layer-opacity);
+  }
+  .mk-slider-input:enabled:is(:active, :focus-visible) + .mk-slider-handle > .mk-slider-value-indicator {
+    opacity: 1;
+    scale: 1;
+  }
+  /* El handle se angosta a 2 al presionar, arrastrar y con foco de teclado; con foco, además, las
+     pistas se separan 4 más para el anillo (InsetRing de Compose). */
+  .mk-slider:has(> .mk-slider-input[data-thumb='start']:enabled:is(:active, :focus-visible)) {
+    --_sl-w1: 2px;
+  }
+  .mk-slider:has(> .mk-slider-input[data-thumb='end']:enabled:is(:active, :focus-visible)) {
+    --_sl-w2: 2px;
+  }
+  .mk-slider:has(> .mk-slider-input[data-thumb='start']:enabled:focus-visible) {
+    --_sl-g1: 10px;
+  }
+  .mk-slider:has(> .mk-slider-input[data-thumb='end']:enabled:focus-visible) {
+    --_sl-g2: 10px;
+  }
+
+  /* --- Deshabilitado (al final para ganar): un handle deshabilitado se apaga; con todos
+     deshabilitados, también la pista. --- */
+  .mk-slider-input:disabled + .mk-slider-handle {
+    --_handle-color: color-mix(
+      in srgb,
+      var(--md-sys-color-on-surface) calc(var(--md-sys-state-disabled-content-opacity) * 100%),
+      transparent
+    );
+  }
+  .mk-slider:not(:has(> .mk-slider-input:enabled)) {
+    --_active: color-mix(
+      in srgb,
+      var(--md-sys-color-on-surface) calc(var(--md-sys-state-disabled-content-opacity) * 100%),
+      transparent
+    );
+    --_inactive: color-mix(
+      in srgb,
+      var(--md-sys-color-on-surface) calc(var(--md-sys-state-disabled-container-opacity) * 100%),
+      transparent
+    );
+    --_mark-on-inactive: color-mix(
+      in srgb,
+      var(--md-sys-color-on-surface) calc(var(--md-sys-state-disabled-content-opacity) * 100%),
+      transparent
+    );
+    --_mark-on-active: var(--md-sys-color-inverse-on-surface);
+  }
+
+  /* --- Alto contraste (forced-colors) ---
+     Pistas, handle y puntos son fondos, que el navegador quitaría: salen del ajuste automático y
+     usan colores del sistema. Pista activa Highlight con puntos HighlightText; pista inactiva
+     Canvas con contorno CanvasText y puntos CanvasText; handle CanvasText; indicador Canvas con
+     texto y contorno CanvasText. Deshabilitado, todo en GrayText. */
+  @media (forced-colors: active) {
+    .mk-slider-segment,
+    .mk-slider-mark,
+    .mk-slider-handle,
+    .mk-slider-value-indicator {
+      forced-color-adjust: none;
+    }
+    .mk-slider {
+      --_active: Highlight;
+      --_inactive: Canvas;
+      --_handle-color: CanvasText;
+      --_mark-on-active: HighlightText;
+      --_mark-on-inactive: CanvasText;
+      --_outline: CanvasText;
+    }
+    .mk-slider-segment:not([data-segment='active']) {
+      outline: 1px solid var(--_outline);
+      outline-offset: -1px;
+    }
+    .mk-slider-value-indicator {
+      background-color: Canvas;
+      color: CanvasText;
+      outline: 1px solid CanvasText;
+    }
+    .mk-slider-input:disabled + .mk-slider-handle {
+      --_handle-color: GrayText;
+    }
+    .mk-slider:not(:has(> .mk-slider-input:enabled)) {
+      --_active: GrayText;
+      --_inactive: Canvas;
+      --_mark-on-active: Canvas;
+      --_mark-on-inactive: GrayText;
+      --_outline: GrayText;
+    }
+  }
+}

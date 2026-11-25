@@ -12,6 +12,30 @@ const pressDown: BrowserCommand<[selector: string]> = async (ctx, selector) => {
 const pressUp: BrowserCommand<[]> = async (ctx) => {
   await ctx.page.mouse.up()
 }
+// Puntero en un punto del elemento (x, y relativos a su esquina superior izquierda), para el
+// Slider: moveTo mueve el mouse; pressAt lo mueve y aprieta; dragThrough aprieta en el primer
+// punto y pasa por los demás sin soltar (un arrastre; después, pressUp).
+const moveTo: BrowserCommand<[selector: string, x: number, y: number]> = async (ctx, selector, x, y) => {
+  await ctx.iframe.locator(selector).hover({ position: { x, y }, force: true })
+}
+const pressAt: BrowserCommand<[selector: string, x: number, y: number]> = async (ctx, selector, x, y) => {
+  await ctx.iframe.locator(selector).hover({ position: { x, y }, force: true })
+  await ctx.page.mouse.down()
+}
+const dragThrough: BrowserCommand<[selector: string, points: Array<[x: number, y: number]>]> = async (
+  ctx,
+  selector,
+  points,
+) => {
+  const box = await ctx.iframe.locator(selector).boundingBox()
+  if (!box) throw new Error(`dragThrough: ${selector} no está visible`)
+  const [first, ...rest] = points
+  if (!first) return
+  // boundingBox() del elemento ya es relativo a la página principal.
+  await ctx.page.mouse.move(box.x + first[0], box.y + first[1])
+  await ctx.page.mouse.down()
+  for (const [x, y] of rest) await ctx.page.mouse.move(box.x + x, box.y + y)
+}
 // Emular prefers-reduced-motion (true) o volver a la preferencia sin emular (false).
 const reduceMotion: BrowserCommand<[on: boolean]> = async (ctx, on) => {
   await ctx.page.emulateMedia({ reducedMotion: on ? 'reduce' : null })
@@ -54,7 +78,7 @@ export default defineConfig({
       headless: true,
       provider: playwright(),
       instances: requested.map((name) => ({ ...ENGINES[name as Engine] })),
-      commands: { pressDown, pressUp, reduceMotion, forcedColors, prefersContrast },
+      commands: { pressDown, pressUp, pressAt, moveTo, dragThrough, reduceMotion, forcedColors, prefersContrast },
     },
   },
 })

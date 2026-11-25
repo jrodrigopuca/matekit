@@ -58,3 +58,17 @@ export {
   type CircularProgressIndicatorProps,
 } from './ProgressIndicator/CircularProgressIndicator.tsx'
 export type { ProgressIndicatorThickness } from './ProgressIndicator/progress.ts'
+export {
+  Slider,
+  type SliderOwnProps,
+  type SliderProps,
+} from './Slider/Slider.tsx'
+export {
+  RangeSlider,
+  RangeSliderEnd,
+  RangeSliderStart,
+  type RangeSliderProps,
+  type RangeSliderThumbProps,
+  type RangeSliderValue,
+} from './Slider/RangeSlider.tsx'
+export type { SliderFormat, SliderOrientation, SliderSize } from './Slider/slider-shared.tsx'

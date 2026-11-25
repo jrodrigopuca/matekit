@@ -624,6 +624,51 @@ y 44 y 52 con grosor 8 en los ejemplos, igual que el kit.
 | Pista del circular indeterminado plano | El conjunto (pista e indicador) gira | `circularIndeterminateTrackColor = Transparent` (sin pista); el ondulado sí la tiene | Con pista, como el kit y el ondulado. |
 | Paso de indeterminado a determinado | — | Las líneas terminan de salir y el valor crece desde 0 (lineal), o el arco gira hasta las 12 (circular) | Sin transición: necesitaría estado (cliente). Pendiente si hace falta. |
 
+## Slider
+
+Revisión del 2026-11-25. Archivos (en `compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/`):
+`tokens/SliderTokens.kt` (commit `76990c62ac`, 2026-11-24) y `Slider.kt` (`1495ff32c4`,
+2026-10-22; `SliderDefaults`, `ThumbContent`, `drawTrack`, `slideOnKeyEvents`). No hay tokens por
+tamaño (`SliderXSmallTokens.kt` y similares no existen): los tokens describen el tamaño XSmall
+(pista de 16, handle de 4 × 44), y los cinco tamaños salen del kit
+(`05-medidas.md` § Slider). Comportamiento web: `@material/web` (`docs/components/slider.md`,
+`slider/internal/slider.ts` y `_slider.scss`) y sus tokens (`tokens/versions/v0_192/_md-comp-slider.scss`).
+
+### Lo que confirma
+
+Pista activa `Primary`, inactiva `SecondaryContainer`, handle `Primary` de 4 × 44 que pasa a 2 al
+presionar (`PressedHandleWidth`), separación de 6 (`ActiveHandleLeadingSpace` = `Space75`), radio
+2 junto al handle (`TrackInsideCornerSize`), punto de parada de 4 `OnSecondaryContainer`
+(`StopIndicatorSize`, `InactiveStopIndicatorContainerColor`), indicador `InverseSurface` con
+Label Large `InverseOnSurface`, deshabilitado `OnSurface` al 38 %.
+
+### Datos nuevos (el kit no los trae)
+
+| Dato | Fuente |
+|---|---|
+| El foco angosta el handle a 2, como el presionado y el arrastre (`FocusHandleWidth`); el cambio es inmediato, sin animación | `SliderTokens.kt`; `ThumbContent` (cualquier interacción de foco, presión o arrastre) |
+| Con el tema de foco `InsetRing`, anillo alrededor del handle y 4 más de separación con las pistas (`insetFocusRingPadding`); el tema por defecto solo usa opacidad | `Slider.kt` (`SliderImpl`, `TrackImpl`); `Ripple.kt` (`InsetFocusRingThemeConfiguration`) |
+| Los pasos que caen en la separación del handle (o en el centro del centrado) no se dibujan | `drawTrack` (`tickStartGap`, `tickEndGap`, `tickCenterGap`) |
+| Pasos sobre la pista activa en `OnPrimary`; deshabilitados, `InverseOnSurface` sobre la activa y `OnSurface` sobre la inactiva | `ActiveStopIndicatorContainerColor`, `DisabledActiveStopIndicatorContainerColor`, `DisabledInactiveStopIndicatorContainerColor` |
+| Teclado: Re Pág y Av Pág de a 10 % (entre 1 y 10 pasos), Inicio y Fin a los extremos, flechas de a un paso (1 % sin pasos) | `slideOnKeyEvents` |
+| Área táctil mínima de 48 (`minimumInteractiveComponentSize`) | `SliderImpl` |
+| `@material/web` muestra el indicador de valor con el handle enfocado (también por teclado), con el puntero encima y presionado | `_slider.scss` (`:host(:focus-within) .label`, `.handleContainer.hover .label`, `input:active`) |
+
+### Conflictos y decisiones
+
+| Tema | Kit | Compose | Decisión |
+|---|---|---|---|
+| Handle en los extremos | A 4 del borde (centro a 6), alineado con los puntos de parada a 4 | La pista empieza a 2 (medio handle) y el handle llega al borde (centro a 2); los puntos, a medio alto de la pista del final | Kit: el centro del handle va de 6 a L − 6 y los pasos caen en los mismos puntos que el handle. Sin tercera fuente (`@material/web` es anterior a Expressive). |
+| Separación al angostarse | Las pistas crecen 1 de cada lado (6 desde el borde del handle de 2) | La separación se mide desde la caja de 4: se ven 7 | Kit. |
+| Pasos sobre la pista activa | `Secondary Container` | `OnPrimary` | Compose, confirmado por `@material/web` (`with-tick-marks-active-container-color: on-primary`) y por la regla de pares del ADR-0008 (`secondary-container` sobre `primary` no tiene contraste garantizado). Error probable del kit. |
+| Separación en el centro del centrado | 4 entre la pista inactiva y la activa | 6 (la separación del handle, con ancho 0) | Kit. |
+| Pista inactiva deshabilitada | `On Surface` al 10 % | 12 % (`DisabledInactiveTrackOpacity`) | Kit (token `disabled-container-opacity`), como en el Switch. |
+| Indicador de valor | 4 sobre el handle | 12 (`ValueIndicatorActiveBottomSpace` = `Space150`) | Kit; con foco de teclado, 4 más para el anillo. |
+| Alto total | 44 (XSmall y Small) | 48 (área táctil) | 48 con el handle de 44 centrado, como el área de 48 del Switch. |
+| Animación del handle | Sin datos | Sin animación | Resorte rápido espacial (el plan la pide); sin duración con movimiento reducido. |
+| Cuándo aparece el indicador | Presionado | No lo dibuja por defecto | Presionado, arrastrando y con foco de teclado (`@material/web`): con el teclado no hay otra forma de ver el número. No con hover. |
+| Punto centrado del rango ("Track dot - centered") | Con los dos handles en el mismo valor | Sin equivalente | Sin implementar: no está claro dónde va con los handles superpuestos. Pendiente de mirar en el kit. |
+
 ## No revisado
 
 La tipografía (`TypeScaleTokens.kt`, descargado pero sin comparar).

@@ -15,6 +15,7 @@ import { NavigationRailPage } from './pages/NavigationRailPage.tsx'
 import { ProgressIndicatorPage } from './pages/ProgressIndicatorPage.tsx'
 import { RadioButtonPage } from './pages/RadioButtonPage.tsx'
 import { ShapesPage } from './pages/ShapesPage.tsx'
+import { SliderPage } from './pages/SliderPage.tsx'
 import { SwitchPage } from './pages/SwitchPage.tsx'
 import { TextFieldPage } from './pages/TextFieldPage.tsx'
 import { TokensPage } from './pages/TokensPage.tsx'
@@ -36,6 +37,7 @@ const PAGES = {
   checkbox: { label: 'Checkbox', Page: CheckboxPage },
   'radio-button': { label: 'RadioButton', Page: RadioButtonPage },
   switch: { label: 'Switch', Page: SwitchPage },
+  slider: { label: 'Slider', Page: SliderPage },
   'text-field': { label: 'TextField', Page: TextFieldPage },
   dialog: { label: 'Dialog', Page: DialogPage },
   menu: { label: 'Menu', Page: MenuPage },

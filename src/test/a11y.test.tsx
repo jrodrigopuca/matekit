@@ -46,6 +46,10 @@ import {
   SearchIcon,
   StarIcon,
   Switch,
+  Slider,
+  RangeSlider,
+  RangeSliderStart,
+  RangeSliderEnd,
   TextField,
   TextFieldInput,
   TextFieldLabel,
@@ -161,6 +165,24 @@ const GALLERIES: Record<string, ReactNode> = {
       <Switch icons>Con iconos</Switch>
       <Switch icons defaultChecked>Con iconos activado</Switch>
       <Switch disabled>Deshabilitado</Switch>
+    </>
+  ),
+  Slider: (
+    <>
+      <Slider label="Volumen" defaultValue={40} />
+      <span id="brillo">Brillo</span>
+      <Slider aria-labelledby="brillo" size="md" step={10} ticks defaultValue={60} format={(v) => `${v} %`} />
+      <Slider label="Balance" centered min={-50} max={50} defaultValue={-10} />
+      <Slider label="Deshabilitado" disabled defaultValue={30} />
+      <Slider label="Vertical" orientation="vertical" size="lg" defaultValue={70} />
+      <RangeSlider aria-label="Precio" defaultValue={[20, 80]}>
+        <RangeSliderStart label="Precio mínimo" name="desde" />
+        <RangeSliderEnd label="Precio máximo" name="hasta" />
+      </RangeSlider>
+      <RangeSlider defaultValue={[30, 60]} disabled orientation="vertical">
+        <RangeSliderStart aria-label="Desde" />
+        <RangeSliderEnd aria-label="Hasta" />
+      </RangeSlider>
     </>
   ),
   TextField: (

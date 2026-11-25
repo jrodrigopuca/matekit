@@ -41,6 +41,10 @@ import {
   CheckIcon,
   StarIcon,
   Switch,
+  Slider,
+  RangeSlider,
+  RangeSliderStart,
+  RangeSliderEnd,
   TextField,
   TextFieldInput,
   TextFieldLabel,
@@ -211,6 +215,36 @@ for (const scheme of SCHEMES) {
       const onTrack = q(c, '.on .mk-switch-track')
       expect(contrastRatio(cs(onTrack).backgroundColor, surface), 'pista activada').toBeGreaterThanOrEqual(NON_TEXT)
       expect(contrastRatio(cs(q(c, '.on .mk-switch-handle')).backgroundColor, effectiveBackground(onTrack)), 'handle activado').toBeGreaterThanOrEqual(NON_TEXT)
+    })
+
+    // WCAG 1.4.11 pide 3:1 a lo que hace falta para identificar el control y su estado: el handle
+    // (dónde está el valor) y la pista activa (cuánto se eligió), contra la superficie, y el punto
+    // de parada que marca el final sobre la pista inactiva. La pista inactiva no: el valor ya lo
+    // dicen el handle y la pista activa, y Material la pinta a propósito con poco contraste
+    // (secondary-container). Los pasos sí (on-primary sobre la activa, on-secondary-container
+    // sobre la inactiva): marcan los valores posibles. El texto del indicador, 4,5:1.
+    test('Slider y RangeSlider: handle, pista activa, puntos y texto del indicador', async () => {
+      const c = await render(
+        <Themed scheme={scheme}>
+          <Slider label="Volumen" className="s" step={25} ticks defaultValue={50} />
+          <RangeSlider className="r" defaultValue={[20, 80]}>
+            <RangeSliderStart aria-label="Desde" />
+            <RangeSliderEnd aria-label="Hasta" />
+          </RangeSlider>
+        </Themed>,
+      )
+      const surface = effectiveBackground(c.querySelector('main') as Element)
+      for (const root of ['.s', '.r']) {
+        expect(contrastRatio(cs(q(c, `${root} .mk-slider-handle`)).backgroundColor, surface), `${root} handle`).toBeGreaterThanOrEqual(NON_TEXT)
+        const active = q(c, `${root} .mk-slider-segment[data-segment="active"]`)
+        expect(contrastRatio(cs(active).backgroundColor, surface), `${root} pista activa`).toBeGreaterThanOrEqual(NON_TEXT)
+        const inactive = q(c, `${root} .mk-slider-segment[data-segment="inactive-end"]`)
+        const stop = q(inactive, '.mk-slider-mark:last-child')
+        expect(contrastRatio(cs(stop).backgroundColor, effectiveBackground(inactive)), `${root} punto de parada`).toBeGreaterThanOrEqual(NON_TEXT)
+        expect(textContrast(q(c, `${root} .mk-slider-value-indicator`)), `${root} indicador`).toBeGreaterThanOrEqual(TEXT)
+      }
+      const active = q(c, '.s .mk-slider-segment[data-segment="active"]')
+      expect(contrastRatio(cs(q(active, '.mk-slider-mark')).backgroundColor, effectiveBackground(active)), 'paso sobre la activa').toBeGreaterThanOrEqual(NON_TEXT)
     })
 
     for (const variant of ['filled', 'outlined'] as const) {
