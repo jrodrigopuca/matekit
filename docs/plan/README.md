@@ -211,6 +211,104 @@ Fuente: `05-medidas.md` § Navigation rail; Compose `NavigationRailCollapsedToke
       activo, enlaces y accesibilidad que NavigationBar, compartiendo código.
 - [ ] Transición entre contraída y expandida con resortes.
 
+## Segunda etapa (planificada el 2026-11-25)
+
+Todos tienen página en el kit de Figma (se extrae con el conector antes de lanzar cada agente,
+como se hizo con el FAB y el rail) y tokens en Compose (`compose/material3/.../tokens/`). Los
+criterios comunes de arriba aplican a todos. Se ignoran las variantes XR.
+
+Orden: primero lo que completa formularios y estados (lo que más usa una aplicación), después
+contenido, después estructura de pantalla, y al final lo más complejo. Dentro de cada tanda, de
+menor a mayor riesgo.
+
+### Tanda A: formularios y estados
+
+**8. Radio button** (molécula, universal). `<RadioGroup>` sobre `<fieldset>`/`role="radiogroup"`
+con `RadioButton` sobre `<input type="radio">`: las flechas del navegador ya mueven la selección.
+Tokens `RadioButtonTokens.kt`. Mismo patrón que el Checkbox (input oculto, área de 48, átomos
+activados por variables). Riesgo bajo.
+
+**9. Divider** (átomo, universal). `<hr>` completo, con sangría inicial o en ambos lados
+(`DividerTokens.kt`). Lo usan Lists y Cards; `MenuDivider` pasa a usarlo. Riesgo bajo.
+
+**10. Indicadores de progreso lineal y circular** (molécula, universal). Determinado e
+indeterminado, y las versiones onduladas de Expressive (`LinearProgressIndicatorTokens.kt`,
+`CircularProgressIndicatorTokens.kt`, `WavyProgressIndicator.kt`). `role="progressbar"` como
+el LoadingIndicator. Riesgo medio: la onda animada (SVG o CSS) y el movimiento reducido.
+
+**11. Slider** (molécula, cliente si hace falta arrastre propio). Sobre `<input type="range">`
+mientras alcance (teclado y accesibilidad nativos); rango de dos valores, marcas y el handle
+angosto de Expressive (`SliderTokens.kt`). Riesgo medio: estilizar `range` igual en los tres
+motores (`::-webkit-slider-thumb` y `::-moz-range-thumb`), o dibujar el control y dejar el input
+invisible encima, como el Switch.
+
+### Tanda B: contenido
+
+**12. Card** (molécula, universal). Elevated, filled y outlined (`ElevatedCardTokens.kt`,
+`FilledCardTokens.kt`, `OutlinedCardTokens.kt`); como superficie o interactiva (enlace o botón
+con `href`/`render`, ADR-0010, sin anidar interactivos). Riesgo bajo.
+
+**13. List** (organismo, universal). `List` y `ListItem` con partes (`ListItemLeading`,
+`ListItemHeadline`, `ListItemSupporting`, `ListItemTrailing`), una, dos y tres líneas, y
+elementos interactivos (`ListTokens.kt`). Usa Divider, Checkbox, Radio y Switch como contenido
+final. Riesgo bajo a medio: la semántica (lista de enlaces, de acciones o de selección).
+
+**14. Chips** (molécula). Assist, filter, input y suggestion (`AssistChipTokens.kt`,
+`FilterChipTokens.kt`, `InputChipTokens.kt`, `SuggestionChipTokens.kt`). Filter como toggle
+(`aria-pressed`) o en grupo de selección; input con botón de quitar. Riesgo medio: la
+navegación con teclado de un grupo de chips.
+
+**15. Tooltip** (organismo, cliente). Plain y rich (`PlainTooltipTokens.kt`,
+`RichTooltipTokens.kt`), con Popover y anchor positioning como el Menu (ADR-0007), y el patrón
+APG de tooltip (hover y foco, Escape, sin contenido interactivo en el plain). Riesgo medio:
+mostrar y ocultar con demora sin parpadeos y en dispositivos táctiles.
+
+**16. Snackbar** (organismo, cliente). Mensaje con acción opcional y botón de cerrar
+(`SnackbarTokens.kt`), en la capa superior (Popover), con región viva (`role="status"`) y una
+cola para varios mensajes. Riesgo medio: la API de la cola sin acoplarse a un estado global.
+
+### Tanda C: estructura de pantalla
+
+**17. Tabs** (organismo, cliente). Primary y secondary (`PrimaryNavigationTabTokens.kt`,
+`SecondaryNavigationTabTokens.kt`), con el patrón APG de pestañas (`tablist`, flechas, Inicio y
+Fin, activación automática o manual) y el indicador animado. Variante de enlaces para navegar
+entre páginas (no pestañas). Riesgo medio.
+
+**18. Top app bar** (organismo). Small, medium y large, y las "flexible" de Expressive
+(`AppBarSmallTokens.kt`, `AppBarMediumFlexibleTokens.kt`, `AppBarLargeFlexibleTokens.kt`), con
+título, subtítulo y acciones; el cambio al desplazar (fondo y tamaño) con CSS
+(`animation-timeline: scroll()` donde exista) o con un respaldo. Riesgo medio a alto.
+
+**19. Sheets** (organismo, cliente). Bottom sheet modal y side sheet (`SheetBottomTokens.kt`),
+sobre `<dialog>` como el Dialog; el arrastre para cerrar del bottom sheet es lo que agrega
+riesgo. Riesgo alto.
+
+**20. Search** (organismo, cliente). Search bar y search view (`SearchBarTokens.kt`,
+`SearchViewTokens.kt`), con el patrón APG de combobox para las sugerencias. Riesgo alto.
+
+**21. Toolbars** (organismo). Docked y floating de Expressive (`DockedToolbarTokens.kt`,
+`FloatingToolbarTokens.kt`, `VibrantToolbarTokens.kt`), con el patrón APG de toolbar (una sola
+parada de Tab y flechas). Riesgo medio.
+
+### Tanda D: botones de Expressive
+
+**22. Button groups** (organismo). Standard y connected (`StandardButtonGroupSmallTokens.kt`,
+`ConnectedButtonGroupSmallTokens.kt`), con el cambio de forma por posición (esquinas interiores
+más chicas que crecen al presionar); de ahí sale también el reemplazo de los segmented buttons.
+**23. Split button** (`SplitButton*Tokens.kt`) y **24. FAB menu** (`FabMenu*Tokens.kt`), que
+reutiliza el Menu. Riesgo medio: la forma por posición y el foco.
+
+### Tanda E: lo más complejo
+
+**25. Date y time pickers** (`DatePickerModalTokens.kt`, `TimePickerTokens.kt`): calendario
+con el patrón APG de grilla, entrada de texto y localización (`Intl`). **26. Carousel**. Riesgo
+alto; se planifican en detalle cuando lleguemos.
+
+### Fuera de esta etapa
+
+Color dinámico en tiempo de ejecución (ADR-0009), paleta de referencia (`md.ref.palette`), XR
+y la publicación (que va en paralelo: no depende de estos componentes).
+
 ## Fuera de este plan
 
 **XR (decidido el 2026-11-25).** El kit trae componentes y variantes para XR (por ejemplo
@@ -219,9 +317,8 @@ posterior, cuando la librería tenga versiones estables y haya un proyecto para 
 tanto, al extraer datos del kit se ignoran las variantes XR. Revisar si aparece un proyecto
 que lo necesite.
 
-Chips,
-Lists, Tabs, Snackbar, Tooltip, Sheets, compilación y publicación del paquete, color
-dinámico (ADR-0004). Al publicar: crear `@matekit/theme` con el generador de `scripts/lib/` y
+Los componentes que faltaban pasaron a la "Segunda etapa" de arriba. Quedan fuera:
+compilación y publicación del paquete, y color dinámico (ADR-0004). Al publicar: crear `@matekit/theme` con el generador de `scripts/lib/` y
 su comando (ADR-0009).
 
 **Formas decorativas (ADR-0011).** Las 35 formas de Expressive (`03-tokens.md` § Formas
