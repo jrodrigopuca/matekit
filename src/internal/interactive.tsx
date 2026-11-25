@@ -1,7 +1,7 @@
 // Módulo interno universal (ADR-0003): sin estado, efectos, contexto ni eventos. No se exporta
 // desde src/index.ts; lo usan los componentes que dibujan un `<a>`, un `<button>` o el elemento
 // de `render` (ADR-0010): los destinos de NavigationBar y NavigationRail (por
-// src/internal/navigation-item.tsx) y los FAB.
+// src/internal/navigation-item.tsx), los FAB, Button e IconButton.
 //
 // cloneElement e isValidElement también existen en la versión de React para Server Components
 // (react.react-server.js), así que esto corre en el servidor.
@@ -60,6 +60,29 @@ export type RenderElementProps = Omit<HTMLAttributes<HTMLElement>, 'children'> &
 export type InteractiveElementProps = LinkElementProps | ButtonElementProps | RenderElementProps
 
 /**
+ * Lo que solo tiene sentido en la forma `<button>` y los tipos rechazan en un enlace:
+ * - `selected` (toggle, `aria-pressed`): un enlace navega, no se activa y desactiva.
+ * - `disabled` y `aria-disabled`: un `<a>` no tiene `disabled`, y ARIA in HTML desaconseja
+ *   `aria-disabled="true"` en un `<a href>` (el enlace sigue funcionando); para anunciar un
+ *   destino no disponible, indica quitar el `href`. Acá eso es la forma `<button disabled>`.
+ */
+export interface LinkModeExclusions {
+  selected?: never
+  disabled?: never
+  'aria-disabled'?: never
+  'aria-pressed'?: never
+}
+
+/**
+ * Props de un botón que también puede ser enlace (Button, IconButton): las propias (`Own`) más
+ * una de las tres formas de ADR-0010. Solo la forma `<button>` acepta `selected` y `disabled`.
+ */
+export type ToggleButtonOrLinkProps<Own> =
+  | (Own & { selected?: boolean | undefined } & Omit<ButtonElementProps, keyof Own | 'selected'>)
+  | (Own & LinkModeExclusions & Omit<LinkElementProps, keyof Own | keyof LinkModeExclusions>)
+  | (Own & LinkModeExclusions & Omit<RenderElementProps, keyof Own | keyof LinkModeExclusions>)
+
+/**
  * Dibuja el elemento interactivo de un componente según ADR-0010: el de `render` clonado, un
  * `<a>` si hay `href`, o un `<button type="button">`.
  *
@@ -99,8 +122,10 @@ export function interactiveElement(
   }
 
   const button = rest as Omit<ButtonElementProps, 'render'>
+  // `type` explícitamente undefined también queda en "button" (si no, React lo omitiría y el
+  // botón enviaría el formulario).
   return (
-    <button type="button" {...button} className={className}>
+    <button {...button} type={button.type ?? 'button'} className={className}>
       {children}
     </button>
   )

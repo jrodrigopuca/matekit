@@ -1,6 +1,6 @@
-import { createRef } from 'react'
-import { describe, expect, test } from 'vitest'
-import { commands, userEvent } from 'vitest/browser'
+import { createRef, type AnchorHTMLAttributes, type Ref } from 'react'
+import { afterEach, describe, expect, test } from 'vitest'
+import { commands, page, userEvent } from 'vitest/browser'
 import { SearchIcon, StarIcon } from '../../icons/icons.tsx'
 import { IconButton, type IconButtonSize, type IconButtonVariant, type IconButtonWidth } from './IconButton.tsx'
 import { render, roleColor, style, withMotion } from '../../test/render.tsx'
@@ -411,6 +411,125 @@ describe('IconButton: estados', () => {
     expect(Number(style(wave).opacity)).toBeCloseTo(0.1)
     await commands.pressUp()
     await expect.poll(() => b.querySelector('.mk-ripple-wave'), { timeout: 2000 }).toBeNull()
+  })
+})
+
+/** Enlace propio que imita al Link de Next.js y React Router: reparte sus props en el <a>. */
+function FakeLink({ to, prefetch, ref, ...props }: AnchorHTMLAttributes<HTMLAnchorElement> & { to: string; prefetch?: boolean; ref?: Ref<HTMLAnchorElement> }) {
+  return <a {...props} href={to} data-prefetch={String(prefetch)} ref={ref} />
+}
+
+// Propiedades que dibujan el botón: con href o render tienen que dar lo mismo que el <button>.
+const DRAWN = [
+  'display', 'width', 'height', 'padding-left', 'box-sizing', 'border-top-left-radius',
+  'background-color', 'color', 'outline-color', 'outline-width', 'outline-offset',
+  'text-decoration-line', 'cursor', 'align-items', 'justify-content',
+] as const
+
+describe('IconButton: como enlace (ADR-0010)', () => {
+  afterEach(() => history.replaceState(null, '', location.pathname + location.search))
+
+  test('con href es un <a> con label como nombre, las clases, los átomos y la ref', async () => {
+    const ref = createRef<HTMLAnchorElement>()
+    await render(<IconButton label="Ajustes" href="#ajustes" className="mio" ref={ref}><SearchIcon /></IconButton>)
+    const a = page.getByRole('link', { name: 'Ajustes' }).element() as HTMLAnchorElement
+    expect(a.tagName).toBe('A')
+    expect(a.getAttribute('href')).toBe('#ajustes')
+    expect(a.getAttribute('aria-label')).toBe('Ajustes')
+    expect(a.className).toBe('mk-icon-button mio')
+    expect(a.dataset).toMatchObject({ variant: 'standard', size: 'sm', width: 'default', shape: 'round' })
+    expect(a.hasAttribute('type')).toBe(false)
+    expect(a.hasAttribute('aria-pressed')).toBe(false)
+    expect(a.querySelectorAll(':scope > .mk-state-layer, :scope > .mk-ripple, :scope > .mk-focus-ring')).toHaveLength(3)
+    expect(ref.current).toBe(a)
+  })
+
+  test('con render, el enlace del enrutador recibe las clases, el nombre, las props y la ref', async () => {
+    const ref = createRef<HTMLElement>()
+    await render(
+      <IconButton label="Ajustes" variant="filled" size="md" ref={ref} title="Abrir ajustes" render={<FakeLink to="/ajustes" prefetch className="propia" />}>
+        <SearchIcon />
+      </IconButton>,
+    )
+    const a = page.getByRole('link', { name: 'Ajustes' }).element() as HTMLAnchorElement
+    expect(a.getAttribute('href')).toBe('/ajustes')
+    expect(a.className).toBe('mk-icon-button propia')
+    expect(a.dataset).toMatchObject({ prefetch: 'true', variant: 'filled', size: 'md' })
+    expect(a.title).toBe('Abrir ajustes')
+    expect(ref.current).toBe(a)
+  })
+
+  for (const variant of ['standard', 'filled', 'tonal', 'outlined'] as const) {
+    for (const [size, width] of [['xs', 'narrow'], ['md', 'default'], ['xl', 'wide']] as const) {
+      test(`${variant} ${size} ${width}: el <a> mide y se pinta igual que el <button>`, async () => {
+        const c = await render(
+          <div>
+            <IconButton label="b" variant={variant} size={size} width={width}><SearchIcon /></IconButton>
+            <IconButton label="a" variant={variant} size={size} width={width} href="#x"><SearchIcon /></IconButton>
+          </div>,
+        )
+        const b = button(c)
+        const a = c.querySelector('a') as HTMLAnchorElement
+        for (const prop of DRAWN) {
+          expect(style(a).getPropertyValue(prop), prop).toBe(style(b).getPropertyValue(prop))
+        }
+        expect(a.getBoundingClientRect().width).toBeCloseTo(SIZES[size].widths[width], 2)
+        expect(a.getBoundingClientRect().height).toBeCloseTo(SIZES[size].h, 2)
+        const ai = a.querySelector('svg')
+        expect(style(ai).fill).toBe(style(b.querySelector('svg')).fill)
+        expect(ai?.getBoundingClientRect().width).toBeCloseTo(SIZES[size].icon, 2)
+        expect(getComputedStyle(a, '::before').width).toBe(getComputedStyle(b, '::before').width)
+      })
+    }
+  }
+
+  test('sin subrayado y con el color del estilo, también en un enlace ya visitado', async () => {
+    // La página actual está en el historial: el enlace es :visited. getComputedStyle no revela
+    // :visited (privacidad); lo que se prueba es que el color sale de la clase (ver Button).
+    const c = await render(<IconButton label="Visitado" href={location.href}><SearchIcon /></IconButton>)
+    const a = c.querySelector('a') as HTMLAnchorElement
+    expect(style(a).textDecorationLine).toBe('none')
+    expect(style(a).color).toBe(roleColor('on-surface-variant'))
+  })
+
+  test('el teclado: Tab lo enfoca con el anillo visible y Enter sigue el enlace', async () => {
+    const c = await render(<IconButton label="Ir" href="#destino"><SearchIcon /></IconButton>)
+    const a = c.querySelector('a') as HTMLAnchorElement
+    await userEvent.tab()
+    expect(document.activeElement).toBe(a)
+    expect(style(a.querySelector('.mk-focus-ring')).opacity).toBe('1')
+    await userEvent.keyboard('{Enter}')
+    await expect.poll(() => location.hash).toBe('#destino')
+  })
+
+  test('presionado: cambia al radio de presionado y muestra la onda, como el <button>', async () => {
+    const c = await render(<IconButton label="Onda" size="md" href="#x"><SearchIcon /></IconButton>)
+    const a = c.querySelector('a') as HTMLAnchorElement
+    a.addEventListener('dragstart', (e) => e.preventDefault())
+    await commands.pressDown('.mk-icon-button')
+    expect(px(style(a).borderTopLeftRadius)).toBe(SIZES.md.pressed)
+    expect(a.querySelector('.mk-ripple-wave')).not.toBeNull()
+    await commands.pressUp()
+  })
+
+  test('los tipos rechazan el toggle y el deshabilitado en un enlace', () => {
+    // Solo comprobación de tipos (pnpm typecheck); no se dibuja nada.
+    const ok = [
+      <IconButton key="1" label="t" selected><SearchIcon /></IconButton>,
+      <IconButton key="2" label="d" disabled><SearchIcon /></IconButton>,
+      <IconButton key="3" label="e" href="/x"><SearchIcon /></IconButton>,
+    ]
+    const wrong = [
+      // @ts-expect-error: un enlace no es un toggle.
+      <IconButton key="4" label="e" href="/x" selected><SearchIcon /></IconButton>,
+      // @ts-expect-error: un enlace no es un toggle (tampoco con render).
+      <IconButton key="5" label="e" render={<FakeLink to="/x" />} selected><SearchIcon /></IconButton>,
+      // @ts-expect-error: un <a> no tiene disabled.
+      <IconButton key="6" label="e" href="/x" disabled><SearchIcon /></IconButton>,
+      // @ts-expect-error: el nombre es label, también como enlace.
+      <IconButton key="7" href="/x" aria-label="e"><SearchIcon /></IconButton>,
+    ]
+    expect(ok.length + wrong.length).toBe(7)
   })
 })
 

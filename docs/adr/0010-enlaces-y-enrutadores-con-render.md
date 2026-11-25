@@ -43,11 +43,32 @@
   - Si el elemento de `render` y el item traen las dos una `ref`, solo llega la del elemento
     (no se combinan, para no usar hooks en un componente universal).
   - Los hijos del elemento de `render` se descartan en silencio.
-- Revisit if: otro componente (Button con `href`, una lista de enlaces) necesita lo mismo;
-  entonces se extrae la lógica de clonado a una función interna compartida antes de repetirla.
-  Si React o los enrutadores dejan de aceptar `className`/`ref` como props del enlace, o si
-  aparece un estándar de facto distinto (por ejemplo, que la comunidad converja en
-  `asChild`), revisar la forma.
+- Revisit if: si React o los enrutadores dejan de aceptar `className`/`ref` como props del
+  enlace, o si aparece un estándar de facto distinto (por ejemplo, que la comunidad converja en
+  `asChild`), revisar la forma. Un componente nuevo que necesite las tres formas usa
+  `interactiveElement` (ver la actualización), no una copia.
+- Actualización (2026-11-25): la condición anterior de "Revisit if" (que otro componente lo
+  necesitara y se extrajera la lógica) ya se cumplió. La elección del elemento y el clonado
+  están en `src/internal/interactive.tsx` (`interactiveElement`), y la usan los destinos de
+  NavigationBar y NavigationRail (por `src/internal/navigation-item.tsx`), `Fab`,
+  `ExtendedFab`, `Button` e `IconButton`. Para Button e IconButton:
+  - **Toggle solo como `<button>`:** los tipos (`ToggleButtonOrLinkProps`, una unión
+    discriminada por `href` y `render`) rechazan `selected` en las dos formas de enlace; un
+    enlace navega, no se activa y desactiva, y `aria-pressed` en un `role="link"` no tiene
+    sentido.
+  - **Sin deshabilitado como enlace:** los tipos rechazan `disabled` y `aria-disabled` con
+    `href` o `render`. Un `<a>` no tiene `disabled`, y ARIA in HTML (W3C, sección del elemento
+    `a` con `href`, leída el 2026-11-25) dice: "It is NOT RECOMMENDED to use
+    aria-disabled="true" on an a element with an href attribute" y "If a link needs to be
+    programmatically communicated as "disabled", remove the href attribute". El enlace con
+    `aria-disabled` seguiría navegando. Un destino no disponible se escribe sin `href`, como
+    `<Button disabled>`, que ya se atenúa y no recibe clics ni foco.
+  - **Alto contraste:** como enlace, el navegador pintaría el contenido en `LinkText` con el
+    contorno en `ButtonText`. `button.css` fuerza `ButtonText` en `:any-link`, igual que el FAB
+    enlace: en pantalla es un botón, y el rol `link` ya lo distingue para el lector.
+  - Comprobado en `Button.test.tsx` e `IconButton.test.tsx` (las medidas y los colores calculados
+    del `<a>` son los del `<button>` en cada estilo; teclado; `render`; tipos con
+    `@ts-expect-error`) y en `src/test/forced-colors.test.tsx`.
 - Evidencia (verificado el 2026-11-25, leyendo el código, no de memoria):
   - **React 19.3.1** (instalado): `cloneElement` e `isValidElement` están en
     `cjs/react.react-server.production.js`, la versión que usan los Server Components

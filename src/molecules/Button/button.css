@@ -11,6 +11,13 @@
    compartirlas. Lo propio de cada uno (relleno, texto, Elevated y Text en el Button; ancho,
    estilo Standard y área táctil en el IconButton) va con su clase. */
 
+/* Como enlace (<a> con href o el de render, ADR-0010) se ve igual que el <button>: la base fija
+   display, alto, color, text-decoration: none y cursor, que ganan a los del navegador para
+   :link y :visited (la hoja del navegador pierde siempre contra la del autor). :visited solo
+   puede cambiar colores y acá el color es siempre el del estilo. Las reglas de presionado y
+   hover usan :not(:disabled, [aria-disabled='true']), que un <a> siempre cumple; las de
+   deshabilitado no aplican porque los tipos no aceptan disabled ni aria-disabled en un enlace. */
+
 @layer matekit.components {
   :is(.mk-button, .mk-icon-button) {
     /* Valores del tamaño (sm por defecto); cada data-size los cambia. */
@@ -262,10 +269,16 @@
      El navegador quita fondos y sombras y fuerza los colores del sistema. La forma la da el
      contorno, que se dibuja siempre en ButtonText (también en Text, Standard y Filled, que
      normalmente no lo tienen). El toggle seleccionado se marca con Highlight; para eso el botón
-     sale del ajuste automático (forced-color-adjust: none) y usa colores del sistema. */
+     sale del ajuste automático (forced-color-adjust: none) y usa colores del sistema.
+     Como enlace, el navegador pintaría el texto y el icono en LinkText mientras el contorno
+     queda en ButtonText: se fuerza ButtonText, para que se vea como el botón que es en
+     pantalla (como el FAB enlace). El rol sigue siendo link para el lector de pantalla. */
   @media (forced-colors: active) {
     :is(.mk-button, .mk-icon-button) {
       outline-color: ButtonText;
+    }
+    :is(.mk-button, .mk-icon-button):any-link {
+      color: ButtonText;
     }
     :is(.mk-button, .mk-icon-button)[aria-pressed='true'] {
       forced-color-adjust: none;

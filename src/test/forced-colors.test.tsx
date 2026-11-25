@@ -95,6 +95,23 @@ describe('Button e IconButton', () => {
     }
   })
 
+  test('como enlace se ve como botón: contenido y contorno ButtonText, no LinkText', async () => {
+    // Sin la regla :any-link de button.css, el navegador pintaría el texto y el icono del <a> en
+    // LinkText mientras el contorno queda en ButtonText. La regla es de matekit: vale en los tres.
+    const c = await render(
+      <div>
+        <Button variant="text" href="#x" className="b">Ver detalle</Button>
+        <IconButton label="Ajustes" href="#x" className="i"><StarIcon /></IconButton>
+      </div>,
+    )
+    for (const sel of ['.b', '.i']) {
+      expect(style(q(c, sel)).color, sel).toBe(systemColor('ButtonText'))
+      expect(style(q(c, sel)).outlineColor, sel).toBe(systemColor('ButtonText'))
+      expect(style(q(c, sel)).textDecorationLine, sel).toBe('none')
+    }
+    expect(style(q(c, '.i svg')).fill).toBe(systemColor('ButtonText'))
+  })
+
   test('deshabilitado en GrayText', async () => {
     const c = await render(<Button disabled>No</Button>)
     expect(style(q(c, 'button')).color).toBe(systemColor('GrayText'))

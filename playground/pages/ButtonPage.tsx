@@ -94,6 +94,25 @@ export function ButtonPage() {
         </div>
       </section>
 
+      <section className="pg-section" id="como-enlace">
+        <h2>Como enlace</h2>
+        <p className="pg-hint">
+          Con <code>href</code> (o <code>render=&#123;&lt;Link href="…" /&gt;&#125;</code>) es un{' '}
+          <code>&lt;a&gt;</code> que se ve igual que el <code>&lt;button&gt;</code>: abre en otra pestaña
+          con el menú contextual y Enter lo sigue. No admite <code>selected</code> ni{' '}
+          <code>disabled</code> (ADR-0010).
+        </p>
+        <div className="pg-grid" style={{ gridTemplateColumns: 'repeat(3, max-content)' }}>
+          <span />
+          {['<button>', '<a href>'].map((h) => (
+            <span key={h} className="pg-col-head">{h}</span>
+          ))}
+          {VARIANTS.map((v) => (
+            <LinkRow key={v} variant={v} />
+          ))}
+        </div>
+      </section>
+
       <section className="pg-section">
         <h2>Tamaños</h2>
         {SHAPES.map((s) => (
@@ -137,6 +156,16 @@ function Row({ variant }: { variant: ButtonVariant }) {
         )}
       </span>
       <span><Button variant={variant} disabled>Deshabilitado</Button></span>
+    </>
+  )
+}
+
+function LinkRow({ variant }: { variant: ButtonVariant }) {
+  return (
+    <>
+      <span className="pg-row-head">{variant}</span>
+      <span><Button variant={variant}><AddIcon />Ver detalle</Button></span>
+      <span><Button variant={variant} href="#button"><AddIcon />Ver detalle</Button></span>
     </>
   )
 }

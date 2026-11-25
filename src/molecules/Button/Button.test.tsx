@@ -1,6 +1,6 @@
-import { createRef } from 'react'
-import { describe, expect, test } from 'vitest'
-import { commands, userEvent } from 'vitest/browser'
+import { createRef, type AnchorHTMLAttributes, type Ref } from 'react'
+import { afterEach, describe, expect, test } from 'vitest'
+import { commands, page, userEvent } from 'vitest/browser'
 import { Button, type ButtonSize, type ButtonVariant } from './Button.tsx'
 import { render, roleColor, style, withMotion } from '../../test/render.tsx'
 
@@ -292,6 +292,142 @@ describe('Button: estados', () => {
     expect(style(b.querySelector('.mk-focus-ring')).opacity).toBe('1')
     expect(Number(style(b.querySelector('.mk-state-layer')).opacity)).toBeCloseTo(0.1)
     expect(b.querySelector('.mk-ripple-wave')).toBeNull()
+  })
+})
+
+/** Enlace propio que imita al Link de Next.js y React Router: reparte sus props en el <a>. */
+function FakeLink({ to, prefetch, ref, ...props }: AnchorHTMLAttributes<HTMLAnchorElement> & { to: string; prefetch?: boolean; ref?: Ref<HTMLAnchorElement> }) {
+  return <a {...props} href={to} data-prefetch={String(prefetch)} ref={ref} />
+}
+
+// Propiedades que dibujan el botón: con href o render tienen que dar lo mismo que el <button>.
+const DRAWN = [
+  'display', 'height', 'min-width', 'padding-left', 'padding-right', 'column-gap', 'box-sizing',
+  'border-top-left-radius', 'background-color', 'color', 'box-shadow', 'outline-color',
+  'outline-width', 'outline-offset', 'font-family', 'font-size', 'font-weight', 'line-height',
+  'letter-spacing', 'text-decoration-line', 'cursor', 'white-space', 'align-items', 'justify-content',
+] as const
+
+describe('Button: como enlace (ADR-0010)', () => {
+  afterEach(() => history.replaceState(null, '', location.pathname + location.search))
+
+  test('con href es un <a> con su nombre, las clases, los átomos y la ref; sin type ni aria-pressed', async () => {
+    const ref = createRef<HTMLAnchorElement>()
+    await render(<Button variant="tonal" size="md" href="#detalle" className="mio" ref={ref} target="_self">Ver detalle</Button>)
+    const a = page.getByRole('link', { name: 'Ver detalle' }).element() as HTMLAnchorElement
+    expect(a.tagName).toBe('A')
+    expect(a.getAttribute('href')).toBe('#detalle')
+    expect(a.target).toBe('_self')
+    expect(a.className).toBe('mk-button mio')
+    expect(a.dataset).toMatchObject({ variant: 'tonal', size: 'md', shape: 'round' })
+    expect(a.hasAttribute('type')).toBe(false)
+    expect(a.hasAttribute('aria-pressed')).toBe(false)
+    expect(a.querySelectorAll(':scope > .mk-state-layer, :scope > .mk-ripple, :scope > .mk-focus-ring')).toHaveLength(3)
+    expect(ref.current).toBe(a)
+  })
+
+  test('con render, el enlace del enrutador recibe las clases (también las suyas), las props y la ref', async () => {
+    const ref = createRef<HTMLElement>()
+    await render(
+      <Button variant="outlined" ref={ref} id="b1" data-foo="bar" render={<FakeLink to="/pedidos/42" prefetch={false} className="propia" />}>
+        Ver detalle
+      </Button>,
+    )
+    const a = page.getByRole('link', { name: 'Ver detalle' }).element() as HTMLAnchorElement
+    expect(a.getAttribute('href')).toBe('/pedidos/42')
+    expect(a.className).toBe('mk-button propia')
+    expect(a.dataset).toMatchObject({ prefetch: 'false', foo: 'bar', variant: 'outlined', size: 'sm' })
+    expect(a.id).toBe('b1')
+    expect(ref.current).toBe(a)
+    expect(a.querySelectorAll(':scope > .mk-state-layer, :scope > .mk-ripple, :scope > .mk-focus-ring')).toHaveLength(3)
+  })
+
+  for (const variant of ['filled', 'tonal', 'outlined', 'elevated', 'text'] as const) {
+    for (const size of ['xs', 'md', 'xl'] as const) {
+      test(`${variant} ${size}: el <a> mide y se pinta igual que el <button>`, async () => {
+        const c = await render(
+          <div>
+            <Button variant={variant} size={size} shape="square">{icon}Texto</Button>
+            <Button variant={variant} size={size} shape="square" href="#x">{icon}Texto</Button>
+          </div>,
+        )
+        const b = button(c)
+        const a = c.querySelector('a') as HTMLAnchorElement
+        for (const prop of DRAWN) {
+          expect(style(a).getPropertyValue(prop), prop).toBe(style(b).getPropertyValue(prop))
+        }
+        expect(a.getBoundingClientRect().width).toBeCloseTo(b.getBoundingClientRect().width, 2)
+        expect(a.getBoundingClientRect().height).toBeCloseTo(SIZES[size].h, 2)
+        expect(px(style(a.querySelector('svg')).width)).toBe(SIZES[size].icon)
+        // Área táctil: el ::before es el mismo.
+        expect(getComputedStyle(a, '::before').height).toBe(getComputedStyle(b, '::before').height)
+      })
+    }
+  }
+
+  test('sin subrayado y con el color del estilo, también en un enlace ya visitado', async () => {
+    // La página actual está en el historial, así que este enlace es :visited. getComputedStyle
+    // no revela el estilo de :visited (privacidad): devuelve el de :link. Lo que sí se prueba es
+    // que el color y la decoración vienen de la clase, que gana a la hoja del navegador para
+    // los dos estados; :visited solo puede cambiar colores, y ninguna regla de matekit lo usa.
+    const c = await render(<Button variant="text" href={location.href}>Visitado</Button>)
+    const a = c.querySelector('a') as HTMLAnchorElement
+    expect(style(a).textDecorationLine).toBe('none')
+    expect(style(a).color).toBe(roleColor('primary'))
+    expect(style(a).cursor).toBe('pointer')
+  })
+
+  test('el teclado: Tab lo enfoca con el anillo visible y Enter sigue el enlace', async () => {
+    const c = await render(<Button href="#destino">Ir</Button>)
+    const a = c.querySelector('a') as HTMLAnchorElement
+    await userEvent.tab()
+    expect(document.activeElement).toBe(a)
+    expect(style(a.querySelector('.mk-focus-ring')).opacity).toBe('1')
+    expect(Number(style(a.querySelector('.mk-state-layer')).opacity)).toBeCloseTo(0.1)
+    await userEvent.keyboard('{Enter}')
+    await expect.poll(() => location.hash).toBe('#destino')
+  })
+
+  test('presionado: cambia al radio de presionado y muestra la onda, como el <button>', async () => {
+    const c = await render(<Button size="md" href="#x">Onda</Button>)
+    const a = c.querySelector('a') as HTMLAnchorElement
+    // Sin que el navegador arrastre el enlace mientras está apretado.
+    a.addEventListener('dragstart', (e) => e.preventDefault())
+    await commands.pressDown('.mk-button')
+    expect(px(style(a).borderTopLeftRadius)).toBe(SIZES.md.pressed)
+    expect(Number(style(a.querySelector('.mk-state-layer')).opacity)).toBeCloseTo(0.08)
+    expect(a.querySelector('.mk-ripple-wave')).not.toBeNull()
+    await commands.pressUp()
+    expect(px(style(a).borderTopLeftRadius)).toBe(SIZES.md.h / 2)
+  })
+
+  test('elevated: la sombra sube con el puntero también como enlace', async () => {
+    const c = await render(<Button variant="elevated" href="#x">E</Button>)
+    const a = c.querySelector('a') as HTMLAnchorElement
+    expect(style(a).boxShadow).toContain('0px 1px 3px 1px')
+    await userEvent.hover(a)
+    expect(style(a).boxShadow).toContain('0px 2px 6px 2px')
+  })
+
+  test('los tipos rechazan el toggle y el deshabilitado en un enlace', () => {
+    // Solo comprobación de tipos (pnpm typecheck); no se dibuja nada.
+    const ok = [
+      <Button key="1" selected>Toggle</Button>,
+      <Button key="2" disabled>No</Button>,
+      <Button key="3" href="/x">Enlace</Button>,
+      <Button key="4" render={<FakeLink to="/x" />}>Enlace</Button>,
+    ]
+    const wrong = [
+      // @ts-expect-error: un enlace no es un toggle.
+      <Button key="5" href="/x" selected>Enlace</Button>,
+      // @ts-expect-error: un enlace no es un toggle (tampoco con render).
+      <Button key="6" render={<FakeLink to="/x" />} selected={false}>Enlace</Button>,
+      // @ts-expect-error: un <a> no tiene disabled.
+      <Button key="7" href="/x" disabled>Enlace</Button>,
+      // @ts-expect-error: aria-disabled en un <a href> no lo deshabilita (ARIA in HTML).
+      <Button key="8" href="/x" aria-disabled="true">Enlace</Button>,
+    ]
+    expect(ok.length + wrong.length).toBe(8)
   })
 })
 

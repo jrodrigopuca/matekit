@@ -84,6 +84,9 @@ const GALLERIES: Record<string, ReactNode> = {
       ))}
       <Button disabled>Deshabilitado</Button>
       {(['xs', 'sm', 'md', 'lg', 'xl'] as const).map((s) => <Button key={s} size={s}>{s}</Button>)}
+      {(['filled', 'tonal', 'outlined', 'elevated', 'text'] as const).map((v) => (
+        <Button key={`${v}-link`} variant={v} href={`#${v}`}>{v} enlace</Button>
+      ))}
     </>
   ),
   IconButton: (
@@ -96,6 +99,9 @@ const GALLERIES: Record<string, ReactNode> = {
         </span>
       ))}
       <IconButton label="Deshabilitado" disabled><StarIcon /></IconButton>
+      {(['standard', 'filled', 'tonal', 'outlined'] as const).map((v) => (
+        <IconButton key={v} variant={v} label={`${v} enlace`} href={`#${v}`}><StarIcon /></IconButton>
+      ))}
     </>
   ),
   Fab: (

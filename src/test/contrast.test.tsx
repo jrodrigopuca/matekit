@@ -91,9 +91,13 @@ for (const scheme of SCHEMES) {
             <Button key={`${v}-on`} variant={v} selected>{v} sí</Button>,
             <Button key={`${v}-off`} variant={v} selected={false}>{v} no</Button>,
           ])}
+          {(['filled', 'tonal', 'outlined', 'elevated', 'text'] as const).map((v) => (
+            <Button key={`${v}-link`} variant={v} href={`#${v}`}>{v} enlace</Button>
+          ))}
         </Themed>,
       )
-      for (const b of c.querySelectorAll('button')) {
+      expect(c.querySelectorAll('a.mk-button')).toHaveLength(5)
+      for (const b of c.querySelectorAll<HTMLElement>('.mk-button')) {
         expect(textContrast(b), `${b.textContent} (${b.dataset['variant']})`).toBeGreaterThanOrEqual(TEXT)
       }
     })
@@ -105,10 +109,12 @@ for (const scheme of SCHEMES) {
             <IconButton key={v} variant={v} label={v}><StarIcon /></IconButton>,
             <IconButton key={`${v}-on`} variant={v} label={`${v} sí`} selected><StarIcon filled /></IconButton>,
             <IconButton key={`${v}-off`} variant={v} label={`${v} no`} selected={false}><StarIcon /></IconButton>,
+            <IconButton key={`${v}-link`} variant={v} label={`${v} enlace`} href={`#${v}`}><StarIcon /></IconButton>,
           ])}
         </Themed>,
       )
-      for (const b of c.querySelectorAll('button')) {
+      expect(c.querySelectorAll('a.mk-icon-button')).toHaveLength(4)
+      for (const b of c.querySelectorAll<HTMLElement>('.mk-icon-button')) {
         const icon = q(b, 'svg')
         expect(contrastRatio(cs(icon).fill, effectiveBackground(b)), b.getAttribute('aria-label') ?? '').toBeGreaterThanOrEqual(NON_TEXT)
       }
