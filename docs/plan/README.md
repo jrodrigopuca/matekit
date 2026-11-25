@@ -42,6 +42,8 @@ siguiente. Convenciones en [`CLAUDE.md`](../../CLAUDE.md).
       `prefers-reduced-motion`, sin desplazamientos.
 - [ ] Modo de alto contraste (`forced-colors: active`): forma visible y estados distinguibles
       con colores del sistema; cubierto en `src/test/forced-colors.test.tsx`.
+- [ ] Sin violaciones de axe-core en tema claro y oscuro (`src/test/a11y.test.tsx`) y con el
+      contraste mínimo verificado (`src/test/contrast.test.tsx`).
 - [ ] Pruebas en navegador que cubren lo anterior; `pnpm typecheck` y `pnpm test` en verde;
       una prueba de falsación hecha.
 - [ ] Página en el playground; exportado en `src/index.ts`; CSS importado en `src/styles.css`.

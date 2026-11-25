@@ -29,7 +29,7 @@ estructura. Las fuentes de matekit siguen siendo las del ADR-0004.
 |---|---|---|
 | Alto contraste (`forced-colors: active`) | El sitio lo atiende en el switch, el buscador y la cabecera. Sin él, los componentes que se distinguen por fondo o sombra pierden forma. | Hecho (2026-11-24): Checkbox y Switch desaparecían, el TextField filled y el Dialog perdían su borde, el toggle seleccionado no se distinguía. Pruebas en `src/test/forced-colors.test.tsx`. |
 | Lint de valores sueltos | Rechazar en CI colores o duraciones literales en el CSS de los componentes. | Hecho (2026-11-24): `pnpm lint:css` revisa color, duración, curva y tipografía; corre en CI. |
-| Revisión automática de accesibilidad | axe-core en las pruebas. Agrega una dependencia. | Pendiente de decisión |
+| Revisión automática de accesibilidad | axe-core en las pruebas. Agrega una dependencia. | Hecho (2026-11-24): axe-core 4.14.0 (dev) en `src/test/a11y.test.tsx`; el contraste que axe deja sin decidir (elementos cubiertos por los átomos) se mide en `src/test/contrast.test.tsx`. |
 | Paleta de referencia (`--md-ref-palette-*`) | Capa entre los valores crudos y los roles; facilita el color dinámico. | Para cuando se haga el color dinámico |
 | Clases de tamaño de ventana | Compacto < 600, medio 600–839, expandido 840–1199, grande ≥ 1200 (M3). El sitio usa 600 / 960 / 1294 propios, con rangos que se solapan en 1 px (960/961, 1294/1295). | Para NavigationBar y NavigationRail |
 | Container queries | Que un componente se adapte a su contenedor, no a la ventana (el sitio cambia `mio-card` con el ancho de la ventana). | Para componentes de contenido, más adelante |

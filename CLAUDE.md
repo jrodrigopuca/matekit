@@ -112,6 +112,11 @@ No llamar al conector de Figma salvo que falte un dato imprescindible: tiene lí
 - Para esperar animaciones, `expect.poll`, no tiempos fijos.
 - Alto contraste: sumar el componente a `src/test/forced-colors.test.tsx`, que emula el modo
   con `commands.forcedColors(true)` y compara contra los colores del sistema (`systemColor`).
+- Accesibilidad automática: sumar una galería del componente (estados principales) a
+  `src/test/a11y.test.tsx`, que corre axe-core (WCAG 2.2 A/AA) en tema claro y oscuro.
+- Contraste: sumar el componente a `src/test/contrast.test.tsx` (4,5:1 texto, 3:1 iconos y
+  bordes que identifican el control). axe no decide el contraste de elementos cubiertos por los
+  átomos (StateLayer, Ripple, FocusRing), por eso existe esta prueba propia.
 - `src/test/render.tsx` aísla cada prueba: desmonta lo renderizado al terminar y deja el
   puntero en una esquina antes de empezar. No repetir eso en cada archivo. Para detectar
   dependencias de orden: `pnpm exec vitest run --sequence.shuffle --sequence.seed=<n>`.
