@@ -28,7 +28,7 @@ Los identificadores sirven para volver a consultar cada página con el conector 
 | Dialogs | 55141:14176 | sí |
 | Dividers | 55141:14177 | sí |
 | Lists | 55141:14249 | no |
-| Loading & progress | 55141:14252 | no |
+| Loading & progress | 55141:14252 | sí |
 | Menu | 55141:14250 | sí |
 | Navigation | 55141:14251 | sí |
 | Radio button | 55141:14253 | sí |

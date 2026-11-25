@@ -365,6 +365,41 @@ Leído del kit el 2026-11-25 (página Dividers; componentes sueltos, sin conjunt
 - "Divider with subhead" (horizontal): relleno 16 a ambos lados, la línea y debajo, con
   separación 4, un subtítulo Title Small (14/20, 500) en `On Surface Variant`; 25 de alto.
 
+## Indicadores de progreso (lineal y circular)
+
+Leído del kit el 2026-11-25 (página Loading & progress; conjuntos
+`Linear-determinate progress indicator` 58005:7997, `Linear-indeterminate progress indicator`
+58005:8284, `Circular-determinate progress indicator` 58005:8459 y
+`Circular-indeterminate progress indicator` 58005:8525; piezas en
+`.Building Blocks/Progress indicator/`). Variantes: Type Flat o Wave, Thickness 4 u 8 dp, y
+Progress 0, 10, 20 (30 en el circular), 50, 80 y 100, o Step 0 a 2 en los indeterminados.
+
+### Lineal
+
+- Contenedor de 12 de alto (14 en Wave de 8); el ancho lo da el padre (404 en el kit).
+- Pista: `Secondary Container`, alto igual al grosor (4 u 8), radio la mitad (2 o 4).
+- Indicador activo: trazo `Primary` del grosor (4 u 8) con extremos redondos (`cap=ROUND`). Los
+  extremos sobresalen medio grosor: el kit lo compensa con relleno 2 (grosor 4) o 4 (grosor 8)
+  al inicio, y al 100 % también al final.
+- Separación visible entre el indicador y la pista: 4 en los dos grosores (relleno 6 menos 2 del
+  extremo redondo con grosor 4; 8 menos 4 con grosor 8).
+- Punto de parada (stop): cuadrado de 4 × 4 `Primary`, redondo, al final de la pista y centrado
+  en su alto. Con grosor 4 toca el borde final; con grosor 8 queda a 2 del final (centrado en un
+  cuadrado de 8). Se ve de 0 % a 80 %; al 100 % no hay pista ni punto.
+- 0 %: solo pista y punto, sin indicador activo.
+- Wave: el indicador activo es una onda de 12 de alto (medida del trazado, sin el grosor del
+  trazo), longitud de onda 40 en el determinado y 20 en el indeterminado; el primer tramo va
+  girado 180°. La pista sigue plana.
+- Indeterminado: pista, separación, indicador activo, separación, pista (Step 1: pista de unos
+  40, indicador de unos 120 y el resto pista, en 404).
+
+### Circular
+
+- Tamaño total: Flat 4 dp 40 × 40, Flat 8 dp 44 × 44, Wave 4 dp 48 × 48, Wave 8 dp 52 × 52.
+- Pista `Secondary Container` e indicador activo `Primary` (en el kit son vectores rellenos:
+  el grosor, la separación y la onda se toman de Compose).
+- Indeterminado: el indicador gira (en Step 1 el conjunto está rotado unos −100°).
+
 ## Diferencias con la especificación a revisar
 
 - El indicador con foco del campo de texto mide 3 en el kit. Confirmar en m3.material.io.
