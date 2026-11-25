@@ -1,0 +1,240 @@
+/* FAB y FAB extendido de Material 3 Expressive.
+   Medidas, colores y elevación por estado: kit de Figma (docs/research/05-medidas.md § FAB y FAB
+   extendido). Elevación "lowered" y movimiento de expandir y contraer: Jetpack Compose
+   (FloatingActionButtonDefaults.loweredElevation y extendedFab{Expand,Collapse}Animation en
+   FloatingActionButton.kt); ver docs/research/07-jetpack-compose.md § FAB.
+
+   No comparte la base del Button: el FAB no cambia de forma al presionar, no tiene
+   deshabilitado y su elevación es otra. Solo usa los mismos átomos. */
+
+@layer matekit.components {
+  :is(.mk-fab, .mk-extended-fab) {
+    /* Valores del tamaño (sm por defecto); cada data-size los cambia. */
+    --_height: 56px;
+    --_padding: 16px;
+    --_gap: 8px;
+    --_icon-size: 24px;
+    /* El radio no anima (no hay cambio de forma): los tokens de esquina sirven tal cual. */
+    --_radius: var(--md-sys-shape-corner-large);
+    --_font: var(--md-sys-typescale-title-medium-font);
+    --_font-size: var(--md-sys-typescale-title-medium-size);
+    --_line-height: var(--md-sys-typescale-title-medium-line-height);
+    --_font-weight: var(--md-sys-typescale-title-medium-weight);
+    --_tracking: var(--md-sys-typescale-title-medium-tracking);
+
+    /* Colores (primary-container por defecto); cada data-variant los cambia. */
+    --_container: var(--md-sys-color-primary-container);
+    --_content: var(--md-sys-color-on-primary-container);
+
+    /* Elevación: 3 en reposo, con foco y presionado; 4 con el puntero. */
+    --_elevation-rest: var(--md-sys-elevation-level3);
+    --_elevation-hover: var(--md-sys-elevation-level4);
+    --_elevation: var(--_elevation-rest);
+
+    --mk-icon-size: var(--_icon-size);
+
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    height: var(--_height);
+    min-width: var(--_height);
+    margin: 0;
+    padding: 0;
+    border: none;
+    border-radius: var(--_radius);
+    background-color: var(--_container);
+    box-shadow: var(--_elevation);
+    color: var(--_content);
+    font-family: var(--_font);
+    font-size: var(--_font-size);
+    line-height: var(--_line-height);
+    font-weight: var(--_font-weight);
+    letter-spacing: var(--_tracking);
+    white-space: nowrap;
+    text-decoration: none;
+    vertical-align: middle;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: box-shadow var(--md-sys-motion-spring-default-effects-duration)
+      var(--md-sys-motion-spring-default-effects-easing);
+  }
+
+  /* El FAB es cuadrado: el icono centrado. */
+  .mk-fab {
+    width: var(--_height);
+  }
+
+  :is(.mk-fab, .mk-extended-fab-label) > :is(svg, .mk-icon) {
+    flex-shrink: 0;
+    width: var(--_icon-size);
+    height: var(--_icon-size);
+  }
+
+  /* --- Tamaños (kit: alto, radio, relleno, separación, icono y texto) --- */
+  :is(.mk-fab, .mk-extended-fab)[data-size='md'] {
+    --_height: 80px;
+    --_padding: 26px;
+    --_gap: 12px;
+    --_icon-size: 28px;
+    --_radius: var(--md-sys-shape-corner-large-increased);
+    --_font: var(--md-sys-typescale-title-large-font);
+    --_font-size: var(--md-sys-typescale-title-large-size);
+    --_line-height: var(--md-sys-typescale-title-large-line-height);
+    --_font-weight: var(--md-sys-typescale-title-large-weight);
+    --_tracking: var(--md-sys-typescale-title-large-tracking);
+  }
+  :is(.mk-fab, .mk-extended-fab)[data-size='lg'] {
+    --_height: 96px;
+    /* 28 a los lados en el extendido (kit); arriba y abajo el alto fijo deja 30. */
+    --_padding: 28px;
+    --_gap: 16px;
+    --_icon-size: 36px;
+    --_radius: var(--md-sys-shape-corner-extra-large);
+    --_font: var(--md-sys-typescale-headline-small-font);
+    --_font-size: var(--md-sys-typescale-headline-small-size);
+    --_line-height: var(--md-sys-typescale-headline-small-line-height);
+    --_font-weight: var(--md-sys-typescale-headline-small-weight);
+    --_tracking: var(--md-sys-typescale-headline-small-tracking);
+  }
+
+  /* --- Colores: siempre on-X sobre X (ADR-0008) --- */
+  :is(.mk-fab, .mk-extended-fab)[data-variant='secondary-container'] {
+    --_container: var(--md-sys-color-secondary-container);
+    --_content: var(--md-sys-color-on-secondary-container);
+  }
+  :is(.mk-fab, .mk-extended-fab)[data-variant='tertiary-container'] {
+    --_container: var(--md-sys-color-tertiary-container);
+    --_content: var(--md-sys-color-on-tertiary-container);
+  }
+  :is(.mk-fab, .mk-extended-fab)[data-variant='primary'] {
+    --_container: var(--md-sys-color-primary);
+    --_content: var(--md-sys-color-on-primary);
+  }
+  :is(.mk-fab, .mk-extended-fab)[data-variant='secondary'] {
+    --_container: var(--md-sys-color-secondary);
+    --_content: var(--md-sys-color-on-secondary);
+  }
+  :is(.mk-fab, .mk-extended-fab)[data-variant='tertiary'] {
+    --_container: var(--md-sys-color-tertiary);
+    --_content: var(--md-sys-color-on-tertiary);
+  }
+
+  /* Más baja (Compose loweredElevation): 1 en reposo, con foco y presionado; 2 con el puntero. */
+  :is(.mk-fab, .mk-extended-fab)[data-lowered] {
+    --_elevation-rest: var(--md-sys-elevation-level1);
+    --_elevation-hover: var(--md-sys-elevation-level2);
+  }
+
+  /* --- Extendido: icono, separación y texto; contraído, solo el icono ---
+     El ancho no puede animarse hacia "auto" en los tres navegadores (interpolate-size solo
+     existe en Chrome). En cambio, una pista de grilla sí interpola entre 0fr y 1fr (Chrome 107,
+     Firefox 66, Safari 16): en un contenedor de ancho automático, una pista de N fr mide N veces
+     el ancho del contenido, así que el ancho del texto pasa de 0 a su ancho real siguiendo la
+     curva del resorte. El icono queda fuera de la pista (posición absoluta en el relleno
+     inicial de la grilla), así que el texto puede recortarse sin recortarlo a él. */
+  .mk-extended-fab {
+    padding-inline: var(--_padding);
+    /* Expandir: resorte rápido espacial y opacidad con el efecto por defecto (Compose). */
+    --_spatial-duration: var(--md-sys-motion-spring-fast-spatial-duration);
+    --_spatial-easing: var(--md-sys-motion-spring-fast-spatial-easing);
+    --_effects-duration: var(--md-sys-motion-spring-default-effects-duration);
+    --_effects-easing: var(--md-sys-motion-spring-default-effects-easing);
+    transition:
+      box-shadow var(--md-sys-motion-spring-default-effects-duration)
+        var(--md-sys-motion-spring-default-effects-easing),
+      padding-inline var(--_spatial-duration) var(--_spatial-easing);
+  }
+  .mk-extended-fab-content {
+    position: relative;
+    display: inline-grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: center;
+    /* Lugar del icono y la separación. */
+    padding-inline-start: calc(var(--_icon-size) + var(--_gap));
+    transition:
+      grid-template-columns var(--_spatial-duration) var(--_spatial-easing),
+      padding-inline-start var(--_spatial-duration) var(--_spatial-easing);
+  }
+  /* Solo texto, sin icono: sin lugar reservado. */
+  .mk-extended-fab-content:not(:has(> .mk-extended-fab-label > :is(svg, .mk-icon):first-child)) {
+    padding-inline-start: 0;
+  }
+  /* El texto se desvanece con el color y no con opacity: opacity también ocultaría el icono,
+     que es hijo de la etiqueta. El icono fija su color para no seguir al texto. */
+  .mk-extended-fab-label {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--_content);
+    transition: color var(--_effects-duration) var(--_effects-easing);
+  }
+  /* El icono, fuera del recorte: su bloque contenedor es la grilla, no la etiqueta. */
+  .mk-extended-fab-label > :is(svg, .mk-icon):first-child {
+    position: absolute;
+    inset-inline-start: 0;
+    top: 50%;
+    translate: 0 -50%;
+    color: var(--_content);
+  }
+
+  .mk-extended-fab[data-expanded='false'] {
+    /* El relleno centra el icono: (alto − icono) / 2, que es 16, 26 y 30. */
+    padding-inline: calc((var(--_height) - var(--_icon-size)) / 2);
+    /* Contraer: resorte espacial por defecto y opacidad con el efecto rápido (Compose). */
+    --_spatial-duration: var(--md-sys-motion-spring-default-spatial-duration);
+    --_spatial-easing: var(--md-sys-motion-spring-default-spatial-easing);
+    --_effects-duration: var(--md-sys-motion-spring-fast-effects-duration);
+    --_effects-easing: var(--md-sys-motion-spring-fast-effects-easing);
+  }
+  .mk-extended-fab[data-expanded='false'] > .mk-extended-fab-content {
+    grid-template-columns: minmax(0, 0fr);
+    padding-inline-start: var(--_icon-size);
+  }
+  .mk-extended-fab[data-expanded='false'] .mk-extended-fab-label {
+    color: transparent;
+  }
+
+  /* --- Estados --- */
+  @media (hover: hover) {
+    :is(.mk-fab, .mk-extended-fab):hover {
+      --_elevation: var(--_elevation-hover);
+    }
+  }
+  /* Con foco, la elevación es la de reposo (ya es el valor por defecto). Presionado también,
+     aunque el puntero siga encima (Compose da prioridad a la presión). */
+  :is(.mk-fab, .mk-extended-fab):active {
+    --_elevation: var(--_elevation-rest);
+  }
+  /* Con la onda presente, la capa de presionado queda en la opacidad de hover (8 %) y la onda
+     suma la suya, como en el kit (igual que el Button). */
+  :is(.mk-fab, .mk-extended-fab):active > .mk-state-layer {
+    opacity: var(--md-sys-state-hover-state-layer-opacity);
+  }
+
+  /* --- Alto contraste (forced-colors) ---
+     El navegador quita el fondo y la sombra: la forma se dibuja con un contorno ButtonText
+     interior, que sigue el radio y no cambia el tamaño. El texto y el icono van en ButtonText
+     también cuando el FAB es un enlace (si no, el navegador lo pintaría LinkText y el contenido
+     no coincidiría con el contorno). */
+  @media (forced-colors: active) {
+    :is(.mk-fab, .mk-extended-fab) {
+      outline: 1px solid ButtonText;
+      outline-offset: -1px;
+      color: ButtonText;
+    }
+    /* El texto y el icono del extendido fijan su propio color: también ButtonText. */
+    .mk-extended-fab-label,
+    .mk-extended-fab-label > :is(svg, .mk-icon):first-child {
+      color: ButtonText;
+    }
+    /* Contraído, el texto sigue transparente: sin esto, el navegador lo forzaría a un color del
+       sistema y asomaría mientras se contrae. El icono, que hereda el ajuste, queda en
+       ButtonText por la regla anterior. */
+    .mk-extended-fab[data-expanded='false'] .mk-extended-fab-label {
+      forced-color-adjust: none;
+      color: transparent;
+    }
+  }
+}

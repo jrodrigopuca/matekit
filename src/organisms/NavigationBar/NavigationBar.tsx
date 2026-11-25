@@ -21,24 +21,19 @@
 // Enlaces y enrutadores (ADR-0010): con `href`, un `<a>`; sin `href`, un `<button>`; con
 // `render={<Link href="/" />}`, el elemento que se pase, clonado con las clases, `aria-current`
 // y las partes como hijos. Así sirve el `Link` de Next.js o el de React Router sin depender de
-// ninguno. cloneElement e isValidElement también existen en la versión de React para Server
-// Components (react.react-server.js), así que esto corre en el servidor.
+// ninguno. La lógica vive en src/internal/interactive.tsx, compartida con los FAB.
 
-import {
-  cloneElement,
-  isValidElement,
-  type AnchorHTMLAttributes,
-  type ButtonHTMLAttributes,
-  type HTMLAttributes,
-  type ReactElement,
-  type ReactNode,
-  type Ref,
-} from 'react'
+import type { HTMLAttributes, ReactNode, Ref } from 'react'
 import { FocusRing } from '../../atoms/FocusRing/FocusRing.tsx'
 import { Ripple } from '../../atoms/Ripple/Ripple.tsx'
 import { StateLayer } from '../../atoms/StateLayer/StateLayer.tsx'
-
-const cx = (base: string, extra: string | undefined) => (extra ? `${base} ${extra}` : base)
+import {
+  cx,
+  interactiveElement,
+  type ButtonElementProps,
+  type LinkElementProps,
+  type RenderElementProps,
+} from '../../internal/interactive.tsx'
 
 export type NavigationBarLayout = 'vertical' | 'horizontal'
 
@@ -89,48 +84,17 @@ interface NavigationBarItemOwnProps {
   children?: ReactNode
 }
 
-/** Props que el elemento recibe al clonarse (las de un `<a>`, más lo que pida el enrutador). */
-type RenderedProps = {
-  className?: string | ((...args: never[]) => string | undefined) | undefined
-  children?: ReactNode
-  ref?: Ref<HTMLElement> | undefined
-}
+/** Con `href`, el elemento es un `<a>`. */
+export type NavigationBarItemLinkProps = NavigationBarItemOwnProps & LinkElementProps
 
-export interface NavigationBarItemLinkProps
-  extends NavigationBarItemOwnProps,
-    Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 'children'> {
-  /** Con `href`, el elemento es un `<a>`. */
-  href: string
-  render?: undefined
-  /** Referencia al `<a>`. */
-  ref?: Ref<HTMLAnchorElement> | undefined
-}
+/** Sin `href`, el elemento es un `<button type="button">`. */
+export type NavigationBarItemButtonProps = NavigationBarItemOwnProps & ButtonElementProps
 
-export interface NavigationBarItemButtonProps
-  extends NavigationBarItemOwnProps,
-    Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'> {
-  /** Sin `href`, el elemento es un `<button type="button">`. */
-  href?: undefined
-  render?: undefined
-  /** Referencia al `<button>`. */
-  ref?: Ref<HTMLButtonElement> | undefined
-}
-
-export interface NavigationBarItemRenderProps
-  extends NavigationBarItemOwnProps,
-    Omit<HTMLAttributes<HTMLElement>, 'children'> {
-  /**
-   * El elemento que se dibuja en lugar del `<a>`: por ejemplo `<Link href="/" />` de Next.js o
-   * de React Router. Se clona agregándole las clases (las suyas se conservan), `aria-current`,
-   * las demás props del elemento y las partes como hijos; sus propias props ganan. Tiene que
-   * pasar `className`, `aria-current`, `ref` y los hijos al `<a>` que dibuja, como hacen esos
-   * dos. Sus hijos se reemplazan por los del `NavigationBarItem`.
-   */
-  render: ReactElement<RenderedProps>
-  href?: undefined
-  /** Referencia al elemento que dibuje `render`, si ese elemento no trae la suya. */
-  ref?: Ref<HTMLElement> | undefined
-}
+/**
+ * Con `render`, el elemento que se pase (el `Link` del enrutador), clonado con las clases,
+ * `aria-current` y las partes como hijos.
+ */
+export type NavigationBarItemRenderProps = NavigationBarItemOwnProps & RenderElementProps
 
 export type NavigationBarItemProps =
   | NavigationBarItemLinkProps
@@ -156,47 +120,19 @@ export type NavigationBarItemProps =
  * ```
  */
 export function NavigationBarItem(props: NavigationBarItemProps) {
-  const { active, render, className, children, ...rest } = props
-  const base = cx('mk-navigation-bar-item', className)
+  const { active, className, children, ...rest } = props
   const current = active ? { 'aria-current': 'page' as const } : {}
-  const content = (
+  return interactiveElement(
+    'NavigationBarItem',
+    cx('mk-navigation-bar-item', className),
+    { ...current, ...rest },
     <>
       <span className="mk-navigation-bar-item-indicator" aria-hidden="true" />
       <StateLayer />
       <Ripple />
       <FocusRing />
       {children}
-    </>
-  )
-
-  if (render !== undefined) {
-    if (!isValidElement(render)) {
-      throw new Error('NavigationBarItem espera en `render` un elemento, por ejemplo render={<Link href="/" />}.')
-    }
-    const own = render.props
-    // El NavLink de React Router acepta className como función de su estado: se respeta.
-    const ownClass = own.className
-    const className =
-      typeof ownClass === 'function'
-        ? (...args: never[]) => cx(base, ownClass(...args))
-        : cx(base, ownClass)
-    return cloneElement(render, { ...current, ...rest, ...own, className, children: content } as RenderedProps)
-  }
-
-  if (rest.href !== undefined) {
-    const anchor = rest as Omit<NavigationBarItemLinkProps, keyof NavigationBarItemOwnProps>
-    return (
-      <a {...current} {...anchor} className={base}>
-        {content}
-      </a>
-    )
-  }
-
-  const button = rest as Omit<NavigationBarItemButtonProps, keyof NavigationBarItemOwnProps>
-  return (
-    <button type="button" {...current} {...button} className={base}>
-      {content}
-    </button>
+    </>,
   )
 }
 

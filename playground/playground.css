@@ -326,3 +326,33 @@ body {
   color: var(--md-sys-color-on-surface-variant);
   font-size: var(--md-sys-typescale-title-medium-size);
 }
+
+/* Marco de teléfono para el FAB: la página lo ubica en la esquina, sobre una lista. */
+.pg-fab-phone {
+  width: 360px;
+}
+
+.pg-fab-screen {
+  position: relative;
+  height: 360px;
+}
+
+.pg-fab-list {
+  overflow-y: auto;
+  height: 100%;
+  margin: 0;
+  padding: 8px 0 96px;
+  list-style: none;
+}
+
+.pg-fab-list li {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  color: var(--md-sys-color-on-surface);
+}
+
+.pg-fab-corner {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+}

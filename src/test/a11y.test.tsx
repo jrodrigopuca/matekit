@@ -31,6 +31,8 @@ import {
   MenuTrigger,
   MoreVertIcon,
   EditIcon,
+  ExtendedFab,
+  Fab,
   CheckIcon,
   SearchIcon,
   StarIcon,
@@ -85,6 +87,25 @@ const GALLERIES: Record<string, ReactNode> = {
         </span>
       ))}
       <IconButton label="Deshabilitado" disabled><StarIcon /></IconButton>
+    </>
+  ),
+  Fab: (
+    <>
+      {(['primary-container', 'secondary-container', 'tertiary-container', 'primary', 'secondary', 'tertiary'] as const).map((v) => (
+        <span key={v}>
+          <Fab variant={v} label={`Redactar ${v}`}><EditIcon /></Fab>
+          <ExtendedFab variant={v}><EditIcon />Redactar {v}</ExtendedFab>
+        </span>
+      ))}
+      {(['sm', 'md', 'lg'] as const).map((s) => (
+        <span key={s}>
+          <Fab size={s} label={`Nuevo ${s}`} lowered><AddIcon /></Fab>
+          <ExtendedFab size={s}><AddIcon />Nuevo {s}</ExtendedFab>
+          <ExtendedFab size={s} expanded={false}><AddIcon />Nuevo contraído {s}</ExtendedFab>
+        </span>
+      ))}
+      <Fab label="Nuevo enlace" href="#nuevo"><AddIcon /></Fab>
+      <ExtendedFab href="#redactar"><EditIcon />Redactar enlace</ExtendedFab>
     </>
   ),
   Checkbox: (

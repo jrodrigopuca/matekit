@@ -406,6 +406,90 @@ etiqueta Label Medium, colores sin activar en `on-surface-variant` e icono activ
 `labs/navigationbar` usa `role="tablist"` y `role="tab"` con flechas; matekit no la sigue
 (ver la fila de semántica).
 
+## FAB y FAB extendido
+
+Revisión del 2026-11-25. Archivos (en `compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/`):
+`tokens/FabBaselineTokens.kt`, `FabSmallTokens.kt`, `FabMediumTokens.kt`, `FabLargeTokens.kt`,
+`FabPrimaryContainerTokens.kt`, `FabSecondaryContainerTokens.kt`, `ExtendedFabSmallTokens.kt`,
+`ExtendedFabMediumTokens.kt`, `ExtendedFabLargeTokens.kt` y `ExtendedFabPrimaryTokens.kt` (commit
+`160825094a`, 2026-08-05; tokens `v0_14_0`, salvo `ExtendedFabPrimaryTokens`, `v0_103`), y
+`FloatingActionButton.kt` (`be3f6f8075`, 2026-09-14). No hay más archivos de color del FAB:
+Compose no tiene tokens `FabTertiaryContainer` ni de los tonos `primary`/`secondary`/`tertiary`
+(se arman pasando `containerColor`). Medidas y colores mandan los del kit
+(`05-medidas.md` § FAB y FAB extendido, ADR-0004); Compose se usó para comparar y para lo que el
+kit no trae.
+
+### Lo que confirma
+
+| Dato del kit | Compose |
+|---|---|
+| FAB 56 radio 16, icono 24 | `FabBaselineTokens`: 56, `CornerLarge`, 24 |
+| FAB medium 80, radio 20, icono 28 | `FabMediumTokens`: 80, 28; radio `ShapeDefaults.LargeIncreased` (20) en `FloatingActionButtonDefaults.mediumShape` (el token de forma está comentado con un TODO) |
+| FAB large 96, radio 28 | `FabLargeTokens`: 96, `CornerExtraLarge` |
+| Extendido small: alto 56, radio 16, relleno 16, separación 8, icono 24, Title Medium | `ExtendedFabSmallTokens` y `SmallExtendedFabTextStyle` |
+| Extendido medium: alto 80, radio 20, relleno 26, icono 28, Title Large | `ExtendedFabMediumTokens` y `MediumExtendedFabTextStyle` |
+| Extendido large: alto 96, radio 28, relleno lateral 28, icono 36, Headline Small | `ExtendedFabLargeTokens` (28 y 28) y `LargeExtendedFabTextStyle` |
+| Contenedor `primary-container` con contenido `on-primary-container` (y `secondary-container`) | `FabPrimaryContainerTokens`, `FabSecondaryContainerTokens`, `ExtendedFabPrimaryTokens` |
+| Elevación 3 en reposo, 4 con el puntero, 3 con foco y presionado | `FabPrimaryContainerTokens` y `FloatingActionButtonDefaults.elevation()` |
+| Contraído, el extendido mide lo mismo que el FAB de su alto | `ExtendedFloatingActionButton` (privado): ancho mínimo = `ContainerHeight` de su tamaño |
+
+### Vigentes y obsoletos (tercera fuente: MDC-Android)
+
+El código de Compose no marca nada como obsoleto (`SmallFloatingActionButton` no tiene
+`@Deprecated`), pero solo las funciones nuevas de Expressive llevan la etiqueta
+`@material3expressive` (commit del 2026-09-14). La guía de Google para Android,
+`material-components-android/docs/components/FloatingActionButton.md` y
+`ExtendedFloatingActionButton.md` (`fca1418bf4`, 2025-08-25), § "M3 Expressive update", dice:
+
+- **Obsoletos:** el FAB pequeño de 40 (`FabSmallTokens`, radio 12), los FAB de color
+  `surface` y el extendido original de 56 sin tamaño (`ExtendedFabPrimaryTokens`, con 16 y 20
+  de relleno y Label Large), que se reemplaza por el extendido small.
+- **Nuevos:** el FAB medium (80) y los extendidos small, medium y large; los colores de tono
+  `primary`, `secondary` y `tertiary` (los que antes se llamaban así pasan a ser los
+  `*-container`, con los mismos valores).
+- El kit coincide: no trae el FAB de 40 ni colores `surface` (`05-medidas.md`).
+
+matekit implementa solo los vigentes: FAB 56/80/96 y extendido 56/80/96, en los seis colores.
+
+### Datos nuevos (el kit no los trae)
+
+| Dato | Fuente | Uso en matekit |
+|---|---|---|
+| Elevación **lowered**: 1 en reposo, con foco y presionado; 2 con el puntero | `FloatingActionButtonDefaults.loweredElevation()` (también `ExtendedFabPrimaryTokens.Lowered*`) | prop `lowered` |
+| Expandir: ancho con **FastSpatial** y aparición del texto con **DefaultEffects** | `extendedFabExpandAnimation()` (`expandHorizontally` + `fadeIn`) | `transition` del estado expandido |
+| Contraer: ancho con **DefaultSpatial** y desaparición del texto con **FastEffects** | `extendedFabCollapseAnimation()` (`shrinkHorizontally` + `fadeOut`) | `transition` del estado contraído |
+| Contraído, el texto se quita de la semántica (`clearAndSetSemantics`) y el nombre sale del `contentDescription` del icono | `ExtendedFloatingActionButton` | **Distinto en web:** el texto queda en el DOM (recortado y transparente) y sigue siendo el nombre accesible; el icono es decorativo. Así no hace falta repetir el nombre en el icono. |
+| Sin estado deshabilitado: `FloatingActionButton` no tiene parámetro `enabled` | `FloatingActionButton.kt` | matekit no acepta `disabled` (la guía es ocultar el FAB, no atenuarlo) |
+| El texto del extendido no usa los colores por estado: icono y texto son `on-X` en todos los estados | `ExtendedFabPrimaryTokens` (`Hover`/`Focus`/`Pressed*Color` = `OnPrimaryContainer`) | igual |
+
+### Conflictos y decisiones
+
+| Tema | Kit | Compose | Decisión |
+|---|---|---|---|
+| Icono del FAB large | 36 | `FabLargeTokens.IconSize` = 32, pero `FloatingActionButtonDefaults.LargeIconSize = 36.dp` con el comentario `// TODO: FabLargeTokens.IconSize is incorrect` | **36**, el kit; Compose reconoce el error de su token. |
+| Icono del extendido large | 36 | `ExtendedFabLargeTokens.IconSize` = 32 | **36**, el kit (mismo error de token que el FAB large). |
+| Separación icono–texto del extendido medium | 12 | `ExtendedFabMediumTokens.IconLabelSpace` = 16, pero `MediumExtendedFabIconPadding = 12.dp` con `// TODO: … IconLabelSpace is incorrect` | **12**, el kit; el código de Compose también usa 12. |
+| Separación icono–texto del extendido large | 16 | `ExtendedFabLargeTokens.IconLabelSpace` = 20, pero `LargeExtendedFabIconPadding = 16.dp` con el mismo TODO | **16**, el kit y el código de Compose. |
+| Colores de tono y `tertiary-container` | los seis | solo `primary-container` y `secondary-container` en tokens | Los seis del kit, siempre `on-X` sobre `X` (ADR-0008). MDC-Android los confirma. |
+
+Ninguno es un conflicto real: en los cuatro casos el código de Compose (o su comentario) da la
+razón al kit frente a su propio token.
+
+### Pendiente de confirmar contra el kit
+
+- Elevación **lowered** (1/2/1/1): el kit no tiene esa variante; viene solo de Compose.
+- El **movimiento** de expandir y contraer (qué resorte para el ancho y cuál para el texto):
+  el kit no tiene movimiento.
+- Si en el kit el FAB y el extendido tienen variante **deshabilitada** en otra página (no está
+  en los conjuntos `FAB` y `Extended FAB`).
+- El relleno del FAB large que anota el kit (30) es `(96 − 36) / 2`: matekit centra el icono y
+  no lo usa como dato aparte.
+
+`@material/web` (`docs/components/fab.md`, consultado el 2026-11-25), para comportamiento:
+el FAB con solo icono necesita `aria-label`; el extendido usa su texto como nombre; existe
+`lowered`. Es anterior a Expressive (tamaños `small`/`medium`/`large` de 40/56/96): no se usó
+para medidas.
+
 ## No revisado
 
 Los tokens de Navigation rail, y la

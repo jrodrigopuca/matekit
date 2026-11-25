@@ -35,6 +35,8 @@ src/atoms/       primitivas: StateLayer, FocusRing, Ripple, Icon
 src/molecules/   controles: Button, Checkbox, …
 src/organisms/   combinan controles: Dialog, Menu, NavigationBar, …
 src/icons/       iconos generados
+src/internal/    ayudas compartidas entre componentes, no exportadas (interactive.tsx: <a>, <button>
+                 o el elemento de render, ADR-0010)
 src/styles.css   hoja única: importa tokens, átomos y componentes
 playground/      páginas de prueba manual, una por componente
 docs/research/   datos extraídos del kit de Figma y de Jetpack Compose

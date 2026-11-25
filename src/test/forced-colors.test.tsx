@@ -14,6 +14,9 @@ import {
   NavigationBarItemLabel,
   Checkbox,
   Dialog,
+  EditIcon,
+  ExtendedFab,
+  Fab,
   DialogContent,
   DialogHeadline,
   IconButton,
@@ -87,6 +90,44 @@ describe('Button e IconButton', () => {
     const c = await render(<Button disabled>No</Button>)
     expect(style(q(c, 'button')).color).toBe(systemColor('GrayText'))
     expect(style(q(c, 'button')).outlineColor).toBe(systemColor('GrayText'))
+  })
+})
+
+describe('Fab y ExtendedFab', () => {
+  test('el contorno ButtonText de 1 px dibuja la forma, sin fondo ni sombra', async () => {
+    const c = await render(
+      <div>
+        <Fab label="Redactar" className="fab"><EditIcon /></Fab>
+        <ExtendedFab className="ext"><EditIcon />Redactar</ExtendedFab>
+        <ExtendedFab className="collapsed" expanded={false}><EditIcon />Redactar</ExtendedFab>
+        <Fab label="Nuevo" href="#nuevo" className="link"><EditIcon /></Fab>
+      </div>,
+    )
+    for (const sel of ['.fab', '.ext', '.collapsed', '.link']) {
+      const s = style(q(c, sel))
+      expect(s.outlineStyle, sel).toBe('solid')
+      expect(s.outlineWidth, sel).toBe('1px')
+      expect(s.outlineOffset, sel).toBe('-1px')
+      expect(s.outlineColor, sel).toBe(systemColor('ButtonText'))
+      if (autoForced) {
+        // El navegador quita la sombra y fuerza el color del contenido.
+        expect(s.boxShadow, sel).toBe('none')
+        expect(s.color, sel).toBe(systemColor('ButtonText'))
+      }
+    }
+  })
+
+  test('extendido: texto e icono en ButtonText; contraído, el texto transparente y el icono visible', async () => {
+    const c = await render(
+      <div>
+        <ExtendedFab className="ext"><EditIcon />Redactar</ExtendedFab>
+        <ExtendedFab className="collapsed" expanded={false}><EditIcon />Redactar</ExtendedFab>
+      </div>,
+    )
+    expect(style(q(c, '.ext .mk-extended-fab-label')).color).toBe(systemColor('ButtonText'))
+    expect(style(q(c, '.ext .mk-icon')).color).toBe(systemColor('ButtonText'))
+    expect(style(q(c, '.collapsed .mk-extended-fab-label')).color).toBe('rgba(0, 0, 0, 0)')
+    expect(style(q(c, '.collapsed .mk-icon')).color).toBe(systemColor('ButtonText'))
   })
 })
 

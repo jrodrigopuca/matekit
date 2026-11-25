@@ -19,6 +19,7 @@ siguiente. Convenciones en [`CLAUDE.md`](../../CLAUDE.md).
 | Dialog | organismo | cliente (`showModal`); salida animada, foco atrapado, alerta; resuelto por agente y revisado el 2026-11-24 |
 | Menu | organismo | cliente (popover, foco, teclado APG); Standard y Vibrant; anchor positioning con respaldo en JS (ADR-0007); resuelto por agente y revisado el 2026-11-24 |
 | NavigationBar y Badge | organismo y molécula | universales; vertical y horizontal; enlaces, botones o `render={<Link />}` para el enrutador (ADR-0010); insignia pequeña y grande; resuelto por agente y revisado el 2026-11-25 |
+| FAB y FAB extendido | molécula | universales; FAB 56/80/96 y extendido 56/80/96 (sin el FAB de 40, obsoleto), seis colores, `lowered`; el extendido se contrae con `expanded` (grilla de 0fr a 1fr); enlaces o `render` (ADR-0010, lógica compartida con NavigationBar en `src/internal/interactive.tsx`); medidas y colores del kit; resuelto por agente y revisado el 2026-11-25 |
 | 32 iconos | icons | ADR-0006 |
 
 ## Orden y motivo
@@ -209,7 +210,7 @@ Fuente: `05-medidas.md` § Navigation rail; Compose `NavigationRailCollapsedToke
 
 ## Fuera de este plan
 
-FAB y FAB extendido (los usa el rail: si hacen falta, se agregan antes del paso 7), Chips,
+Chips,
 Lists, Tabs, Snackbar, Tooltip, Sheets, compilación y publicación del paquete, color
 dinámico (ADR-0004). Al publicar: crear `@matekit/theme` con el generador de `scripts/lib/` y
 su comando (ADR-0009).

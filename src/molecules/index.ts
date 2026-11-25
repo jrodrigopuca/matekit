@@ -5,6 +5,14 @@ export {
   type ButtonSize,
   type ButtonVariant,
 } from './Button/Button.tsx'
+export {
+  ExtendedFab,
+  Fab,
+  type ExtendedFabProps,
+  type FabProps,
+  type FabSize,
+  type FabVariant,
+} from './Fab/Fab.tsx'
 export { Checkbox, type CheckboxProps } from './Checkbox/Checkbox.tsx'
 export {
   IconButton,

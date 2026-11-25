@@ -265,6 +265,34 @@ Los colores se completaron con Jetpack Compose y la tipografía queda sin confir
   etiqueta Label Large. Seleccionado: `Secondary Container` y texto e icono
   `On Secondary Container`.
 
+## FAB y FAB extendido
+
+Leído del kit el 2026-11-25 (página Buttons, conjuntos `FAB` y `Extended FAB`; variante
+Primary container, Enabled, salvo que se indique). Variantes del kit: Size, Color (Primary
+container, Secondary container, Tertiary container, Primary, Secondary, Tertiary) y State
+(Enabled, Hovered, Focused, Pressed). No hay variante deshabilitada ni "lowered".
+
+| Componente | Tamaño | Medida | Radio | Relleno | Separación | Icono | Texto |
+|---|---|---|---|---|---|---|---|
+| FAB | Default | 56 × 56 | 16 | 16 | — | 24 | — |
+| FAB | Medium | 80 × 80 | 20 | 26 | — | 28 | — |
+| FAB | Large | 96 × 96 | 28 | 30 | — | 36 | — |
+| Extended FAB | Small | alto 56 (ancho 104 con "Label") | 16 | 16 | 8 | 24 | Title Medium (16/24, 500) |
+| Extended FAB | Medium | alto 80 (ancho 146) | 20 | 26 | 12 | 28 | Title Large (22/28, 400) |
+| Extended FAB | Large | alto 96 (ancho 167) | 28 | 30 arriba y abajo, 28 a los lados | 16 | 36 | Headline Small (24/32, 400) |
+
+Colores (iguales en FAB y extendido): contenedor `X` y contenido (icono y texto) `On X`, para
+X = Primary Container, Secondary Container, Tertiary Container, Primary, Secondary y Tertiary.
+
+Estados (Primary container):
+
+| Estado | Elevación | Capa de estado |
+|---|---|---|
+| Enabled | 3 | — |
+| Hovered | 4 | On Primary Container 8 % |
+| Focused | 3 | On Primary Container 10 %, con indicador de foco |
+| Pressed | 3 | On Primary Container 8 % (más la onda) |
+
 ## Diferencias con la especificación a revisar
 
 - El indicador con foco del campo de texto mide 3 en el kit. Confirmar en m3.material.io.

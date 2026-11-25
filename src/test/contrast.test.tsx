@@ -25,6 +25,8 @@ import {
   MenuItemTrailing,
   MenuTrigger,
   EditIcon,
+  ExtendedFab,
+  Fab,
   CheckIcon,
   StarIcon,
   Switch,
@@ -104,6 +106,27 @@ for (const scheme of SCHEMES) {
       for (const b of c.querySelectorAll('button')) {
         const icon = q(b, 'svg')
         expect(contrastRatio(cs(icon).fill, effectiveBackground(b)), b.getAttribute('aria-label') ?? '').toBeGreaterThanOrEqual(NON_TEXT)
+      }
+    })
+
+    test('Fab y ExtendedFab: icono (3:1) y texto (4,5:1) de cada color sobre su contenedor', async () => {
+      const variants = ['primary-container', 'secondary-container', 'tertiary-container', 'primary', 'secondary', 'tertiary'] as const
+      const c = await render(
+        <Themed scheme={scheme}>
+          {variants.map((v) => (
+            <span key={v}>
+              <Fab variant={v} label={v}><EditIcon /></Fab>
+              <ExtendedFab variant={v}><EditIcon />{v}</ExtendedFab>
+            </span>
+          ))}
+        </Themed>,
+      )
+      for (const b of c.querySelectorAll<HTMLElement>('.mk-fab, .mk-extended-fab')) {
+        const name = `${b.className} ${b.dataset['variant']}`
+        expect(contrastRatio(cs(q(b, 'svg')).fill, effectiveBackground(b)), `icono ${name}`).toBeGreaterThanOrEqual(NON_TEXT)
+      }
+      for (const label of c.querySelectorAll('.mk-extended-fab-label')) {
+        expect(textContrast(label), `texto ${label.textContent}`).toBeGreaterThanOrEqual(TEXT)
       }
     })
 

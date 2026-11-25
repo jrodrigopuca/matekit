@@ -4,6 +4,7 @@ import { ButtonPage } from './pages/ButtonPage.tsx'
 import { CheckboxPage } from './pages/CheckboxPage.tsx'
 import { DialogPage } from './pages/DialogPage.tsx'
 import { ExamplesPage } from './pages/ExamplesPage.tsx'
+import { FabPage } from './pages/FabPage.tsx'
 import { IconButtonPage } from './pages/IconButtonPage.tsx'
 import { IconsPage } from './pages/IconsPage.tsx'
 import { MenuPage } from './pages/MenuPage.tsx'
@@ -25,6 +26,7 @@ const PALETTES: Record<string, string> = {
 const PAGES = {
   button: { label: 'Button', Page: ButtonPage },
   'icon-button': { label: 'IconButton', Page: IconButtonPage },
+  fab: { label: 'FAB', Page: FabPage },
   checkbox: { label: 'Checkbox', Page: CheckboxPage },
   switch: { label: 'Switch', Page: SwitchPage },
   'text-field': { label: 'TextField', Page: TextFieldPage },

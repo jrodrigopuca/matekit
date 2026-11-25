@@ -13,6 +13,7 @@
 @import './molecules/Button/button.css';
 /* Después de button.css: usa su base común y la sobrescribe por orden. */
 @import './molecules/IconButton/icon-button.css';
+@import './molecules/Fab/fab.css';
 @import './molecules/Checkbox/checkbox.css';
 @import './molecules/Switch/switch.css';
 /* Después de icon-button.css: ajusta el color de un IconButton dentro del icono final. */
