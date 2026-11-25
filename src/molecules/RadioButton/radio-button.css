@@ -1,0 +1,210 @@
+/* Radio button de Material 3.
+   Medidas y colores del kit (docs/research/05-medidas.md § Radio button): área de 48, capa de
+   estado circular de 40, dibujo de 20 × 20 centrado; icono primary seleccionado y
+   on-surface-variant sin seleccionar (on-surface con hover, foco y presionado); al presionar,
+   la capa toma el color del estado de destino: on-surface sobre el seleccionado y primary sobre
+   el sin seleccionar (confirmado con los tokens de @material/web, ver
+   docs/research/07-jetpack-compose.md § RadioButton); deshabilitado, on-surface al 38 %.
+
+   Lo que el kit no trae sale de Jetpack Compose (androidx/androidx,
+   compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/):
+   - RadioButton.kt (commit de12189a63 del 2026-11-11): anillo de trazo 2 (RadioStrokeWidth)
+     dibujado en el círculo de 20 (RadioButtonTokens.IconSize); punto de 10 de diámetro
+     (radio RadioButtonDotSize / 2 = 6 menos medio trazo); el punto crece desde 0 con el
+     resorte FastSpatial y el color cambia con DefaultEffects; deshabilitado, el color no
+     anima ("snap").
+   - tokens/RadioButtonTokens.kt (versión 41.1.19, commit 76990c62ac del 2026-11-24): colores
+     del icono, 38 % deshabilitado, capa de estado de 40.
+
+   Dibujo en CSS (anillo con borde y punto con fondo) y no con los iconos radio_button_*: así
+   el punto puede crecer solo, como en Compose, en vez de fundir un icono entero en el otro.
+   Con prefers-reduced-motion el resorte espacial dura 0 (tokens/motion.css): el punto aparece
+   sin crecer y el color sigue fundiéndose. */
+
+@layer matekit.components {
+  .mk-radio-group {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    min-inline-size: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  /* Sin dato del kit para el título del grupo: el texto de los radios en on-surface-variant. */
+  .mk-radio-group-label {
+    padding: 0;
+    padding-inline: 4px;
+    color: var(--md-sys-color-on-surface-variant);
+    font-family: var(--md-sys-typescale-body-medium-font);
+    font-size: var(--md-sys-typescale-body-medium-size);
+    line-height: var(--md-sys-typescale-body-medium-line-height);
+    font-weight: var(--md-sys-typescale-body-medium-weight);
+    letter-spacing: var(--md-sys-typescale-body-medium-tracking);
+  }
+
+  .mk-radio-button {
+    display: inline-flex;
+    align-items: center;
+    vertical-align: middle;
+    color: var(--md-sys-color-on-surface);
+    font-family: var(--md-sys-typescale-body-medium-font);
+    font-size: var(--md-sys-typescale-body-medium-size);
+    line-height: var(--md-sys-typescale-body-medium-line-height);
+    font-weight: var(--md-sys-typescale-body-medium-weight);
+    letter-spacing: var(--md-sys-typescale-body-medium-tracking);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Círculo de 40 px con 4 px alrededor: 48 px de área táctil, como el kit. */
+  .mk-radio-button-control {
+    /* Sin seleccionar. */
+    --_color: var(--md-sys-color-on-surface-variant);
+    --_dot-scale: 0;
+    --mk-state-layer-color: var(--md-sys-color-on-surface);
+    /* La onda anticipa el resultado: presionar un radio sin seleccionar lo selecciona. */
+    --mk-ripple-color: var(--md-sys-color-primary);
+
+    display: inline-grid;
+    flex-shrink: 0;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    margin: 4px;
+    border-radius: 50%;
+  }
+
+  /* El input nativo, invisible, cubre los 48 px y recibe clics, teclado y foco. Ancho y alto
+     explícitos: es un elemento reemplazado y, con solo inset, conserva su tamaño propio en
+     Safari (como en el Checkbox). */
+  .mk-radio-button-input {
+    position: absolute;
+    inset: -4px;
+    width: calc(100% + 8px);
+    height: calc(100% + 8px);
+    z-index: 1;
+    margin: 0;
+    opacity: 0;
+    cursor: inherit;
+  }
+
+  /* Anillo: círculo de 20 con trazo de 2 hacia adentro. */
+  .mk-radio-button-ring {
+    display: grid;
+    place-items: center;
+    box-sizing: border-box;
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--_color);
+    border-radius: 50%;
+    transition: border-color var(--md-sys-motion-spring-default-effects-duration)
+      var(--md-sys-motion-spring-default-effects-easing);
+  }
+
+  /* Punto: 10 de diámetro; crece desde el centro con el resorte rápido espacial (con su
+     rebote) y se funde de color con el de efectos. */
+  .mk-radio-button-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: var(--_color);
+    scale: var(--_dot-scale);
+    transition:
+      scale var(--md-sys-motion-spring-fast-spatial-duration)
+        var(--md-sys-motion-spring-fast-spatial-easing),
+      background-color var(--md-sys-motion-spring-default-effects-duration)
+        var(--md-sys-motion-spring-default-effects-easing);
+  }
+
+  /* --- Seleccionado --- */
+  .mk-radio-button-control:has(> .mk-radio-button-input:checked) {
+    --_color: var(--md-sys-color-primary);
+    --_dot-scale: 1;
+    --mk-state-layer-color: var(--md-sys-color-primary);
+    /* Presionar el radio ya seleccionado no cambia nada: onda on-surface, como la capa. */
+    --mk-ripple-color: var(--md-sys-color-on-surface);
+  }
+
+  /* --- Hover, foco y presionado: sin seleccionar, el anillo pasa a on-surface --- */
+  @media (hover: hover) {
+    .mk-radio-button:hover .mk-radio-button-control {
+      --mk-state-layer-opacity: var(--md-sys-state-hover-state-layer-opacity);
+    }
+    .mk-radio-button:hover .mk-radio-button-control:has(> .mk-radio-button-input:not(:checked)) {
+      --_color: var(--md-sys-color-on-surface);
+    }
+  }
+  .mk-radio-button-control:has(> .mk-radio-button-input:focus-visible) {
+    --mk-state-layer-opacity: var(--md-sys-state-focus-state-layer-opacity);
+    --mk-focus-ring-visible: 1;
+  }
+  .mk-radio-button-control:has(> .mk-radio-button-input:focus-visible:not(:checked)) {
+    --_color: var(--md-sys-color-on-surface);
+  }
+  /* Presionado: la capa toma el color del destino, al revés que en hover y foco. */
+  .mk-radio-button-control:active:has(> .mk-radio-button-input:not(:checked)) {
+    --_color: var(--md-sys-color-on-surface);
+    --mk-state-layer-color: var(--md-sys-color-primary);
+  }
+  .mk-radio-button-control:active:has(> .mk-radio-button-input:checked) {
+    --mk-state-layer-color: var(--md-sys-color-on-surface);
+  }
+
+  /* --- Deshabilitado (en el radio o en el RadioGroup, que es un fieldset): on-surface al
+     38 %, sin animar el color (como Compose). La capa de estado y la onda se apagan solas: el
+     input deshabilitado es hijo directo del control. Va al final para ganar. --- */
+  .mk-radio-button:has(.mk-radio-button-input:disabled) {
+    cursor: default;
+  }
+  .mk-radio-button .mk-radio-button-control:has(> .mk-radio-button-input:disabled) {
+    --_color: var(--md-sys-color-on-surface);
+    opacity: var(--md-sys-state-disabled-content-opacity);
+  }
+  .mk-radio-button-control:has(> .mk-radio-button-input:disabled) :is(.mk-radio-button-ring, .mk-radio-button-dot) {
+    transition-property: scale;
+  }
+  .mk-radio-button:has(.mk-radio-button-input:disabled) .mk-radio-button-label {
+    opacity: var(--md-sys-state-disabled-content-opacity);
+  }
+
+  .mk-radio-button-label {
+    padding-inline-end: 8px;
+  }
+
+  /* --- Alto contraste (forced-colors) ---
+     El borde del anillo sobrevive, pero el punto es un fondo, que el navegador fuerza: sin esto
+     no se ve cuál está seleccionado. Ambos salen del ajuste automático y usan colores del
+     sistema: CanvasText; seleccionado, Highlight; deshabilitado, GrayText sin la opacidad. */
+  @media (forced-colors: active) {
+    .mk-radio-button-ring {
+      forced-color-adjust: none;
+      border-color: CanvasText;
+    }
+    .mk-radio-button-dot {
+      forced-color-adjust: none;
+      background-color: CanvasText;
+    }
+    .mk-radio-button-control:has(> .mk-radio-button-input:checked) .mk-radio-button-ring {
+      border-color: Highlight;
+    }
+    .mk-radio-button-control:has(> .mk-radio-button-input:checked) .mk-radio-button-dot {
+      background-color: Highlight;
+    }
+    .mk-radio-button .mk-radio-button-control:has(> .mk-radio-button-input:disabled) {
+      opacity: 1;
+    }
+    .mk-radio-button-control:has(> .mk-radio-button-input:disabled) .mk-radio-button-ring {
+      border-color: GrayText;
+    }
+    .mk-radio-button-control:has(> .mk-radio-button-input:disabled) .mk-radio-button-dot {
+      background-color: GrayText;
+    }
+    .mk-radio-button:has(.mk-radio-button-input:disabled) .mk-radio-button-label {
+      forced-color-adjust: none;
+      opacity: 1;
+      color: GrayText;
+    }
+  }
+}

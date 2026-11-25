@@ -18,6 +18,10 @@ import {
   NavigationRailItemIcon,
   NavigationRailItemLabel,
   Checkbox,
+  Divider,
+  DividerSubhead,
+  RadioButton,
+  RadioGroup,
   LoadingIndicator,
   Shape,
   Dialog,
@@ -186,6 +190,44 @@ describe('Checkbox', () => {
     expect(style(q(c, '.mk-checkbox-box')).backgroundColor).toBe(systemColor('GrayText'))
     expect(style(q(c, '.mk-checkbox-label')).color).toBe(systemColor('GrayText'))
     expect(style(q(c, '.mk-checkbox-label')).opacity).toBe('1')
+  })
+})
+
+describe('RadioButton', () => {
+  test('sin seleccionar: anillo de 2 px CanvasText, sin punto', async () => {
+    const c = await render(<RadioButton>Uno</RadioButton>)
+    const ring = style(q(c, '.mk-radio-button-ring'))
+    expect(ring.borderTopWidth).toBe('2px')
+    expect(ring.borderTopStyle).toBe('solid')
+    expect(ring.borderTopColor).toBe(systemColor('CanvasText'))
+    expect(style(q(c, '.mk-radio-button-dot')).scale).toBe('0')
+  })
+
+  test('seleccionado: anillo y punto Highlight, también con el puntero encima', async () => {
+    const c = await render(<RadioButton defaultChecked>Uno</RadioButton>)
+    await userEvent.hover(q(c, 'label'))
+    expect(style(q(c, '.mk-radio-button-ring')).borderTopColor).toBe(systemColor('Highlight'))
+    expect(style(q(c, '.mk-radio-button-dot')).backgroundColor).toBe(systemColor('Highlight'))
+    expect(style(q(c, '.mk-radio-button-dot')).scale).toBe('1')
+  })
+
+  test('sin seleccionar con el puntero encima: el anillo sigue en CanvasText', async () => {
+    const c = await render(<RadioButton>Uno</RadioButton>)
+    await userEvent.hover(q(c, 'label'))
+    expect(style(q(c, '.mk-radio-button-ring')).borderTopColor).toBe(systemColor('CanvasText'))
+  })
+
+  test('deshabilitado (en el grupo): GrayText sin la opacidad que lo haría casi invisible', async () => {
+    const c = await render(
+      <RadioGroup aria-label="g" disabled>
+        <RadioButton name="g" defaultChecked>No</RadioButton>
+      </RadioGroup>,
+    )
+    expect(style(q(c, '.mk-radio-button-control')).opacity).toBe('1')
+    expect(style(q(c, '.mk-radio-button-ring')).borderTopColor).toBe(systemColor('GrayText'))
+    expect(style(q(c, '.mk-radio-button-dot')).backgroundColor).toBe(systemColor('GrayText'))
+    expect(style(q(c, '.mk-radio-button-label')).color).toBe(systemColor('GrayText'))
+    expect(style(q(c, '.mk-radio-button-label')).opacity).toBe('1')
   })
 })
 
@@ -471,5 +513,45 @@ describe('LoadingIndicator', () => {
     const px = await pixelsOf(q(c, '.mk-loading-indicator'))
     expect(near(px.at(24, 24), rgb(systemColor('CanvasText'))), `centro: ${px.at(24, 24)}`).toBe(true)
     expect(near(px.at(4, 24), rgb(systemColor('Canvas'))), `contenedor: ${px.at(4, 24)}`).toBe(true)
+  })
+})
+
+describe('Divider', () => {
+  const rgb = (css: string) => css.match(/\d+/g)!.slice(0, 3).map(Number)
+  // El navegador reemplaza el fondo (la línea) por Canvas: el átomo la dibuja con un borde
+  // CanvasText del mismo grosor. Se define a mano, así que vale también en WebKit.
+  test('horizontal y vertical: borde CanvasText de 1 px, sin cambiar el tamaño', async () => {
+    const c = await render(
+      <div style={{ display: 'flex', height: 40 }}>
+        <Divider orientation="vertical" className="v" />
+        <div style={{ display: 'flex', flexDirection: 'column', width: 100 }}>
+          <Divider className="h" />
+          <DividerSubhead><h3>Sección</h3></DividerSubhead>
+        </div>
+      </div>,
+    )
+    const h = style(q(c, '.h'))
+    expect(h.borderTopStyle).toBe('solid')
+    expect(h.borderTopWidth).toBe('1px')
+    expect(h.borderTopColor).toBe(systemColor('CanvasText'))
+    expect(q(c, '.h').getBoundingClientRect().height).toBe(1)
+    const v = style(q(c, '.v'))
+    expect(v.borderLeftStyle).toBe('solid')
+    expect(v.borderLeftColor).toBe(systemColor('CanvasText'))
+    expect(v.borderTopStyle).toBe('none')
+    expect(q(c, '.v').getBoundingClientRect().width).toBe(1)
+    expect(q(c, '.v').getBoundingClientRect().height).toBe(40)
+    expect(style(q(c, '.mk-divider-subhead hr')).borderTopColor).toBe(systemColor('CanvasText'))
+  })
+
+  test('la línea se ve: el píxel del divisor es CanvasText sobre Canvas', async () => {
+    const c = await render(
+      <div className="stage" style={{ width: 100, padding: 8, background: 'Canvas' }}>
+        <Divider />
+      </div>,
+    )
+    const px = await pixelsOf(q(c, '.stage'))
+    expect(near(px.at(50, 8), rgb(systemColor('CanvasText'))), `línea: ${px.at(50, 8)}`).toBe(true)
+    expect(near(px.at(50, 3), rgb(systemColor('Canvas'))), `fondo: ${px.at(50, 3)}`).toBe(true)
   })
 })

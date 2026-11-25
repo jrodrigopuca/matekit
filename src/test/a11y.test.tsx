@@ -21,6 +21,9 @@ import {
   Button,
   CancelIcon,
   Checkbox,
+  RadioButton,
+  RadioGroup,
+  RadioGroupLabel,
   Dialog,
   DialogActions,
   DialogContent,
@@ -52,6 +55,8 @@ import {
   Icon,
   LoadingIndicator,
   Shape,
+  Divider,
+  DividerSubhead,
 } from '../index.ts'
 import { a11yViolations } from './a11y.ts'
 import { render } from './render.tsx'
@@ -130,6 +135,20 @@ const GALLERIES: Record<string, ReactNode> = {
       <Checkbox indeterminate>Indeterminado</Checkbox>
       <Checkbox error>Con error</Checkbox>
       <Checkbox disabled defaultChecked>Deshabilitado</Checkbox>
+    </>
+  ),
+  RadioButton: (
+    <>
+      <RadioGroup>
+        <RadioGroupLabel>Envío</RadioGroupLabel>
+        <RadioButton name="envio" value="retiro" defaultChecked>Retiro en el local</RadioButton>
+        <RadioButton name="envio" value="domicilio">A domicilio</RadioButton>
+        <RadioButton name="envio" value="correo" disabled>Correo</RadioButton>
+      </RadioGroup>
+      <RadioGroup aria-label="Talle" disabled>
+        <RadioButton name="talle" value="s">Chico</RadioButton>
+        <RadioButton name="talle" value="m" defaultChecked>Mediano</RadioButton>
+      </RadioGroup>
     </>
   ),
   Switch: (
@@ -252,6 +271,23 @@ const GALLERIES: Record<string, ReactNode> = {
       <Shape shape="sunny" style={{ width: 48, height: 48, background: 'var(--md-sys-color-primary-container)', color: 'var(--md-sys-color-on-primary-container)' }}>
         <StarIcon />
       </Shape>
+    </>
+  ),
+  // La vertical lleva aria-orientation sobre el rol separator implícito del <hr>: axe tiene que
+  // aceptarlo (aria-allowed-attr). El subtítulo deja la línea oculta y el encabezado visible.
+  Divider: (
+    <>
+      <p>Arriba</p>
+      <Divider />
+      <Divider inset="start" />
+      <Divider inset="both" decorative />
+      <div style={{ display: 'flex', height: 40 }}>
+        <span>Izquierda</span>
+        <Divider orientation="vertical" />
+        <Divider orientation="vertical" inset="both" />
+        <span>Derecha</span>
+      </div>
+      <DividerSubhead><h2>Recientes</h2></DividerSubhead>
     </>
   ),
   LoadingIndicator: (

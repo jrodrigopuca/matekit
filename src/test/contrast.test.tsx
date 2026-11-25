@@ -18,6 +18,10 @@ import {
   NavigationRailItemIcon,
   NavigationRailItemLabel,
   Checkbox,
+  DividerSubhead,
+  RadioButton,
+  RadioGroup,
+  RadioGroupLabel,
   Dialog,
   DialogContent,
   DialogHeadline,
@@ -102,6 +106,19 @@ for (const scheme of SCHEMES) {
       }
     })
 
+    // La línea del Divider (outline-variant) no se mide: no identifica un control ni es
+    // necesaria para entender el contenido (WCAG 1.4.11 exceptúa lo decorativo), y Material la
+    // quiere tenue a propósito. Lo que agrupa es el espacio o el título. El subtítulo sí es
+    // texto: 4,5:1 sobre la superficie.
+    test('DividerSubhead: título sobre la superficie', async () => {
+      const c = await render(
+        <Themed scheme={scheme}>
+          <DividerSubhead><h3>Recientes</h3></DividerSubhead>
+        </Themed>,
+      )
+      expect(textContrast(q(c, 'h3'))).toBeGreaterThanOrEqual(TEXT)
+    })
+
     test('IconButton: icono de cada estilo y toggle sobre su fondo', async () => {
       const c = await render(
         <Themed scheme={scheme}>
@@ -157,6 +174,24 @@ for (const scheme of SCHEMES) {
       const box = q(c, '.on .mk-checkbox-box')
       expect(contrastRatio(cs(box).backgroundColor, surface), 'relleno marcado').toBeGreaterThanOrEqual(NON_TEXT)
       expect(contrastRatio(cs(q(c, '.on .mk-checkbox-icon')).stroke, effectiveBackground(box)), 'marca').toBeGreaterThanOrEqual(NON_TEXT)
+    })
+
+    test('RadioButton: título del grupo, etiqueta, anillo sin seleccionar, anillo y punto seleccionados', async () => {
+      const c = await render(
+        <Themed scheme={scheme}>
+          <RadioGroup>
+            <RadioGroupLabel>Envío</RadioGroupLabel>
+            <RadioButton name="e" className="off">Sin seleccionar</RadioButton>
+            <RadioButton name="e" className="on" defaultChecked>Seleccionado</RadioButton>
+          </RadioGroup>
+        </Themed>,
+      )
+      const surface = effectiveBackground(c.querySelector('main') as Element)
+      expect(textContrast(q(c, '.mk-radio-group-label')), 'título').toBeGreaterThanOrEqual(TEXT)
+      expect(textContrast(q(c, '.off .mk-radio-button-label')), 'etiqueta').toBeGreaterThanOrEqual(TEXT)
+      expect(contrastRatio(cs(q(c, '.off .mk-radio-button-ring')).borderTopColor, surface), 'anillo sin seleccionar').toBeGreaterThanOrEqual(NON_TEXT)
+      expect(contrastRatio(cs(q(c, '.on .mk-radio-button-ring')).borderTopColor, surface), 'anillo seleccionado').toBeGreaterThanOrEqual(NON_TEXT)
+      expect(contrastRatio(cs(q(c, '.on .mk-radio-button-dot')).backgroundColor, surface), 'punto').toBeGreaterThanOrEqual(NON_TEXT)
     })
 
     test('Switch: etiqueta, borde de la pista, pista activada y handle', async () => {

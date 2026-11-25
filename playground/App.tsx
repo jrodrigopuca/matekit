@@ -3,6 +3,7 @@ import paletteTokens from '../tokens/palettes.json' with { type: 'json' }
 import { ButtonPage } from './pages/ButtonPage.tsx'
 import { CheckboxPage } from './pages/CheckboxPage.tsx'
 import { DialogPage } from './pages/DialogPage.tsx'
+import { DividerPage } from './pages/DividerPage.tsx'
 import { ExamplesPage } from './pages/ExamplesPage.tsx'
 import { FabPage } from './pages/FabPage.tsx'
 import { IconButtonPage } from './pages/IconButtonPage.tsx'
@@ -11,6 +12,7 @@ import { LoadingIndicatorPage } from './pages/LoadingIndicatorPage.tsx'
 import { MenuPage } from './pages/MenuPage.tsx'
 import { NavigationBarPage } from './pages/NavigationBarPage.tsx'
 import { NavigationRailPage } from './pages/NavigationRailPage.tsx'
+import { RadioButtonPage } from './pages/RadioButtonPage.tsx'
 import { ShapesPage } from './pages/ShapesPage.tsx'
 import { SwitchPage } from './pages/SwitchPage.tsx'
 import { TextFieldPage } from './pages/TextFieldPage.tsx'
@@ -31,6 +33,7 @@ const PAGES = {
   'icon-button': { label: 'IconButton', Page: IconButtonPage },
   fab: { label: 'FAB', Page: FabPage },
   checkbox: { label: 'Checkbox', Page: CheckboxPage },
+  'radio-button': { label: 'RadioButton', Page: RadioButtonPage },
   switch: { label: 'Switch', Page: SwitchPage },
   'text-field': { label: 'TextField', Page: TextFieldPage },
   dialog: { label: 'Dialog', Page: DialogPage },
@@ -38,6 +41,7 @@ const PAGES = {
   'navigation-bar': { label: 'NavigationBar', Page: NavigationBarPage },
   'navigation-rail': { label: 'NavigationRail', Page: NavigationRailPage },
   'loading-indicator': { label: 'LoadingIndicator', Page: LoadingIndicatorPage },
+  divider: { label: 'Divider', Page: DividerPage },
   examples: { label: 'Ejemplos', Page: ExamplesPage },
   icons: { label: 'Iconos', Page: IconsPage },
   shapes: { label: 'Formas', Page: ShapesPage },
