@@ -93,9 +93,32 @@ const TABBABLE = [
 ].join(', ')
 
 /**
+ * El contenido con scroll y sin enfocables adentro se tiene que poder enfocar con el teclado
+ * para desplazarlo (WCAG 2.1.1). Chrome lo hace solo, pero Firefox y Safari no siempre: se le
+ * pone tabindex="0" al abrir, y se le quita si en otra apertura ya no hace falta. Un
+ * tabindex que haya puesto la aplicación no se toca. Devuelve el contenido si quedó enfocable.
+ */
+function makeScrollableContentFocusable(dialog: HTMLDialogElement): HTMLElement | null {
+  const content = dialog.querySelector<HTMLElement>('.mk-dialog-content')
+  if (!content) return null
+  const ours = content.hasAttribute('data-mk-scroll-focus')
+  if (content.hasAttribute('tabindex') && !ours) return null
+  const needed = content.scrollHeight > content.clientHeight && !content.querySelector(TABBABLE)
+  if (needed) {
+    content.tabIndex = 0
+    content.setAttribute('data-mk-scroll-focus', '')
+    return content
+  }
+  if (ours) {
+    content.removeAttribute('tabindex')
+    content.removeAttribute('data-mk-scroll-focus')
+  }
+  return null
+}
+
+/**
  * Elementos que Tab recorre dentro del diálogo, en orden de documento. Incluye el contenido
- * con scroll sin enfocables adentro: Chrome lo hace enfocable con el teclado para poder
- * desplazarlo, y sin él la vuelta lo salteaba.
+ * con scroll sin enfocables adentro (ver makeScrollableContentFocusable).
  */
 function tabbables(dialog: HTMLDialogElement): HTMLElement[] {
   const all = [...dialog.querySelectorAll<HTMLElement>(`${TABBABLE}, .mk-dialog-content`)]
@@ -206,7 +229,11 @@ export function Dialog({
         // showModal() enfoca el primer enfocable o el que tenga el atributo autofocus, que
         // React no escribe (su autoFocus llama a focus() al montar, con el diálogo cerrado).
         // data-autofocus es la forma de elegirlo desde React.
-        dialog.querySelector<HTMLElement>('[data-autofocus]')?.focus()
+        const scroller = makeScrollableContentFocusable(dialog)
+        const chosen = dialog.querySelector<HTMLElement>('[data-autofocus]')
+        // El contenido largo va antes que las acciones: como en Chrome, recibe el foco inicial
+        // para que se pueda leer y desplazar desde el principio.
+        ;(chosen ?? scroller)?.focus()
       }
       return
     }

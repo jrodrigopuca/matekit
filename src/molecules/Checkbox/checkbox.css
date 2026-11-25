@@ -37,10 +37,14 @@
     border-radius: 50%;
   }
 
-  /* El input nativo, invisible, cubre los 48 px y recibe clics, teclado y foco. */
+  /* El input nativo, invisible, cubre los 48 px y recibe clics, teclado y foco. Ancho y alto
+     explícitos: una casilla nativa es un elemento reemplazado y, con solo inset, conserva su
+     tamaño propio (13 px en Safari; Chrome sí la estira). */
   .mk-checkbox-input {
     position: absolute;
     inset: -4px;
+    width: calc(100% + 8px);
+    height: calc(100% + 8px);
     z-index: 1;
     margin: 0;
     opacity: 0;
