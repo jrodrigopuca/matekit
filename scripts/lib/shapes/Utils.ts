@@ -17,7 +17,8 @@
 // Portado a TypeScript de androidx/androidx@b842c5b3a5,
 // graphics/graphics-shapes/src/commonMain/kotlin/androidx/graphics/shapes/Utils.kt (ADR-0011).
 //
-// Sin portar: findMinimum (solo la usa Morph, entrega 2) y debugLog (registro de depuración).
+// Sin portar: findMinimum (no la usa nada de lo portado, tampoco Morph en este commit) y debugLog
+// (registro de depuración).
 // `Point.rotate90()` está en Point.ts como método.
 
 import { Point } from './Point.ts'

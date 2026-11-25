@@ -7,6 +7,7 @@ import { ExamplesPage } from './pages/ExamplesPage.tsx'
 import { FabPage } from './pages/FabPage.tsx'
 import { IconButtonPage } from './pages/IconButtonPage.tsx'
 import { IconsPage } from './pages/IconsPage.tsx'
+import { LoadingIndicatorPage } from './pages/LoadingIndicatorPage.tsx'
 import { MenuPage } from './pages/MenuPage.tsx'
 import { NavigationBarPage } from './pages/NavigationBarPage.tsx'
 import { NavigationRailPage } from './pages/NavigationRailPage.tsx'
@@ -36,6 +37,7 @@ const PAGES = {
   menu: { label: 'Menu', Page: MenuPage },
   'navigation-bar': { label: 'NavigationBar', Page: NavigationBarPage },
   'navigation-rail': { label: 'NavigationRail', Page: NavigationRailPage },
+  'loading-indicator': { label: 'LoadingIndicator', Page: LoadingIndicatorPage },
   examples: { label: 'Ejemplos', Page: ExamplesPage },
   icons: { label: 'Iconos', Page: IconsPage },
   shapes: { label: 'Formas', Page: ShapesPage },

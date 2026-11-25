@@ -1,0 +1,76 @@
+/* Indicador de carga (Loading indicator) de Material 3 Expressive.
+
+   Fuentes:
+   - Kit de Figma (docs/research/05-medidas.md § Indicador de carga): 48 × 48, la forma en un
+     área de 38; sin contenedor en Primary; con contenedor, círculo Primary Container y la forma
+     en On Primary Container.
+   - Jetpack Compose (androidx/androidx@b842c5b3a5): tokens/LoadingIndicatorTokens.kt (los mismos
+     valores, ContainerShape CornerFull) y LoadingIndicator.kt (la animación, precalculada en
+     loading-indicator-data.ts con pnpm shapes; ADR-0011).
+
+   La forma ya trae el área de 38 y el factor de escala de Compose en sus coordenadas: el SVG
+   ocupa todo el contenedor. El giro y el cambio de forma son SMIL dentro del SVG, no CSS. */
+
+@layer matekit.components {
+  .mk-loading-indicator {
+    display: inline-block;
+    flex: none;
+    vertical-align: middle;
+    box-sizing: border-box;
+    width: 48px;
+    height: 48px;
+    color: var(--md-sys-color-primary);
+  }
+
+  .mk-loading-indicator[data-contained] {
+    /* El radio no anima: corner-full sirve. */
+    border-radius: var(--md-sys-shape-corner-full);
+    background-color: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+  }
+
+  .mk-loading-indicator-svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    fill: currentColor;
+  }
+
+  /* La forma quieta solo se ve con movimiento reducido. */
+  .mk-loading-indicator-still {
+    display: none;
+  }
+
+  /* Movimiento reducido: SMIL no sigue prefers-reduced-motion y CSS no puede pausarlo (las
+     animaciones de visibility de SMIL además ganan a la cascada), así que se oculta el grupo
+     animado entero y se muestra la primera forma quieta. */
+  @media (prefers-reduced-motion: reduce) {
+    .mk-loading-indicator-motion {
+      display: none;
+    }
+
+    .mk-loading-indicator-still {
+      display: inline;
+    }
+  }
+
+  /* --- Alto contraste (forced-colors) ---
+     El navegador quitaría el fondo del contenedor y no siempre fuerza el relleno de un SVG: se
+     sale del ajuste automático y se dibuja con colores del sistema, la forma en CanvasText y el
+     contenedor como un círculo con borde CanvasText de 1 px sobre Canvas (outline hacia dentro,
+     para no cambiar la medida). */
+  @media (forced-colors: active) {
+    /* Con [data-contained] también: si no, su color (más específico) le gana a este. */
+    .mk-loading-indicator,
+    .mk-loading-indicator[data-contained] {
+      forced-color-adjust: none;
+      color: CanvasText;
+    }
+
+    .mk-loading-indicator[data-contained] {
+      background-color: Canvas;
+      outline: 1px solid CanvasText;
+      outline-offset: -1px;
+    }
+  }
+}

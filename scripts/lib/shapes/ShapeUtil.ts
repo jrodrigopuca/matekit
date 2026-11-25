@@ -22,11 +22,13 @@
 // - `Matrix` es solo la parte 2D de la matriz 4×4 de Compose, con `rotateZ`, `scale` y `map`
 //   (misma convención: rotateZ con grados positivos gira de x hacia y, que en pantalla, con y
 //   hacia abajo, es el sentido horario).
-// - `toPath` no dibuja en un `Path` de Compose: devuelve los comandos (moveTo, cubicTo, close)
-//   para escribirlos como SVG. Solo se porta el caso que usa `RoundedPolygon.toShape()`:
-//   `startAngle = 0`, sin `repeatPath` y cerrado. `Morph.toPath` queda para la entrega 2.
+// - `toPath` y `morphToPath` (el `Morph.toPath` del original) no dibujan en un `Path` de Compose:
+//   devuelven los comandos (moveTo, cubicTo, close) para escribirlos como SVG. Solo se porta el
+//   caso que usan `RoundedPolygon.toShape()` y `LoadingIndicator`: `startAngle = 0`, sin
+//   `repeatPath` y cerrado.
 
 import type { Cubic } from './Cubic.ts'
+import type { Morph } from './Morph.ts'
 import type { RoundedPolygon } from './RoundedPolygon.ts'
 
 /** Transformación afín 2D: x' = a·x + c·y + tx, y' = b·x + d·y + ty. Empieza en la identidad. */
@@ -79,6 +81,11 @@ export type PathCommand =
 /** Comandos de trazo de un RoundedPolygon: un moveTo, un cubicTo por curva y close. */
 export function toPath(polygon: RoundedPolygon): PathCommand[] {
   return pathFromCubics(polygon.cubics)
+}
+
+/** Comandos de trazo de un Morph en `progress` (el `Morph.toPath` del original, con `startAngle = 0`). */
+export function morphToPath(morph: Morph, progress: number): PathCommand[] {
+  return pathFromCubics(morph.asCubics(progress))
 }
 
 function pathFromCubics(cubics: readonly Cubic[]): PathCommand[] {

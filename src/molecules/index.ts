@@ -38,3 +38,4 @@ export {
 } from './TextField/TextField.tsx'
 export { TextFieldLeading, TextFieldTrailing, type TextFieldSlotProps } from './TextField/TextFieldSlots.tsx'
 export { Badge, type BadgeProps } from './Badge/Badge.tsx'
+export { LoadingIndicator, type LoadingIndicatorProps } from './LoadingIndicator/LoadingIndicator.tsx'

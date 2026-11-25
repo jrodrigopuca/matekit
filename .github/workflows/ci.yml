@@ -42,15 +42,16 @@ jobs:
       - name: Instalar dependencias
         run: pnpm install --frozen-lockfile
 
-      # src/tokens/*.css, src/icons/icons.tsx y las formas (shapes/, src/atoms/Shape/shapes.ts y
-      # shapes.css) se generan y se versionan: si alguien cambió los datos de origen o la
-      # portación de scripts/lib/shapes/ sin regenerar, el diff no queda vacío y la corrida falla.
+      # src/tokens/*.css, src/icons/icons.tsx, las formas (shapes/, src/atoms/Shape/shapes.ts y
+      # shapes.css) y los datos del indicador de carga (loading-indicator-data.ts) se generan y se
+      # versionan: si alguien cambió los datos de origen o la portación de scripts/lib/shapes/
+      # sin regenerar, el diff no queda vacío y la corrida falla.
       - name: Archivos generados al día
         run: |
           pnpm tokens
           pnpm icons
           pnpm shapes
-          git diff --exit-code -- src/tokens src/icons shapes src/atoms/Shape/shapes.ts src/shapes.css
+          git diff --exit-code -- src/tokens src/icons shapes src/atoms/Shape/shapes.ts src/shapes.css src/molecules/LoadingIndicator/loading-indicator-data.ts
 
       - name: Tipos
         run: pnpm typecheck

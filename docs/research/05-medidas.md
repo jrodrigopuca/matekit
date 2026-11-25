@@ -319,6 +319,18 @@ Estados (Primary container):
 | Focused | 3 | On Primary Container 10 %, con indicador de foco |
 | Pressed | 3 | On Primary Container 8 % (más la onda) |
 
+## Indicador de carga (Loading indicator)
+
+Leído del kit el 2026-11-25 (página Loading & progress, conjunto `Loading indicator`;
+variantes Steps 1 a 7 y Show container).
+
+- 48 × 48 en total; la forma va dentro de un área de 38 × 38 ("Shape container").
+- Sin contenedor: la forma en `Primary`.
+- Con contenedor: círculo de 48 en `Primary Container` y la forma en `On Primary Container`.
+- Los 7 pasos, en orden: Soft burst, 9-sided cookie, Pentagon, Pill, Sunny, 4-sided cookie y
+  Oval (los mismos que `LoadingIndicatorDefaults` de Compose). La forma de cada paso mide
+  unos 30 a 34 dentro del área de 38.
+
 ## Diferencias con la especificación a revisar
 
 - El indicador con foco del campo de texto mide 3 en el kit. Confirmar en m3.material.io.

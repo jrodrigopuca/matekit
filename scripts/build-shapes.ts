@@ -3,7 +3,10 @@
 // - shapes/material-shapes.json: el contorno SVG de cada forma, en un viewBox de 0 a 100;
 // - src/atoms/Shape/shapes.ts: el tipo con los nombres y la lista para catálogos (SHAPES);
 // - src/shapes.css: la máscara de cada forma, para el átomo Shape. Es una hoja opcional (se
-//   importa aparte de styles.css, como las paletas): pesa unos 30 KB y no todos usan formas.
+//   importa aparte de styles.css, como las paletas): pesa unos 30 KB y no todos usan formas;
+// - src/molecules/LoadingIndicator/loading-indicator-data.ts: los contornos y tiempos SMIL del
+//   indicador de carga (scripts/lib/shapes/LoadingIndicator.ts), los 7 pasos quietos y los dos
+//   contornos del determinado.
 // Uso: pnpm shapes   (sin conexión; determinista: dos corridas dan los mismos archivos)
 
 import { mkdirSync, writeFileSync } from 'node:fs'
@@ -11,6 +14,20 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { MATERIAL_SHAPES, type MaterialShapeName } from './lib/shapes/MaterialShapes.ts'
 import { fitToSquare, toSvgPathData } from './lib/shapes/svg.ts'
+import {
+  ContainerSize,
+  GlobalRotationDurationMillis,
+  IndeterminateShapes,
+  MorphIntervalMillis,
+  ViewBoxSide,
+  buildDeterminate,
+  buildIndeterminateAnimation,
+  buildSteps,
+  composeFrameAt,
+  maxPointDistance,
+  morphDurationMillis,
+  smilFrameAt,
+} from './lib/shapes/LoadingIndicator.ts'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 
@@ -149,3 +166,79 @@ writeFileSync(join(root, 'src', 'shapes.css'), css)
 
 const bytes = shapes.reduce((sum, s) => sum + s.path.length, 0)
 console.log(`Generadas ${shapes.length} formas (${(bytes / 1024).toFixed(1)} KiB de contornos, ${PRECISION} decimales)`)
+
+// --- src/molecules/LoadingIndicator/loading-indicator-data.ts ---
+const LI_SOURCE =
+  'androidx/androidx@b842c5b3a5, compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/LoadingIndicator.kt'
+const anim = buildIndeterminateAnimation()
+const steps = buildSteps()
+const determinate = buildDeterminate()
+// Error de los fotogramas de SMIL frente a la animación de Compose, cada 0,5 ms de un ciclo. Se
+// excluye el milisegundo del salto de 1,09 a 1 (Compose lo hace en un fotograma y SMIL en el
+// relevo de un contorno al siguiente).
+let maxError = 0
+for (let ms = 0; ms < anim.cycleMs; ms += 0.5) {
+  const local = ms % MorphIntervalMillis
+  if (Math.abs(local - morphDurationMillis()) < 1) continue
+  maxError = Math.max(maxError, maxPointDistance(composeFrameAt(ms), smilFrameAt(anim, ms)))
+}
+const q = (v: string) => `'${v}'`
+const liTs = `// Generado por scripts/build-shapes.ts. No editar a mano.
+// Fuente: ${LI_SOURCE}
+// Geometría de androidx.graphics.shapes (Morph) y MaterialShapes.kt: Apache-2.0, The Android Open
+// Source Project. Cómo se calcula: scripts/lib/shapes/LoadingIndicator.ts (ADR-0011).
+//
+// Unidades: viewBox de ${ViewBoxSide} centrado en el origen (10 por dp del contenedor de ${ContainerSize}).
+// Error máximo de los fotogramas frente a Compose: ${(maxError / 10).toFixed(2).replace('.', ',')} dp.
+
+/** viewBox del indicador. */
+export const VIEW_BOX = '${-ViewBoxSide / 2} ${-ViewBoxSide / 2} ${ViewBoxSide} ${ViewBoxSide}'
+
+/** Una vuelta entera, lineal (GlobalRotationDurationMillis). */
+export const GLOBAL_ROTATION_MS = ${GlobalRotationDurationMillis}
+
+/** Un cambio de forma (MorphIntervalMillis) y el ciclo de las ${IndeterminateShapes.length} transiciones. */
+export const MORPH_MS = ${MorphIntervalMillis}
+export const CYCLE_MS = ${anim.cycleMs}
+
+/** El giro de cada cambio de forma, de 0 a 90° con el resorte (se suma en cada repetición). */
+export const MORPH_ROTATION = {
+  values: ${q(anim.morphRotation.values)},
+  keyTimes: ${q(anim.morphRotation.keyTimes)},
+  keySplines: ${q(anim.morphRotation.keySplines)},
+} as const
+
+/** Tiempos de los contornos y de su visibilidad (los mismos para las ${anim.shapes.length} transiciones). */
+export const SHAPE_KEY_TIMES = ${q(anim.shapeKeyTimes)}
+export const SHAPE_KEY_SPLINES = ${q(anim.shapeKeySplines)}
+export const VISIBILITY_KEY_TIMES = ${q(anim.visibilityKeyTimes)}
+
+/**
+ * Una transición por forma (${IndeterminateShapes.join(' → ')} → ${IndeterminateShapes[0]}): su
+ * desfase y los cuatro contornos, todos con la misma estructura de comandos.
+ */
+export const TRANSITIONS: ReadonlyArray<{ begin: string; values: string }> = [
+${anim.shapes.map((t) => `  {\n    begin: ${q(t.begin)},\n    values:\n      ${q(t.values.join(';'))},\n  },`).join('\n')}
+]
+
+/** Los ${steps.length} pasos quietos, en orden, con el giro con que se ven en la animación. */
+export const STEPS: readonly string[] = [
+${steps.map((d) => `  ${q(d)},`).join('\n')}
+]
+
+/**
+ * El indicador determinado (Circle girado 18° → SoftBurst): el contorno de inicio y de fin, sin
+ * centrar, como lista plana (x e y del moveTo y seis números por curva).
+ */
+export const DETERMINATE: { readonly start: readonly number[]; readonly end: readonly number[] } = {
+  start: [${determinate.start.join(', ')}],
+  end: [${determinate.end.join(', ')}],
+}
+`
+mkdirSync(join(root, 'src', 'molecules', 'LoadingIndicator'), { recursive: true })
+writeFileSync(join(root, 'src', 'molecules', 'LoadingIndicator', 'loading-indicator-data.ts'), liTs)
+const transitionBytes = anim.shapes.reduce((sum, t) => sum + t.values.join(';').length, 0)
+console.log(
+  `Indicador de carga: ${anim.shapes.length} transiciones (${(transitionBytes / 1024).toFixed(1)} KiB de contornos), ` +
+    `error máximo frente a Compose ${(maxError / 10).toFixed(3)} dp`,
+)

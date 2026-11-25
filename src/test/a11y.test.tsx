@@ -50,6 +50,7 @@ import {
   TextFieldSupporting,
   TextFieldTrailing,
   Icon,
+  LoadingIndicator,
   Shape,
 } from '../index.ts'
 import { a11yViolations } from './a11y.ts'
@@ -245,6 +246,14 @@ const GALLERIES: Record<string, ReactNode> = {
       <Shape shape="sunny" style={{ width: 48, height: 48, background: 'var(--md-sys-color-primary-container)', color: 'var(--md-sys-color-on-primary-container)' }}>
         <StarIcon />
       </Shape>
+    </>
+  ),
+  LoadingIndicator: (
+    <>
+      <LoadingIndicator label="Cargando" />
+      <LoadingIndicator contained label="Actualizando" />
+      <LoadingIndicator value={0.4} label="Subiendo foto" />
+      <LoadingIndicator contained value={1} label="Listo" />
     </>
   ),
 }

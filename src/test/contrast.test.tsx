@@ -22,6 +22,7 @@ import {
   DialogContent,
   DialogHeadline,
   IconButton,
+  LoadingIndicator,
   Menu,
   MenuContent,
   MenuItem,
@@ -292,6 +293,23 @@ for (const scheme of SCHEMES) {
         expect(contrastRatio(cs(large).color, effectiveBackground(large)), 'número de la insignia').toBeGreaterThanOrEqual(TEXT)
       })
     }
+
+    // La forma es un elemento no textual que identifica el estado (1.4.11): 3:1 contra su fondo,
+    // la superficie sin contenedor y primary-container con él.
+    test('LoadingIndicator: la forma sobre la superficie y sobre su contenedor', async () => {
+      const c = await render(
+        <Themed scheme={scheme}>
+          <LoadingIndicator label="a" className="plain" />
+          <LoadingIndicator label="b" contained className="box" />
+          <LoadingIndicator label="c" value={0.5} className="det" />
+          <LoadingIndicator label="d" value={0.5} contained className="det-box" />
+        </Themed>,
+      )
+      for (const sel of ['.plain', '.box', '.det', '.det-box']) {
+        const el = q(c, sel)
+        expect(contrastRatio(cs(q(el, 'svg')).fill, effectiveBackground(el)), sel).toBeGreaterThanOrEqual(NON_TEXT)
+      }
+    })
 
     for (const variant of ['standard', 'vibrant'] as const) {
       test(`Menu ${variant}: texto, iconos y atajo sobre el menú, y seleccionado sobre su fondo`, async () => {

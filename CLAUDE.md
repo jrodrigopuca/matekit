@@ -23,7 +23,7 @@ Antes de decidir algo que cueste revertir, leer `docs/adr/README.md` y aplicar l
 | `pnpm test:browser` | Solo las pruebas de componentes, en el Chrome del sistema; `MK_BROWSERS=firefox` o `webkit` (separados por coma) los corre en esos motores, que el CI prueba en cada push |
 | `pnpm tokens` | Regenera `src/tokens/*.css` y `src/tokens/palettes/*.css` desde `tokens/*.json` (paletas: ADR-0008) |
 | `pnpm icons` / `pnpm icons:fetch` | Regenera los iconos (ver ADR-0006) |
-| `pnpm shapes` | Regenera las 35 formas decorativas (`shapes/material-shapes.json`, `src/atoms/Shape/shapes.ts` y la hoja opcional `src/shapes.css`) con la portación de `scripts/lib/shapes/` (ADR-0011) |
+| `pnpm shapes` | Regenera las 35 formas decorativas (`shapes/material-shapes.json`, `src/atoms/Shape/shapes.ts` y la hoja opcional `src/shapes.css`) y los datos del indicador de carga (`src/molecules/LoadingIndicator/loading-indicator-data.ts`) con la portación de `scripts/lib/shapes/` (ADR-0011) |
 
 ## Estructura y capas (ADR-0002)
 
@@ -31,13 +31,15 @@ Antes de decidir algo que cueste revertir, leer `docs/adr/README.md` y aplicar l
 tokens/          datos de origen de los tokens (JSON) y su física (spring.ts)
 scripts/lib/     color-schemes.ts, palette-css.ts y css.ts: generador de paletas, futuro
                  @matekit/theme (ADR-0009); no importan React, componentes ni tokens/
-scripts/lib/shapes/  portación a TypeScript de androidx.graphics.shapes y MaterialShapes.kt
-                 (Apache 2.0, con el aviso y el commit de origen en cada archivo; ADR-0011);
-                 mismas reglas que scripts/lib/
+scripts/lib/shapes/  portación a TypeScript de androidx.graphics.shapes (con Morph),
+                 MaterialShapes.kt y la animación de LoadingIndicator.kt (Apache 2.0, con el
+                 aviso y el commit de origen en cada archivo; ADR-0011); mismas reglas que
+                 scripts/lib/
 shapes/          contornos SVG generados de las 35 formas decorativas (pnpm shapes)
 src/tokens/      CSS generado: no editar a mano
 src/atoms/       primitivas: StateLayer, FocusRing, Ripple, Icon, Shape
-src/molecules/   controles: Button, Checkbox, …
+src/molecules/   controles y piezas con significado propio: Button, Checkbox, Badge,
+                 LoadingIndicator, …
 src/organisms/   combinan controles: Dialog, Menu, NavigationBar, …
 src/icons/       iconos generados
 src/internal/    ayudas compartidas entre componentes, no exportadas (interactive.tsx: <a>, <button>
@@ -152,6 +154,11 @@ No llamar al conector de Figma salvo que falte un dato imprescindible: tiene lí
     el motivo comprobado en un comentario, nunca en silencio.
   - WebKit en macOS no lleva el foco a los botones con Tab ni con clic (ajuste del sistema):
     en local, esas pruebas fallan; la referencia es el WebKit de Linux del CI.
+  - Animación SVG nativa (SMIL, LoadingIndicator): `begin` negativo, `accumulate="sum"` en
+    `<animateTransform>`, `calcMode="spline"` en `d` y `visibility` discreta funcionan igual en
+    los tres. Para probarla, congelar el reloj del `<svg>` con `pauseAnimations()` y
+    `setCurrentTime(s)` y esperar el valor con `expect.poll` (`getBBox()`, `transform.animVal`,
+    `getComputedStyle().visibility`).
 - `src/test/render.tsx` aísla cada prueba: desmonta lo renderizado al terminar y deja el
   puntero en una esquina antes de empezar. No repetir eso en cada archivo. Para detectar
   dependencias de orden: `pnpm exec vitest run --sequence.shuffle --sequence.seed=<n>`.

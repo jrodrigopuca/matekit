@@ -23,6 +23,7 @@ siguiente. Convenciones en [`CLAUDE.md`](../../CLAUDE.md).
 | NavigationRail | organismo | universal; contraído (96) y expandido (220, ajustable hasta 360), docked y floating, alineación top y middle, etiquetas ocultas en el contraído; transición con resortes en CSS (grilla de pistas interpoladas); destino compartido con NavigationBar (`src/internal/navigation-item.tsx` y la base de `navigation-bar.css`); resuelto por agente y revisado el 2026-11-25 |
 | 32 iconos | icons | ADR-0006 |
 | Formas decorativas (entrega 1): portación de `androidx.graphics.shapes`, 35 formas y átomo Shape | átomo | ADR-0011; universal, recorta con `mask-image` (se estira al tamaño del elemento); `pnpm shapes` genera `shapes/material-shapes.json`, el tipo `ShapeName`, `SHAPES` y las máscaras; resuelto por agente el 2026-11-25 |
+| LoadingIndicator (formas decorativas, entrega 2): portación de `Morph` | molécula | ADR-0011; universal, SVG con SMIL (`<animate>` y `<animateTransform>`) sin JavaScript; indeterminado (7 formas, giro y resorte de Compose, a menos de 0,2 dp de Compose) y determinado (`value`); `contained`; quieto en la primera forma con movimiento reducido; `pnpm shapes` genera `loading-indicator-data.ts`; resuelto por agente y revisado el 2026-11-25 |
 
 ## Orden y motivo
 
@@ -232,9 +233,10 @@ decorativas; Compose `MaterialShapes.kt` sobre `androidx.graphics.shapes`):
 - [x] Contornos generados al compilar (`pnpm shapes`), como los iconos, a partir de una
   portación a TypeScript de `RoundedPolygon` en `scripts/lib/shapes/` (Apache 2.0, con el aviso
   de licencia); sin cálculo en el navegador ni dependencia del conector de Figma.
-- [ ] Indicador de carga de Expressive (entrega 2 del ADR-0011): `Morph` y lo que necesita,
+- [x] Indicador de carga de Expressive (entrega 2 del ADR-0011): `Morph` y lo que necesita,
   pasos de transición entre las 7 formas precalculados y animados con `<animate>`, y versión
-  estática con `prefers-reduced-motion`.
+  estática con `prefers-reduced-motion`. Molécula `LoadingIndicator`, indeterminada y
+  determinada, con y sin contenedor.
 - Cambio de forma por posición (esquinas interiores más chicas) en grupos de botones
   conectados, botón dividido y botones segmentados, cuando se hagan.
 - No se adopta `corner-shape` (esquinas superelípticas): Material 3 usa esquinas circulares.

@@ -18,6 +18,7 @@ import {
   NavigationRailItemIcon,
   NavigationRailItemLabel,
   Checkbox,
+  LoadingIndicator,
   Shape,
   Dialog,
   EditIcon,
@@ -412,5 +413,46 @@ describe('Shape', () => {
     )
     expect(style(q(c, '.mk-shape')).backgroundColor).toBe(systemColor('Canvas'))
     expect(style(q(c, '.mk-icon svg')).fill).toBe(systemColor('CanvasText'))
+  })
+})
+
+describe('LoadingIndicator', () => {
+  const rgb = (css: string) => css.match(/\d+/g)!.slice(0, 3).map(Number)
+
+  test('la forma en CanvasText, sin y con contenedor', async () => {
+    const c = await render(
+      <div>
+        <LoadingIndicator label="a" className="plain" />
+        <LoadingIndicator label="b" contained className="box" />
+        <LoadingIndicator label="c" value={0.5} className="det" />
+      </div>,
+    )
+    for (const sel of ['.plain', '.box', '.det']) {
+      expect(style(q(c, `${sel} svg`)).fill, sel).toBe(systemColor('CanvasText'))
+    }
+  })
+
+  test('el contenedor es un círculo con borde CanvasText de 1 px sobre Canvas', async () => {
+    const c = await render(<LoadingIndicator label="x" contained />)
+    const s = style(q(c, '.mk-loading-indicator'))
+    expect(s.backgroundColor).toBe(systemColor('Canvas'))
+    expect(s.outlineStyle).toBe('solid')
+    expect(s.outlineWidth).toBe('1px')
+    expect(s.outlineColor).toBe(systemColor('CanvasText'))
+    expect(s.borderRadius).toBe('9999px')
+  })
+
+  test('se ve: la forma en CanvasText y, alrededor, Canvas', async () => {
+    const c = await render(
+      <div className="stage" style={{ display: 'inline-block', lineHeight: 0, padding: 4, background: 'Canvas' }}>
+        <LoadingIndicator label="x" contained />
+      </div>,
+    )
+    const svg = q(c, 'svg') as unknown as SVGSVGElement
+    svg.pauseAnimations()
+    svg.setCurrentTime(0)
+    const px = await pixelsOf(q(c, '.mk-loading-indicator'))
+    expect(near(px.at(24, 24), rgb(systemColor('CanvasText'))), `centro: ${px.at(24, 24)}`).toBe(true)
+    expect(near(px.at(4, 24), rgb(systemColor('Canvas'))), `contenedor: ${px.at(4, 24)}`).toBe(true)
   })
 })
