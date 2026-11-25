@@ -16,6 +16,7 @@
     "icons": "node scripts/build-icons.ts",
     "icons:fetch": "node scripts/fetch-icons.ts && node scripts/build-icons.ts",
     "typecheck": "tsc -p .",
+    "lint:css": "node scripts/lint-css.ts",
     "test": "pnpm test:tokens && pnpm test:browser",
     "test:tokens": "node --test \"tests/**/*.test.ts\"",
     "test:browser": "vitest run"

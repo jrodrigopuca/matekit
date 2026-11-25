@@ -53,6 +53,10 @@ jobs:
       - name: Tipos
         run: pnpm typecheck
 
+      # Color, movimiento y tipografía del CSS de componentes tienen que salir de los tokens.
+      - name: CSS sin valores literales
+        run: pnpm lint:css
+
       - name: Pruebas de tokens (Node)
         run: pnpm test:tokens
 

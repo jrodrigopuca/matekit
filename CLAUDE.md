@@ -18,6 +18,7 @@ Antes de decidir algo que cueste revertir, leer `docs/adr/README.md` y aplicar l
 |---|---|
 | `pnpm dev` | Playground en `http://localhost:5175` (usa `src/` directamente) |
 | `pnpm typecheck` | Verificación de tipos |
+| `pnpm lint:css` | Revisa que el CSS de componentes use tokens para color, movimiento y tipografía |
 | `pnpm test` | Pruebas de tokens (Node) y de componentes (Vitest en Chrome) |
 | `pnpm test:browser` | Solo las pruebas de componentes |
 | `pnpm tokens` | Regenera `src/tokens/*.css` desde `tokens/*.json` |
@@ -66,7 +67,8 @@ exporta desde el `index.ts` de su capa y su CSS se importa en `src/styles.css`.
   con `--_` y variables públicas de personalización con `--mk-`.
 - Todo dentro de `@layer matekit.components` (o `matekit.atoms`).
 - Solo tokens `--md-sys-*` para color, tipografía, forma, elevación, estados y movimiento;
-  nada de colores ni duraciones sueltos. Movimiento: resortes
+  nada de colores ni duraciones sueltos. `pnpm lint:css` lo verifica (también en CI); una
+  excepción justificada lleva `/* lint-css-allow: motivo */` al final de la declaración. Movimiento: resortes
   `--md-sys-motion-spring-{fast,default,slow}-{spatial,effects}-{duration,easing}`.
 - Estados en este orden: hover (solo dentro de `@media (hover: hover)`), foco, presionado,
   deshabilitado al final.
