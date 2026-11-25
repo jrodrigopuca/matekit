@@ -288,12 +288,9 @@
   .mk-text-field-trailing {
     grid-column: 3;
     color: var(--_trailing-color);
-  }
-  /* Un IconButton estándar en el icono final sigue el color del campo (en error, error). Se
-     usa la variable interna --_content del IconButton (icon-button.css): si cambia, cambiar
-     también esto. Deshabilitado, conserva su propio color. */
-  .mk-text-field-trailing > .mk-icon-button[data-variant='standard']:not(:disabled, [aria-disabled='true'], [aria-pressed='true']) {
-    --_content: var(--_trailing-color);
+    /* Un IconButton Standard en el icono final sigue el color del campo (en error, error), con
+       su variable pública. Seleccionado o deshabilitado conserva sus propios colores. */
+    --mk-icon-button-color: var(--_trailing-color);
   }
 
   /* --- Texto de ayuda --- */

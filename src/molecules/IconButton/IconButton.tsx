@@ -39,6 +39,11 @@ export interface IconButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonEle
  * El icono es el hijo; el componente le da el tamaño con `--mk-icon-size` (20 a 40 px según
  * el tamaño). `label` es el nombre que anuncian los lectores de pantalla.
  *
+ * Personalización con variables CSS:
+ * - `--mk-icon-button-color`: color del icono del estilo `standard` sin seleccionar (por
+ *   defecto, `on-surface-variant`). Se hereda: definida en un contenedor, afecta a los
+ *   botones de adentro. Seleccionado y deshabilitado conservan sus colores.
+ *
  * ```tsx
  * <IconButton label="Buscar"><SearchIcon /></IconButton>
  * <IconButton variant="filled" width="wide" label="Favorito" selected={fav} onClick={() => setFav(!fav)}>

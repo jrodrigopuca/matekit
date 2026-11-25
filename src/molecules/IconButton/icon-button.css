@@ -90,10 +90,13 @@
     --_radius-selected: var(--_radius-round);
   }
 
-  /* --- Colores del estilo Standard: sin contenedor --- */
+  /* --- Colores del estilo Standard: sin contenedor ---
+     --mk-icon-button-color (pública) cambia el color del icono del Standard sin seleccionar,
+     para que un componente que lo contiene lo integre (por ejemplo, el TextField en error).
+     Seleccionado y deshabilitado conservan sus colores: esas reglas van después. */
   .mk-icon-button[data-variant='standard'] {
     --_container: transparent;
-    --_content: var(--md-sys-color-on-surface-variant);
+    --_content: var(--mk-icon-button-color, var(--md-sys-color-on-surface-variant));
   }
   .mk-icon-button[data-variant='standard'][aria-pressed='true'] {
     --_content: var(--md-sys-color-primary);

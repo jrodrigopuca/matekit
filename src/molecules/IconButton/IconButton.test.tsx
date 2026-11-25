@@ -230,6 +230,24 @@ describe('IconButton: forma', () => {
   })
 })
 
+describe('IconButton: --mk-icon-button-color', () => {
+  test('cambia el icono del standard sin seleccionar, heredada desde un contenedor', async () => {
+    const c = await render(
+      <div style={{ ['--mk-icon-button-color' as string]: 'rgb(200, 0, 0)' }}>
+        <IconButton label="a" className="a"><SearchIcon /></IconButton>
+        <IconButton label="b" className="b" selected><SearchIcon /></IconButton>
+        <IconButton label="c" className="c" disabled><SearchIcon /></IconButton>
+        <IconButton label="d" className="d" variant="filled"><SearchIcon /></IconButton>
+      </div>,
+    )
+    const color = (sel: string) => style(c.querySelector(sel)).color
+    expect(color('.a')).toBe('rgb(200, 0, 0)')
+    expect(color('.b')).toBe(roleColor('primary'))
+    expect(color('.c')).not.toBe('rgb(200, 0, 0)')
+    expect(color('.d')).toBe(roleColor('on-primary'))
+  })
+})
+
 describe('IconButton: colores', () => {
   const transparent = 'rgba(0, 0, 0, 0)'
   const cases: [IconButtonVariant, boolean | undefined, string | null, string][] = [
