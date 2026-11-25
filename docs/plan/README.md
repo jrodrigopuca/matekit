@@ -210,4 +210,5 @@ Fuente: `05-medidas.md` § Navigation rail; Compose `NavigationRailCollapsedToke
 
 FAB y FAB extendido (los usa el rail: si hacen falta, se agregan antes del paso 7), Chips,
 Lists, Tabs, Snackbar, Tooltip, Sheets, compilación y publicación del paquete, color
-dinámico (ADR-0004).
+dinámico (ADR-0004). Al publicar: crear `@matekit/theme` con el generador de `scripts/lib/` y
+su comando (ADR-0009).

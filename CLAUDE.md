@@ -28,6 +28,8 @@ Antes de decidir algo que cueste revertir, leer `docs/adr/README.md` y aplicar l
 
 ```
 tokens/          datos de origen de los tokens (JSON) y su física (spring.ts)
+scripts/lib/     color-schemes.ts, palette-css.ts y css.ts: generador de paletas, futuro
+                 @matekit/theme (ADR-0009); no importan React, componentes ni tokens/
 src/tokens/      CSS generado: no editar a mano
 src/atoms/       primitivas: StateLayer, FocusRing, Ripple, Icon
 src/molecules/   controles: Button, Checkbox, …

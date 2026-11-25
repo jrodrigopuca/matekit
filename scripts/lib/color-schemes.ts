@@ -5,7 +5,6 @@
 
 import { registerHooks } from 'node:module'
 import type * as Mcu from '@material/material-color-utilities'
-import type { ColorTokens, ContrastLevel, PaletteTokens, PaletteVariant } from '../../tokens/types.ts'
 
 // El paquete publicado (0.4.0) tiene imports internos sin extensión ('./dynamic_color' en vez
 // de './dynamic_color.js') que Node no resuelve; los empaquetadores sí. Este hook agrega la
@@ -26,6 +25,30 @@ registerHooks({
 const mcu: typeof Mcu = await import('@material/material-color-utilities')
 const { Hct, MaterialDynamicColors, argbFromHex, hexFromArgb } = mcu
 
+export type ContrastLevel = 'standard' | 'medium' | 'high'
+export type PaletteVariant =
+  | 'tonal-spot'
+  | 'neutral'
+  | 'vibrant'
+  | 'expressive'
+  | 'fidelity'
+  | 'content'
+  | 'monochrome'
+  | 'rainbow'
+  | 'fruit-salad'
+
+/** Entrada del generador: un único color obligatorio (ADR-0009). */
+export interface PaletteOptions {
+  /** Color semilla, en hexadecimal (`#rrggbb`). */
+  seed: string
+  /** Variante del esquema. Por defecto `tonal-spot`. */
+  variant?: PaletteVariant | undefined
+}
+
+/** Valor de contrastLevel de material-color-utilities para cada nivel (de -1 a 1). */
+export type ContrastValues = Record<ContrastLevel, number>
+export const DEFAULT_CONTRAST: ContrastValues = { standard: 0, medium: 0.5, high: 1 }
+
 /** Valores de los 49 roles (`primary`, `on-primary`, …) en claro y oscuro. */
 export interface SchemePair {
   light: Record<string, string>
@@ -34,6 +57,59 @@ export interface SchemePair {
 export type ContrastSchemes = Record<ContrastLevel, SchemePair>
 
 export const CONTRAST_LEVELS: readonly ContrastLevel[] = ['standard', 'medium', 'high']
+
+/** Los 49 roles de color de Material 3, en el orden del kit (tests/palettes.test.ts lo compara). */
+export const COLOR_ROLES: readonly string[] = [
+  'primary',
+  'on-primary',
+  'primary-container',
+  'on-primary-container',
+  'secondary',
+  'on-secondary',
+  'secondary-container',
+  'on-secondary-container',
+  'tertiary',
+  'on-tertiary',
+  'tertiary-container',
+  'on-tertiary-container',
+  'error',
+  'on-error',
+  'error-container',
+  'on-error-container',
+  'background',
+  'on-background',
+  'surface',
+  'on-surface',
+  'surface-variant',
+  'on-surface-variant',
+  'outline',
+  'outline-variant',
+  'surface-tint',
+  'shadow',
+  'scrim',
+  'inverse-surface',
+  'inverse-on-surface',
+  'inverse-primary',
+  'primary-fixed',
+  'on-primary-fixed',
+  'primary-fixed-dim',
+  'on-primary-fixed-variant',
+  'secondary-fixed',
+  'on-secondary-fixed',
+  'secondary-fixed-dim',
+  'on-secondary-fixed-variant',
+  'tertiary-fixed',
+  'on-tertiary-fixed',
+  'tertiary-fixed-dim',
+  'on-tertiary-fixed-variant',
+  'surface-dim',
+  'surface-bright',
+  'surface-container-lowest',
+  'surface-container-low',
+  'surface-container',
+  'surface-container-high',
+  'surface-container-highest',
+]
 
 // Especificación 2021, la de por defecto en matekit (ADR-0004).
 const SPEC = '2021' as const
@@ -74,24 +150,16 @@ function readRoles(scheme: Mcu.DynamicScheme, roles: readonly string[]): Record<
 }
 
 /**
- * Esquema base: no se genera. El estándar es el del kit y el medio y el alto son los valores
- * oficiales de m3.material.io, todos en tokens/color.json (ADR-0008).
+ * Paleta generada desde un único color semilla, en los tres niveles de contraste. Los demás
+ * colores (secundario, terciario, neutros, error) los deriva el algoritmo, que asegura las
+ * diferencias y el contraste entre roles (ADR-0009). Variante por defecto: Tonal Spot.
  */
-export function baselineSchemes(kit: ColorTokens): ContrastSchemes {
-  return {
-    standard: { light: kit.light, dark: kit.dark },
-    medium: kit.contrast.medium,
-    high: kit.contrast.high,
-  }
-}
-
-/** Paleta generada desde un color semilla, en los tres niveles de contraste. */
 export function paletteSchemes(
-  palette: PaletteTokens['palettes'][string],
-  contrast: PaletteTokens['contrast'],
-  roles: readonly string[],
+  palette: PaletteOptions,
+  contrast: ContrastValues = DEFAULT_CONTRAST,
+  roles: readonly string[] = COLOR_ROLES,
 ): ContrastSchemes {
-  const Scheme = VARIANTS[palette.variant]
+  const Scheme = VARIANTS[palette.variant ?? 'tonal-spot']
   const source = Hct.fromInt(argbFromHex(palette.seed))
   const pair = (level: number): SchemePair => ({
     light: readRoles(new Scheme(source, false, level, SPEC), roles),

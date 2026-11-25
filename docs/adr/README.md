@@ -13,3 +13,4 @@ nueva la reemplaza y la anterior pasa a "superseded by".
 | [0006](0006-iconos-atomo-y-set-acotado.md) | Átomo `Icon` como contenedor y un set acotado de Material Symbols en SVG | accepted |
 | [0007](0007-menu-popover-y-anchor-positioning.md) | Menús con la API Popover y CSS anchor positioning, con respaldo en JavaScript | accepted |
 | [0008](0008-paletas-y-niveles-de-contraste.md) | Paletas opcionales y niveles de contraste generados al compilar, con `light-dark()` | accepted |
+| [0009](0009-paquete-matekit-theme.md) | Generador de paletas como paquete aparte, `@matekit/theme`, que trabaja al compilar con un solo color | accepted |

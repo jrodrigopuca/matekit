@@ -10,7 +10,6 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import type {
   ColorTokens,
-  ContrastLevel,
   PaletteTokens,
   ElevationTokens,
   MotionTokens,
@@ -20,21 +19,15 @@ import type {
   TypescaleTokens,
 } from '../tokens/types.ts'
 import { springToCss, toLinear } from '../tokens/spring.ts'
-import {
-  CONTRAST_LEVELS,
-  baselineSchemes,
-  paletteSchemes,
-  type ContrastSchemes,
-  type SchemePair,
-} from './lib/color-schemes.ts'
+import { paletteSchemes, type ContrastSchemes } from './lib/color-schemes.ts'
+import { block, type Decl } from './lib/css.ts'
+import { paletteCss, schemeRules } from './lib/palette-css.ts'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const read = <T>(name: string): T =>
   JSON.parse(readFileSync(join(root, 'tokens', name), 'utf8')) as T
 const outDir = join(root, 'src', 'tokens')
 mkdirSync(outDir, { recursive: true })
-
-type Decl = readonly [name: string, value: string | number]
 
 // El texto de la fuente puede traer "*/" (por ejemplo "State Layers/*/Opacity"), que cerraría
 // el comentario antes de tiempo y rompería el CSS; "/*" se neutraliza también por claridad.
@@ -46,56 +39,20 @@ const header = (source: string): string =>
 const rem = (px: number): string => (px === 0 ? '0' : `${+(px / 16).toFixed(6)}rem`)
 const px = (n: number): string => (n === 0 ? '0' : `${n}px`)
 
-function block(selector: string, decls: readonly Decl[], indent = ''): string {
-  const body = decls.map(([name, value]) => `${indent}  ${name}: ${value};`).join('\n')
-  return `${indent}${selector} {\n${body}\n${indent}}\n`
-}
 const vars = (obj: Record<string, string | number>, prefix: string): Decl[] =>
   Object.entries(obj).map(([k, v]) => [`--${prefix}${k}`, v] as const)
 
-// Color (ADR-0008). Cada rol se escribe una vez con light-dark(claro, oscuro): el navegador
-// elige según el color-scheme del elemento donde se usa la variable, que se hereda. :root sigue
-// al sistema (light dark) y data-theme lo fija en cualquier elemento, así que un data-theme
-// anidado funciona aunque las variables vengan de más arriba.
-//
-// Paleta y contraste se eligen con data-palette y data-contrast, también en cualquier elemento:
-// - nivel estándar: el selector de la paleta;
-// - otro nivel: data-contrast en el mismo elemento que la paleta, en un ancestro o en un
-//   descendiente (este último vuelve a declarar los roles con la paleta de arriba);
-// - prefers-contrast: more elige el nivel alto donde nadie fijó data-contrast.
-// Especificidad: el mismo elemento (0,2,0) le gana al ancestro (0,1,0, por :where); el ancestro
-// le gana al nivel estándar por orden. Límite: dos data-contrast distintos encima de la misma
-// paleta se resuelven por orden (alto > medio > estándar), no por cercanía.
-const colorDecls = ({ light, dark }: SchemePair): Decl[] =>
-  Object.keys(light).map((role) => {
-    const l = light[role] ?? ''
-    const d = dark[role] ?? ''
-    return [`--md-sys-color-${role}`, l === d ? l : `light-dark(${l}, ${d})`] as const
-  })
-
-function schemeRules(selectors: readonly string[], schemes: ContrastSchemes, indent: string): string {
-  const parts = [block(selectors.join(`,\n${indent}`), colorDecls(schemes.standard), indent)]
-  for (const level of CONTRAST_LEVELS) {
-    // :root no tiene ancestros: se omite la regla del ancestro.
-    const sel = selectors.flatMap((s) => [
-      `${s}[data-contrast="${level}"]`,
-      ...(s === ':root' ? [] : [`:where([data-contrast="${level}"]) ${s}`]),
-      `${s} [data-contrast="${level}"]`,
-    ])
-    parts.push(block(sel.join(`,\n${indent}`), colorDecls(schemes[level]), indent))
-  }
-  const auto = `:is(${selectors.join(', ')}):not([data-contrast], [data-contrast] *)`
-  parts.push(
-    `${indent}@media (prefers-contrast: more) {\n` +
-      block(auto, colorDecls(schemes.high), `${indent}  `) +
-      `${indent}}\n`,
-  )
-  return parts.join('\n')
-}
-
-const LAYER_ORDER = '@layer matekit.tokens, matekit.palettes, matekit.atoms, matekit.components;'
+// Color (ADR-0008): el CSS de cada esquema lo escribe scripts/lib/palette-css.ts.
 const palettesConfig = read<PaletteTokens>('palettes.json')
 const kitColor = read<ColorTokens>('color.json')
+
+// Esquema base: no se genera. El estándar es el del kit y el medio y el alto, los valores
+// oficiales de m3.material.io, todos en tokens/color.json (ADR-0008).
+const baselineSchemes = (kit: ColorTokens): ContrastSchemes => ({
+  standard: { light: kit.light, dark: kit.dark },
+  medium: kit.contrast.medium,
+  high: kit.contrast.high,
+})
 
 function buildColor(): string {
   const schemes = baselineSchemes(kitColor)
@@ -113,16 +70,12 @@ function buildColor(): string {
 // Paletas opcionales: un archivo por paleta, en la capa matekit.palettes, que va después de
 // matekit.tokens. Así le ganan al esquema base sin importar el orden en que se importen.
 function buildPalettes(): Record<string, string> {
-  const roles = Object.keys(kitColor.light)
   const out: Record<string, string> = {}
   for (const [name, palette] of Object.entries(palettesConfig.palettes)) {
-    const schemes = paletteSchemes(palette, palettesConfig.contrast, roles)
+    const schemes = paletteSchemes(palette, palettesConfig.contrast)
     out[`${name}.css`] =
-      header(`${palettesConfig.$source} Paleta "${palette.label}": semilla ${palette.seed}, variante ${palette.variant}.`) +
-      `/* Uso: importar este archivo y poner data-palette="${name}" en cualquier elemento. */\n\n` +
-      `${LAYER_ORDER}\n\n@layer matekit.palettes {\n` +
-      schemeRules([`[data-palette="${name}"]`], schemes, '  ') +
-      '}\n'
+      header(`${palettesConfig.$source} Paleta "${palette.label}": semilla ${palette.seed}, variante ${palette.variant ?? 'tonal-spot'}.`) +
+      paletteCss(name, schemes)
   }
   return out
 }

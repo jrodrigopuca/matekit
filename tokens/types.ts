@@ -1,5 +1,9 @@
 // Forma de los archivos tokens/*.json. Los usan el generador y las pruebas.
 
+import type { ContrastValues, PaletteOptions } from '../scripts/lib/color-schemes.ts'
+
+export type { ContrastLevel, PaletteVariant } from '../scripts/lib/color-schemes.ts'
+
 export interface ColorTokens {
   $source: string
   $notes?: Record<string, string>
@@ -66,22 +70,11 @@ export type StateTokens = {
   $notes: Record<string, string>
 } & Record<string, number>
 
-export type ContrastLevel = 'standard' | 'medium' | 'high'
-export type PaletteVariant =
-  | 'tonal-spot'
-  | 'neutral'
-  | 'vibrant'
-  | 'expressive'
-  | 'fidelity'
-  | 'content'
-  | 'monochrome'
-  | 'rainbow'
-  | 'fruit-salad'
 
 export interface PaletteTokens {
   $source: string
   /** Valor de contrastLevel de material-color-utilities para cada nivel (de -1 a 1). */
-  contrast: Record<ContrastLevel, number>
+  contrast: ContrastValues
   /** Paletas opcionales, generadas desde un color semilla. La clave es el valor de data-palette. */
-  palettes: Record<string, { seed: string; variant: PaletteVariant; label: string }>
+  palettes: Record<string, PaletteOptions & { label: string }>
 }

@@ -69,6 +69,7 @@
     marrón); la variante se puede cambiar por paleta en `tokens/palettes.json`.
   - El Menu Vibrant pierde el matiz de color de los iconos con el puntero o el foco.
 - Revisit if:
+  - (Paletas propias de cada proyecto: ver ADR-0009, `@matekit/theme`.)
   - Un proyecto necesita color elegido en tiempo de ejecución: agregar un módulo opcional que
     calcule los roles en el cliente (con `material-color-utilities` como dependencia de ese
     módulo, no del paquete principal).

@@ -8,6 +8,7 @@ import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import type { ColorTokens, PaletteTokens } from '../tokens/types.ts'
+import { COLOR_ROLES } from '../scripts/lib/color-schemes.ts'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const read = (...p: string[]) => readFileSync(join(root, ...p), 'utf8')
@@ -89,6 +90,10 @@ test('cada paleta tiene los 49 roles en los tres niveles, en claro y oscuro, con
     }
     assert.deepEqual(s.auto, s.high, `${name}: prefers-contrast: more usa el nivel alto`)
   }
+})
+
+test('el generador conoce los mismos 49 roles que el kit, en el mismo orden', () => {
+  assert.deepEqual(COLOR_ROLES, ROLES)
 })
 
 test('el esquema base usa los valores oficiales de color.json en los niveles medio y alto', () => {
