@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type RefObject } from 'react'
+import { useEffect, useId, useRef, useState, type RefObject } from 'react'
 import { CircularProgressIndicator, LinearProgressIndicator, type ProgressIndicatorThickness } from '../../src/index.ts'
 
 const VALUES = [0, 0.1, 0.2, 0.5, 0.8, 1] as const
@@ -30,6 +30,8 @@ export function ProgressIndicatorPage() {
   const [paused, setPaused] = useState(false)
   const [time, setTime] = useState(0)
   const root = useRef<HTMLDivElement>(null)
+  const fileLabel = useId()
+  const syncLabel = useId()
   useFreeze(root, paused, time)
   const v = indeterminate ? undefined : value
 
@@ -101,6 +103,26 @@ export function ProgressIndicatorPage() {
           pasado el 10 % y se aplana desde el 95 %. "Pausar" congela todas las animaciones de la página en el instante elegido
           (el lineal indeterminado repite cada 1750 ms, el circular cada 6000 ms).
         </p>
+      </section>
+
+      <section className="pg-section" id="pg-progress-labelled">
+        <h2>Con etiqueta visible</h2>
+        <p className="pg-hint">
+          Sin <code>label</code>: el nombre accesible sale de la etiqueta visible con <code>aria-labelledby</code>. TypeScript
+          exige <code>label</code>, <code>aria-labelledby</code> o <code>aria-label</code>.
+        </p>
+        <div style={{ display: 'grid', gap: 8, maxWidth: 360 }}>
+          {/* Solo el nombre del archivo: el porcentaje ya lo anuncia aria-valuenow. */}
+          <span style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span id={fileLabel}>vacaciones-2026.zip</span>
+            <span aria-hidden="true">{Math.round((v ?? 0) * 100)} %</span>
+          </span>
+          <LinearProgressIndicator aria-labelledby={fileLabel} value={v ?? 0} wavy={wavy} thickness={thickness} />
+          <span style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <CircularProgressIndicator aria-labelledby={syncLabel} wavy={wavy} thickness={thickness} />
+            <span id={syncLabel}>Sincronizando contactos</span>
+          </span>
+        </div>
       </section>
 
       <section className="pg-section" id="pg-progress-linear">

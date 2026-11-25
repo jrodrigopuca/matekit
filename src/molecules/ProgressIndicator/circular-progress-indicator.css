@@ -153,7 +153,7 @@
     }
 
     .mk-circular-progress-indicator[data-indeterminate] .mk-circular-progress-indicator-active {
-      animation: mk-cpi-pulse var(--md-sys-motion-duration-extra-long4) var(--md-sys-motion-easing-standard) infinite alternate;
+      animation: var(--_activity-pulse); /* src/internal/activity-pulse.css */
     }
   }
 
@@ -231,12 +231,6 @@
     80%,
     100% {
       rotate: 360deg;
-    }
-  }
-
-  @keyframes mk-cpi-pulse {
-    to {
-      opacity: 0.4;
     }
   }
 }

@@ -45,6 +45,30 @@ describe('LoadingIndicator', () => {
     expect(svg(c).getAttribute('aria-hidden')).toBe('true')
   })
 
+  test('nombre accesible por aria-labelledby (etiqueta visible) o por aria-label', async () => {
+    const c = await render(
+      <div>
+        <span id="etiqueta-visible">Subiendo foto.jpg</span>
+        <LoadingIndicator aria-labelledby="etiqueta-visible" value={0.5} />
+        <LoadingIndicator aria-label="Directo" />
+      </div>,
+    )
+    await expect.element(page.getByRole('progressbar', { name: 'Subiendo foto.jpg' })).toBeInTheDocument()
+    await expect.element(page.getByRole('progressbar', { name: 'Directo' })).toBeInTheDocument()
+    const [linked, direct] = [...c.querySelectorAll<HTMLElement>('.mk-loading-indicator')]
+    // Con aria-labelledby no se inventa un aria-label vacío; aria-label directo llega tal cual.
+    expect(linked!.hasAttribute('aria-label')).toBe(false)
+    expect(direct!.getAttribute('aria-label')).toBe('Directo')
+  })
+
+  test('TypeScript exige un nombre accesible', () => {
+    // @ts-expect-error: sin label, aria-labelledby ni aria-label
+    void (<LoadingIndicator value={0.5} />)
+    // @ts-expect-error: label y aria-label irían al mismo atributo
+    void (<LoadingIndicator label="a" aria-label="b" />)
+    void (<LoadingIndicator label="a" aria-labelledby="b" />)
+  })
+
   test('determinado: aria-valuenow de 0 a 100, acotado', async () => {
     const c = await render(
       <div>
@@ -144,7 +168,7 @@ describe('LoadingIndicator', () => {
     await expect.poll(() => visibleShape(c)).toBe(1)
   })
 
-  test('movimiento reducido: el indeterminado queda quieto en la primera forma', async () => {
+  test('movimiento reducido: el indeterminado queda quieto en la primera forma, latiendo en opacidad', async () => {
     await commands.reduceMotion(true)
     try {
       const c = await render(<LoadingIndicator label="x" />)
@@ -154,6 +178,25 @@ describe('LoadingIndicator', () => {
       expect(style(still).display).not.toBe('none')
       expect(still.getBBox().width).toBeGreaterThan(200)
       expect(style(still).fill).toBe(roleColor('primary'))
+      // Señal de actividad: el mismo latido que los indicadores de progreso (no gira ni cambia de forma).
+      const [pulse, ...rest] = still.getAnimations() as CSSAnimation[]
+      expect([pulse?.animationName, rest.length]).toEqual(['mk-activity-pulse', 0])
+      const timing = pulse!.effect!.getComputedTiming()
+      expect([timing.duration, timing.iterations, timing.direction]).toEqual([1000, Infinity, 'alternate'])
+      pulse!.pause()
+      pulse!.currentTime = 1000
+      await expect.poll(() => Number(style(still).opacity)).toBeCloseTo(0.4, 5)
+    } finally {
+      await commands.reduceMotion(false)
+    }
+  })
+
+  test('movimiento reducido: el determinado sigue quieto, sin latir', async () => {
+    await commands.reduceMotion(true)
+    try {
+      const c = await render(<LoadingIndicator label="x" value={0.5} />)
+      await expect.poll(() => matchMedia('(prefers-reduced-motion: reduce)').matches).toBe(true)
+      expect(c.querySelector('.mk-loading-indicator')!.getAnimations({ subtree: true })).toEqual([])
     } finally {
       await commands.reduceMotion(false)
     }

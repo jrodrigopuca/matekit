@@ -307,7 +307,7 @@
     }
 
     .mk-linear-progress-indicator[data-indeterminate] .mk-linear-progress-indicator-active {
-      animation: mk-lpi-pulse var(--md-sys-motion-duration-extra-long4) var(--md-sys-motion-easing-standard) infinite alternate;
+      animation: var(--_activity-pulse); /* src/internal/activity-pulse.css */
     }
   }
 
@@ -390,12 +390,6 @@
     }
     100% {
       --_lpi-t2: 1;
-    }
-  }
-
-  @keyframes mk-lpi-pulse {
-    to {
-      opacity: 0.4;
     }
   }
 }

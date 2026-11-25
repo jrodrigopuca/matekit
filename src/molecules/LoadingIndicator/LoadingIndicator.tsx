@@ -13,6 +13,7 @@
 //   contorno y se hace visible solo durante su cambio y la espera previa.
 
 import type { HTMLAttributes, Ref } from 'react'
+import type { AccessibleNameProps } from '../../internal/accessible-name.ts'
 import { clampProgress, determinatePathData, determinateRotation } from './determinate.ts'
 import {
   CYCLE_MS,
@@ -27,13 +28,13 @@ import {
   VISIBILITY_KEY_TIMES,
 } from './loading-indicator-data.ts'
 
-export interface LoadingIndicatorProps
-  extends Omit<HTMLAttributes<HTMLSpanElement>, 'aria-label' | 'role' | 'children'> {
-  /**
-   * Nombre accesible (se vuelve `aria-label`), por ejemplo "Cargando mensajes". Obligatorio:
-   * ARIA exige nombre en un `progressbar` y el indicador no tiene texto visible.
-   */
-  label: string
+/**
+ * El nombre accesible es obligatorio (ARIA lo exige en un `progressbar` y el indicador no tiene
+ * texto visible): `label` (se vuelve `aria-label`), `aria-labelledby` (el id de una etiqueta
+ * visible) o `aria-label`. TypeScript exige al menos uno (AccessibleNameProps).
+ */
+export type LoadingIndicatorProps = Omit<HTMLAttributes<HTMLSpanElement>, 'aria-label' | 'aria-labelledby' | 'role' | 'children'> &
+  AccessibleNameProps & {
   /** Con contenedor: un círculo `primary-container` con la forma en `on-primary-container`. */
   contained?: boolean | undefined
   /**
@@ -54,7 +55,8 @@ const repeat = { repeatCount: 'indefinite' } as const
  * `width` y `height` en CSS y la forma se escala.
  *
  * Con movimiento reducido (`prefers-reduced-motion: reduce`), el indeterminado se muestra quieto
- * en la primera forma.
+ * en la primera forma, latiendo en opacidad (la misma señal de actividad que los indicadores de
+ * progreso indeterminados); el determinado queda quieto.
  *
  * ```tsx
  * <LoadingIndicator label="Cargando mensajes" />
@@ -62,13 +64,20 @@ const repeat = { repeatCount: 'indefinite' } as const
  * <LoadingIndicator value={0.4} label="Subiendo foto" />
  * ```
  */
-export function LoadingIndicator({ label, contained, value, className, ...props }: LoadingIndicatorProps) {
+export function LoadingIndicator({
+  label,
+  'aria-label': ariaLabel,
+  contained,
+  value,
+  className,
+  ...props
+}: LoadingIndicatorProps) {
   const progress = value === undefined ? undefined : clampProgress(value)
   return (
     <span
       {...props}
       role="progressbar"
-      aria-label={label}
+      aria-label={label ?? ariaLabel}
       // Indeterminado: sin aria-valuenow (WAI-ARIA, rol progressbar). Determinado: de 0 a 100,
       // que los lectores de pantalla anuncian como porcentaje.
       {...(progress === undefined

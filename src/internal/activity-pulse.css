@@ -1,0 +1,24 @@
+/* Latido de actividad: la señal de los indicadores indeterminados (LoadingIndicator,
+   LinearProgressIndicator y CircularProgressIndicator) con prefers-reduced-motion. La opacidad
+   va y vuelve entre 1 y 0,4 cada segundo (DurationExtraLong4, EasingStandard): un efecto, no un
+   desplazamiento, para que siga habiendo señal de actividad sin movimiento (ADR-0013).
+
+   Se comparte entero: cada componente aplica `animation: var(--_activity-pulse)` sobre lo que
+   tiene que latir. La variable lleva la animación completa (nombre, duración, curva y
+   repetición) para que no haya que copiar los tokens en cada componente; las opacidades
+   quedan en el @keyframes. */
+
+@layer matekit.components {
+  :root {
+    --_activity-pulse: mk-activity-pulse var(--md-sys-motion-duration-extra-long4) var(--md-sys-motion-easing-standard) infinite alternate;
+  }
+
+  @keyframes mk-activity-pulse {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 0.4;
+    }
+  }
+}

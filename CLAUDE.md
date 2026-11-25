@@ -46,7 +46,10 @@ src/internal/    ayudas compartidas entre componentes, no exportadas (interactiv
                  o el elemento de render, ADR-0010, de Button, IconButton, los FAB y la
                  navegación; navigation-item.tsx: base de los destinos de NavigationBar y
                  NavigationRail; merge-refs.ts: mergeRefs une varias ref con la limpieza de
-                 React 19, sin hooks: memorizarla al llamarla, como Dialog y Menu)
+                 React 19, sin hooks: memorizarla al llamarla, como Dialog y Menu;
+                 accessible-name.ts: AccessibleNameProps, el nombre obligatorio por label,
+                 aria-labelledby o aria-label de los indicadores; activity-pulse.css: el latido
+                 de los indicadores indeterminados con movimiento reducido)
 src/styles.css   hoja única: importa tokens, átomos y componentes
 playground/      páginas de prueba manual, una por componente
 docs/research/   datos extraídos del kit de Figma y de Jetpack Compose

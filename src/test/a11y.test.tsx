@@ -299,6 +299,8 @@ const GALLERIES: Record<string, ReactNode> = {
       <LoadingIndicator contained label="Actualizando" />
       <LoadingIndicator value={0.4} label="Subiendo foto" />
       <LoadingIndicator contained value={1} label="Listo" />
+      <span id="a11y-li-label">Sincronizando</span>
+      <LoadingIndicator aria-labelledby="a11y-li-label" />
     </>
   ),
   ProgressIndicator: (
@@ -308,6 +310,10 @@ const GALLERIES: Record<string, ReactNode> = {
       <LinearProgressIndicator label="Copiando" value={0.6} wavy />
       <CircularProgressIndicator label="Actualizando" />
       <CircularProgressIndicator label="Descargando" value={0.6} wavy thickness={8} />
+      <span id="a11y-lp-label">foto.jpg</span>
+      <LinearProgressIndicator aria-labelledby="a11y-lp-label" value={0.3} />
+      <span id="a11y-cp-label">Copia de seguridad</span>
+      <CircularProgressIndicator aria-labelledby="a11y-cp-label" />
     </>
   ),
 }

@@ -54,6 +54,30 @@ describe('CircularProgressIndicator', () => {
     expect(c.querySelector('svg')!.getAttribute('aria-hidden')).toBe('true')
   })
 
+  test('nombre accesible por aria-labelledby (etiqueta visible) o por aria-label', async () => {
+    const c = await render(
+      <div>
+        <span id="etiqueta-visible">Subiendo foto.jpg</span>
+        <CircularProgressIndicator aria-labelledby="etiqueta-visible" value={0.5} />
+        <CircularProgressIndicator aria-label="Directo" />
+      </div>,
+    )
+    await expect.element(page.getByRole('progressbar', { name: 'Subiendo foto.jpg' })).toBeInTheDocument()
+    await expect.element(page.getByRole('progressbar', { name: 'Directo' })).toBeInTheDocument()
+    const [linked, direct] = [...c.querySelectorAll<HTMLElement>('.mk-circular-progress-indicator')]
+    // Con aria-labelledby no se inventa un aria-label vacío; aria-label directo llega tal cual.
+    expect(linked!.hasAttribute('aria-label')).toBe(false)
+    expect(direct!.getAttribute('aria-label')).toBe('Directo')
+  })
+
+  test('TypeScript exige un nombre accesible', () => {
+    // @ts-expect-error: sin label, aria-labelledby ni aria-label
+    void (<CircularProgressIndicator value={0.5} />)
+    // @ts-expect-error: label y aria-label irían al mismo atributo
+    void (<CircularProgressIndicator label="a" aria-label="b" />)
+    void (<CircularProgressIndicator label="a" aria-labelledby="b" />)
+  })
+
   test('determinado: aria-valuenow de 0 a 100, acotado', async () => {
     const c = await render(
       <div>
@@ -217,7 +241,7 @@ describe('CircularProgressIndicator', () => {
       const c = await render(<Surface><CircularProgressIndicator label="x" wavy /></Surface>)
       await expect.poll(() => names(root(c))).toEqual([])
       expect(names(c.querySelector('.mk-circular-progress-indicator-rotor')!)).toEqual([])
-      expect(names(active(c))).toEqual(['mk-cpi-pulse'])
+      expect(names(active(c))).toEqual(['mk-activity-pulse'])
       expect(Number(style(root(c)).getPropertyValue('--_cpi-value'))).toBeCloseTo(0.25, 5)
       // Quieto de las 12 a las 3.
       const p = await pixelsOf(root(c))

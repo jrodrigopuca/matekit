@@ -400,6 +400,45 @@ Progress 0, 10, 20 (30 en el circular), 50, 80 y 100, o Step 0 a 2 en los indete
   el grosor, la separación y la onda se toman de Compose).
 - Indeterminado: el indicador gira (en Step 1 el conjunto está rotado unos −100°).
 
+## Slider
+
+Leído del kit el 2026-11-25 (página Sliders; conjuntos `Standard slider` 58008:10356,
+`Centered slider` 58008:10979 y `Range slider` 58008:11810; piezas en `.Building Blocks/`).
+Variantes: Orientation Horizontal o Vertical, Size XSmall a XLarge, State Enabled, Hovered,
+Pressed y Disabled (no hay Focused), y Value 0, 50 y 100 (−50, 0 y +50 en centered y range).
+
+| Tamaño | Alto de la pista | Radio exterior | Alto del handle (= alto total) |
+|---|---|---|---|
+| XSmall | 16 | 8 (completo) | 44 |
+| Small | 24 | 8 | 44 |
+| Medium | 40 | 12 | 52 |
+| Large | 56 | 16 | 68 |
+| XLarge | 96 | 28 | 108 |
+
+- Handle: barra de 4 de ancho, radio 2, `Primary`; al presionar se angosta a 2 (las pistas
+  crecen 1 de cada lado).
+- Separación de 6 entre el handle y cada pista. Las esquinas de la pista junto al handle tienen
+  radio 2; las de los extremos, el radio exterior de la tabla.
+- Pista activa `Primary`; pista inactiva `Secondary Container`.
+- Punto de parada (track stop): círculo de 4 `On Secondary Container`, centrado en el alto y a 4
+  del final de la pista inactiva. En el slider con pasos ("Stops"), puntos de 4 repartidos con
+  4 de margen en los extremos; sobre la pista activa van en `Secondary Container`.
+- Valor 0: sin pista activa, el handle a 4 del inicio. Valor 100: sin pista inactiva ni punto,
+  el handle a 4 del final.
+- Hover: capa `On Primary` al 8 % sobre el handle. Presionado: capa `On Primary` al 10 %, handle
+  de 2 y el indicador de valor.
+- Indicador de valor (presionado): píldora de 48 × 44 (radio completo), `Inverse Surface`,
+  relleno 12 arriba y abajo y 16 a los lados, texto Label Large en `Inverse On Surface`, 4 por
+  encima del handle.
+- Deshabilitado: pista activa y handle `On Surface` al 38 %, pista inactiva `On Surface` al
+  10 %, punto `On Surface` al 38 %. (En el kit la pista activa deshabilitada pierde el radio:
+  probable error del kit.)
+- Vertical: el mismo dibujo girado; la pista activa abajo y la inactiva arriba.
+- Centered: la pista activa va del centro al valor; puntos de parada en los dos extremos; 4 de
+  separación entre la pista inactiva izquierda y la activa en el centro.
+- Range: dos handles con la pista activa entre ellos; con los dos en el mismo valor, un punto en
+  el centro ("Track dot - centered").
+
 ## Diferencias con la especificación a revisar
 
 - El indicador con foco del campo de texto mide 3 en el kit. Confirmar en m3.material.io.

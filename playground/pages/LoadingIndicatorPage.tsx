@@ -75,7 +75,7 @@ export function LoadingIndicatorPage() {
         </div>
         <p className="pg-hint">
           Sin JavaScript: SVG con <code>&lt;animate&gt;</code> precalculado con <code>pnpm shapes</code> (ADR-0011). Con
-          movimiento reducido, el indeterminado queda quieto en la primera forma. "Pausar" congela todos los indicadores de la
+          movimiento reducido, el indeterminado queda quieto en la primera forma, latiendo en opacidad (como los indicadores de progreso). "Pausar" congela todos los indicadores de la
           página en el instante elegido del ciclo de {CYCLE_MS} ms.
         </p>
       </section>

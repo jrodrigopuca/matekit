@@ -43,7 +43,9 @@
 
   /* Movimiento reducido: SMIL no sigue prefers-reduced-motion y CSS no puede pausarlo (las
      animaciones de visibility de SMIL además ganan a la cascada), así que se oculta el grupo
-     animado entero y se muestra la primera forma quieta. */
+     animado entero y se muestra la primera forma quieta, latiendo en opacidad como los
+     indicadores de progreso indeterminados (src/internal/activity-pulse.css): sin girar ni
+     cambiar de forma, pero con señal de actividad. El determinado no tiene forma quieta: no late. */
   @media (prefers-reduced-motion: reduce) {
     .mk-loading-indicator-motion {
       display: none;
@@ -51,6 +53,7 @@
 
     .mk-loading-indicator-still {
       display: inline;
+      animation: var(--_activity-pulse);
     }
   }
 

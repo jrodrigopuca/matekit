@@ -12,6 +12,7 @@
 // Detalle y fuentes en linear-progress-indicator.css y progress.ts.
 
 import type { CSSProperties, HTMLAttributes, Ref } from 'react'
+import type { AccessibleNameProps } from '../../internal/accessible-name.ts'
 import {
   LINEAR_FLAT_PATH,
   LINEAR_WAVELENGTH,
@@ -22,13 +23,13 @@ import {
   type ProgressIndicatorThickness,
 } from './progress.ts'
 
-export interface LinearProgressIndicatorProps
-  extends Omit<HTMLAttributes<HTMLDivElement>, 'aria-label' | 'role' | 'children'> {
-  /**
-   * Nombre accesible (se vuelve `aria-label`), por ejemplo "Subiendo foto". Obligatorio: ARIA
-   * exige nombre en un `progressbar` y el indicador no tiene texto visible.
-   */
-  label: string
+/**
+ * El nombre accesible es obligatorio (ARIA lo exige en un `progressbar` y el indicador no tiene
+ * texto visible): `label` (se vuelve `aria-label`), `aria-labelledby` (el id de una etiqueta
+ * visible) o `aria-label`. TypeScript exige al menos uno (AccessibleNameProps).
+ */
+export type LinearProgressIndicatorProps = Omit<HTMLAttributes<HTMLDivElement>, 'aria-label' | 'aria-labelledby' | 'role' | 'children'> &
+  AccessibleNameProps & {
   /**
    * Progreso de 0 a 1 (fuera de eso se acota). Sin `value`, el indicador es indeterminado. Los
    * cambios se animan (500 ms lineales, la recomendación de Compose para los indicadores de
@@ -69,6 +70,7 @@ const WAVE_PATHS = {
  */
 export function LinearProgressIndicator({
   label,
+  'aria-label': ariaLabel,
   value,
   wavy,
   thickness,
@@ -83,7 +85,7 @@ export function LinearProgressIndicator({
     <div
       {...props}
       role="progressbar"
-      aria-label={label}
+      aria-label={label ?? ariaLabel}
       {...progressAria(progress)}
       className={className ? `mk-linear-progress-indicator ${className}` : 'mk-linear-progress-indicator'}
       data-wavy={wavy ? '' : undefined}

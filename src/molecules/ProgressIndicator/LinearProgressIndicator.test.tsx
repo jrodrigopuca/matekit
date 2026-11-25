@@ -90,6 +90,30 @@ describe('LinearProgressIndicator', () => {
     expect(c.querySelector('svg')!.getAttribute('aria-hidden')).toBe('true')
   })
 
+  test('nombre accesible por aria-labelledby (etiqueta visible) o por aria-label', async () => {
+    const c = await render(
+      <div>
+        <span id="etiqueta-visible">Subiendo foto.jpg</span>
+        <LinearProgressIndicator aria-labelledby="etiqueta-visible" value={0.5} />
+        <LinearProgressIndicator aria-label="Directo" />
+      </div>,
+    )
+    await expect.element(page.getByRole('progressbar', { name: 'Subiendo foto.jpg' })).toBeInTheDocument()
+    await expect.element(page.getByRole('progressbar', { name: 'Directo' })).toBeInTheDocument()
+    const [linked, direct] = [...c.querySelectorAll<HTMLElement>('.mk-linear-progress-indicator')]
+    // Con aria-labelledby no se inventa un aria-label vacío; aria-label directo llega tal cual.
+    expect(linked!.hasAttribute('aria-label')).toBe(false)
+    expect(direct!.getAttribute('aria-label')).toBe('Directo')
+  })
+
+  test('TypeScript exige un nombre accesible', () => {
+    // @ts-expect-error: sin label, aria-labelledby ni aria-label
+    void (<LinearProgressIndicator value={0.5} />)
+    // @ts-expect-error: label y aria-label irían al mismo atributo
+    void (<LinearProgressIndicator label="a" aria-label="b" />)
+    void (<LinearProgressIndicator label="a" aria-labelledby="b" />)
+  })
+
   test('determinado: aria-valuenow de 0 a 100, acotado', async () => {
     const c = await render(
       <div>
@@ -375,7 +399,7 @@ describe('LinearProgressIndicator', () => {
       expect(style(ca).getPropertyValue('--_lpi-shift')).toBe('0px')
       // Señal de actividad: el indicador late en opacidad (no se desplaza).
       const pulse = a.querySelector('.mk-linear-progress-indicator-active')!.getAnimations()
-      expect(pulse.map((x) => (x as CSSAnimation).animationName)).toEqual(['mk-lpi-pulse'])
+      expect(pulse.map((x) => (x as CSSAnimation).animationName)).toEqual(['mk-activity-pulse'])
       // El valor cambia sin transición.
       expect(withMotion(() => style(b).transitionProperty)).toBe('none')
     } finally {

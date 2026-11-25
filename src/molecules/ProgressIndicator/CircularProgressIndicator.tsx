@@ -9,6 +9,7 @@
 // Detalle y fuentes en circular-progress-indicator.css y progress.ts.
 
 import type { CSSProperties, HTMLAttributes, Ref } from 'react'
+import type { AccessibleNameProps } from '../../internal/accessible-name.ts'
 import { FLAT_PATH, TRACK_LENGTH, TRACK_PATH, WAVE_PATH } from './circular-wavy-data.ts'
 import {
   CIRCULAR_FLAT_LENGTH,
@@ -20,13 +21,13 @@ import {
   type ProgressIndicatorThickness,
 } from './progress.ts'
 
-export interface CircularProgressIndicatorProps
-  extends Omit<HTMLAttributes<HTMLSpanElement>, 'aria-label' | 'role' | 'children'> {
-  /**
-   * Nombre accesible (se vuelve `aria-label`), por ejemplo "Actualizando". Obligatorio: ARIA exige
-   * nombre en un `progressbar` y el indicador no tiene texto visible.
-   */
-  label: string
+/**
+ * El nombre accesible es obligatorio (ARIA lo exige en un `progressbar` y el indicador no tiene
+ * texto visible): `label` (se vuelve `aria-label`), `aria-labelledby` (el id de una etiqueta
+ * visible) o `aria-label`. TypeScript exige al menos uno (AccessibleNameProps).
+ */
+export type CircularProgressIndicatorProps = Omit<HTMLAttributes<HTMLSpanElement>, 'aria-label' | 'aria-labelledby' | 'role' | 'children'> &
+  AccessibleNameProps & {
   /**
    * Progreso de 0 a 1 (fuera de eso se acota). Sin `value`, el indicador es indeterminado. Los
    * cambios se animan (500 ms lineales), salvo con movimiento reducido.
@@ -55,6 +56,7 @@ export interface CircularProgressIndicatorProps
  */
 export function CircularProgressIndicator({
   label,
+  'aria-label': ariaLabel,
   value,
   wavy,
   thickness,
@@ -74,7 +76,7 @@ export function CircularProgressIndicator({
     <span
       {...props}
       role="progressbar"
-      aria-label={label}
+      aria-label={label ?? ariaLabel}
       {...progressAria(progress)}
       className={className ? `mk-circular-progress-indicator ${className}` : 'mk-circular-progress-indicator'}
       data-wavy={wavy ? '' : undefined}
