@@ -131,6 +131,17 @@ No llamar al conector de Figma salvo que falte un dato imprescindible: tiene lí
   bordes que identifican el control), que lo recorre en las 4 paletas, los 3 niveles de
   contraste y los 2 temas. axe no decide el contraste de elementos cubiertos por los
   átomos (StateLayer, Ripple, FocusRing), por eso existe esta prueba propia.
+- **Motores:** el CI corre las pruebas en Chrome, Firefox y WebKit (`MK_BROWSERS`). Lo que
+  ya se sabe de cada uno (comprobado el 2026-11-25):
+  - Medidas: comparar posiciones restadas con `toBeCloseTo(x, 2)`; Firefox ubica en subpíxeles.
+  - Foco de teclado: llegar con `userEvent.tab()`, no con `.focus()`; Firefox no muestra el foco
+    visible en un elemento enfocado por script si el foco anterior no era de teclado.
+  - WebKit activa `forced-colors` pero no reemplaza colores: probar ahí solo lo que el CSS de
+    matekit define a mano.
+  - Una prueba que no aplica en un motor se saltea con `test.skipIf(server.browser === '…')` y
+    el motivo comprobado en un comentario, nunca en silencio.
+  - WebKit en macOS no lleva el foco a los botones con Tab ni con clic (ajuste del sistema):
+    en local, esas pruebas fallan; la referencia es el WebKit de Linux del CI.
 - `src/test/render.tsx` aísla cada prueba: desmonta lo renderizado al terminar y deja el
   puntero en una esquina antes de empezar. No repetir eso en cada archivo. Para detectar
   dependencias de orden: `pnpm exec vitest run --sequence.shuffle --sequence.seed=<n>`.
