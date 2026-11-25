@@ -6,6 +6,23 @@ import { afterEach, beforeEach } from 'vitest'
 import { userEvent } from 'vitest/browser'
 import '../styles.css'
 
+// act() solo se usa para montar y desmontar. React exige que el entorno se declare de pruebas
+// mientras corre act() (si no, avisa "The current testing environment is not configured to
+// support act(...)"), pero si queda declarado siempre, avisa por cada actualización que causa
+// un evento real del navegador ("not wrapped in act"). Esos eventos vienen de Playwright y las
+// pruebas esperan su resultado en el DOM, así que la marca se activa solo durante act().
+declare global {
+  var IS_REACT_ACT_ENVIRONMENT: boolean | undefined
+}
+async function inAct(fn: () => void): Promise<void> {
+  globalThis.IS_REACT_ACT_ENVIRONMENT = true
+  try {
+    await act(async () => fn())
+  } finally {
+    globalThis.IS_REACT_ACT_ENVIRONMENT = false
+  }
+}
+
 // Sin transiciones durante las pruebas: getComputedStyle devolvería valores intermedios.
 const noMotion = document.createElement('style')
 noMotion.id = 'mk-test-no-motion'
@@ -27,7 +44,7 @@ let container: HTMLElement | undefined
 
 /** Desmonta lo que haya renderizado la prueba anterior. */
 async function cleanup() {
-  if (root) await act(async () => root?.unmount())
+  if (root) await inAct(() => root?.unmount())
   root = undefined
   container?.remove()
   container = undefined
@@ -55,7 +72,7 @@ export async function render(ui: ReactNode): Promise<HTMLElement> {
   container = document.createElement('div')
   document.body.append(container)
   root = createRoot(container)
-  await act(async () => root?.render(ui))
+  await inAct(() => root?.render(ui))
   return container
 }
 
