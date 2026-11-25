@@ -138,4 +138,47 @@
   .mk-checkbox-label {
     padding-inline-end: 8px;
   }
+
+  /* --- Alto contraste (forced-colors) ---
+     El borde de la caja es una sombra interior, que el navegador quita, y el relleno es un
+     fondo, que fuerza: sin esto la casilla desaparece. La caja sale del ajuste automático y se
+     dibuja con colores del sistema: contorno CanvasText, marcada en Highlight con la marca en
+     HighlightText, deshabilitada en GrayText. */
+  @media (forced-colors: active) {
+    .mk-checkbox-box {
+      forced-color-adjust: none;
+      background-color: Canvas;
+      box-shadow: none;
+      outline: 2px solid CanvasText;
+      outline-offset: -2px;
+    }
+    .mk-checkbox-icon {
+      stroke: Canvas;
+    }
+    .mk-checkbox-control:has(> .mk-checkbox-input:is(:checked, :indeterminate)) .mk-checkbox-box {
+      background-color: Highlight;
+      outline-color: Highlight;
+    }
+    .mk-checkbox-control:has(> .mk-checkbox-input:is(:checked, :indeterminate)) .mk-checkbox-icon {
+      stroke: HighlightText;
+    }
+    /* Deshabilitado: GrayText ya lo comunica; el 38 % de opacidad lo haría casi invisible. */
+    .mk-checkbox-control:has(> .mk-checkbox-input:disabled) {
+      opacity: 1;
+    }
+    .mk-checkbox:has(.mk-checkbox-input:disabled) .mk-checkbox-label {
+      forced-color-adjust: none;
+      opacity: 1;
+      color: GrayText;
+    }
+    .mk-checkbox-control:has(> .mk-checkbox-input:disabled) .mk-checkbox-box {
+      outline-color: GrayText;
+    }
+    .mk-checkbox-control:has(> .mk-checkbox-input:disabled:is(:checked, :indeterminate)) .mk-checkbox-box {
+      background-color: GrayText;
+    }
+    .mk-checkbox-control:has(> .mk-checkbox-input:disabled:is(:checked, :indeterminate)) .mk-checkbox-icon {
+      stroke: Canvas;
+    }
+  }
 }

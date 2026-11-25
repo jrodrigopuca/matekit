@@ -381,4 +381,35 @@
   .mk-text-field:has(.mk-text-field-input:disabled) .mk-text-field-input {
     cursor: default;
   }
+
+  /* --- Alto contraste (forced-colors) ---
+     En el filled, el fondo del contenedor y el indicador (un ::after con fondo) desaparecen:
+     sin esto el campo no se distingue del texto que lo rodea. Se le da un contorno
+     CanvasText al contenedor y el indicador sale del ajuste automático: CanvasText en reposo,
+     Highlight con foco, GrayText deshabilitado. El outlined ya dibuja su borde con un
+     <fieldset>, que el navegador conserva. */
+  @media (forced-colors: active) {
+    .mk-text-field[data-variant='filled'] .mk-text-field-container {
+      outline: 1px solid CanvasText;
+      outline-offset: -1px;
+    }
+    .mk-text-field-container::after {
+      forced-color-adjust: none;
+      background-color: CanvasText;
+    }
+    .mk-text-field:has(.mk-text-field-input:focus) .mk-text-field-container::after {
+      background-color: Highlight;
+    }
+    .mk-text-field:has(.mk-text-field-input:disabled) .mk-text-field-container {
+      outline-color: GrayText;
+    }
+    .mk-text-field:has(.mk-text-field-input:disabled) .mk-text-field-container::after {
+      background-color: GrayText;
+    }
+    .mk-text-field:has(.mk-text-field-input:disabled)
+      :is(.mk-text-field-label, .mk-text-field-input, .mk-text-field-supporting, .mk-text-field-leading, .mk-text-field-trailing) {
+      forced-color-adjust: none;
+      color: GrayText;
+    }
+  }
 }

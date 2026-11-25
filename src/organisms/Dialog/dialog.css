@@ -190,4 +190,13 @@
   .mk-dialog-headline:has(+ .mk-dialog-actions) {
     margin-bottom: 0;
   }
+
+  /* --- Alto contraste (forced-colors) ---
+     El diálogo se distingue de la página solo por su fondo, que el navegador fuerza al mismo
+     color que la página. Un contorno CanvasText marca su borde. */
+  @media (forced-colors: active) {
+    .mk-dialog {
+      outline: 1px solid CanvasText;
+    }
+  }
 }

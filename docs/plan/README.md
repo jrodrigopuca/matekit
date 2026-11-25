@@ -40,6 +40,8 @@ siguiente. Convenciones en [`CLAUDE.md`](../../CLAUDE.md).
 - [ ] Teclado y roles según WAI-ARIA APG; foco visible con `FocusRing`.
 - [ ] Tema claro y oscuro correctos; movimiento con los resortes; con
       `prefers-reduced-motion`, sin desplazamientos.
+- [ ] Modo de alto contraste (`forced-colors: active`): forma visible y estados distinguibles
+      con colores del sistema; cubierto en `src/test/forced-colors.test.tsx`.
 - [ ] Pruebas en navegador que cubren lo anterior; `pnpm typecheck` y `pnpm test` en verde;
       una prueba de falsación hecha.
 - [ ] Página en el playground; exportado en `src/index.ts`; CSS importado en `src/styles.css`.

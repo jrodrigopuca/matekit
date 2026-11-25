@@ -9,5 +9,7 @@ declare module 'vitest/browser' {
     pressUp(): Promise<void>
     /** Emula `prefers-reduced-motion: reduce` (true) o la quita (false). */
     reduceMotion(on: boolean): Promise<void>
+    /** Emula el modo de alto contraste, `forced-colors: active` (true), o lo quita (false). */
+    forcedColors(on: boolean): Promise<void>
   }
 }

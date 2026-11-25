@@ -257,4 +257,27 @@
   :is(.mk-button, .mk-icon-button)[data-variant='outlined'][aria-pressed='true']:is(:disabled, [aria-disabled='true']) {
     --_outline: transparent;
   }
+
+  /* --- Alto contraste (forced-colors) ---
+     El navegador quita fondos y sombras y fuerza los colores del sistema. La forma la da el
+     contorno, que se dibuja siempre en ButtonText (también en Text, Standard y Filled, que
+     normalmente no lo tienen). El toggle seleccionado se marca con Highlight; para eso el botón
+     sale del ajuste automático (forced-color-adjust: none) y usa colores del sistema. */
+  @media (forced-colors: active) {
+    :is(.mk-button, .mk-icon-button) {
+      outline-color: ButtonText;
+    }
+    :is(.mk-button, .mk-icon-button)[aria-pressed='true'] {
+      forced-color-adjust: none;
+      background-color: Highlight;
+      color: HighlightText;
+      outline-color: Highlight;
+    }
+    :is(.mk-button, .mk-icon-button):is(:disabled, [aria-disabled='true']) {
+      forced-color-adjust: none;
+      background-color: Canvas;
+      color: GrayText;
+      outline-color: GrayText;
+    }
+  }
 }

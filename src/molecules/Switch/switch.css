@@ -241,4 +241,53 @@
   .mk-switch-label {
     padding-inline: 8px;
   }
+
+  /* --- Alto contraste (forced-colors) ---
+     La pista y el handle se dibujan con fondos y con una sombra interior, que el navegador
+     fuerza o quita: sin esto solo quedan los iconos. Salen del ajuste automático y usan
+     colores del sistema: pista con contorno CanvasText y handle CanvasText; activado, pista
+     Highlight con handle HighlightText; deshabilitado, GrayText. */
+  @media (forced-colors: active) {
+    .mk-switch-track {
+      forced-color-adjust: none;
+      background-color: Canvas;
+      box-shadow: none;
+      outline: 2px solid CanvasText;
+      outline-offset: -2px;
+    }
+    .mk-switch-handle {
+      forced-color-adjust: none;
+      background-color: CanvasText;
+      color: Canvas;
+    }
+    .mk-switch-control:has(> .mk-switch-input:checked) > .mk-switch-track {
+      background-color: Highlight;
+      outline-color: Highlight;
+    }
+    .mk-switch-control:has(> .mk-switch-input:checked) > .mk-switch-handle {
+      background-color: HighlightText;
+      color: Highlight;
+    }
+    /* Deshabilitado: GrayText ya lo comunica; sin la opacidad, que restaría contraste. */
+    .mk-switch:has(> .mk-switch-control > .mk-switch-input:disabled) .mk-switch-label {
+      forced-color-adjust: none;
+      opacity: 1;
+      color: GrayText;
+    }
+    .mk-switch-control:has(> .mk-switch-input:disabled) > .mk-switch-track {
+      outline-color: GrayText;
+    }
+    .mk-switch-control:has(> .mk-switch-input:disabled) > .mk-switch-handle {
+      background-color: GrayText;
+      color: Canvas;
+    }
+    .mk-switch-control:has(> .mk-switch-input:disabled:checked) > .mk-switch-track {
+      background-color: GrayText;
+      outline-color: GrayText;
+    }
+    .mk-switch-control:has(> .mk-switch-input:disabled:checked) > .mk-switch-handle {
+      background-color: Canvas;
+      color: GrayText;
+    }
+  }
 }

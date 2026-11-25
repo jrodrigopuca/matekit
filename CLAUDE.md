@@ -70,6 +70,12 @@ exporta desde el `index.ts` de su capa y su CSS se importa en `src/styles.css`.
   `--md-sys-motion-spring-{fast,default,slow}-{spatial,effects}-{duration,easing}`.
 - Estados en este orden: hover (solo dentro de `@media (hover: hover)`), foco, presionado,
   deshabilitado al final.
+- **Alto contraste:** un bloque `@media (forced-colors: active)` al final de cada CSS. El
+  navegador quita fondos y sombras (incluidas las sombras interiores usadas como borde) y
+  fuerza colores del sistema: la forma se dibuja con `outline` o `border`, y los estados con
+  colores del sistema (`Highlight`/`HighlightText` para seleccionado o activado, `GrayText`
+  para deshabilitado, sin sumar opacidad), con `forced-color-adjust: none` donde haga falta.
+  Ejemplos: Checkbox, Switch, TextField.
 
 ## Fuentes de verdad (ADR-0004)
 
@@ -102,6 +108,8 @@ No llamar al conector de Figma salvo que falte un dato imprescindible: tiene lí
 - Antes de dar algo por terminado: `pnpm typecheck` y `pnpm test` en verde, y romper a
   propósito una regla CSS para confirmar que alguna prueba falla (luego restaurarla).
 - Para esperar animaciones, `expect.poll`, no tiempos fijos.
+- Alto contraste: sumar el componente a `src/test/forced-colors.test.tsx`, que emula el modo
+  con `commands.forcedColors(true)` y compara contra los colores del sistema (`systemColor`).
 - `src/test/render.tsx` aísla cada prueba: desmonta lo renderizado al terminar y deja el
   puntero en una esquina antes de empezar. No repetir eso en cada archivo. Para detectar
   dependencias de orden: `pnpm exec vitest run --sequence.shuffle --sequence.seed=<n>`.
