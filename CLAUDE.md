@@ -55,7 +55,9 @@ src/internal/    ayudas compartidas entre componentes, no exportadas (interactiv
                  de los indicadores indeterminados con movimiento reducido; layout-element.tsx:
                  el `<div>` o el elemento de `render` de Stack y Group; anchor-position.ts: la
                  posición de una capa junto a su ancla, respaldo sin anchor positioning, de Menu y
-                 Tooltip, ADR-0007 y ADR-0021)
+                 Tooltip, ADR-0007 y ADR-0021; roving-focus.ts: useRovingFocus, el foco
+                 itinerante de una sola parada de Tab de ChipGroup y Tabs, para las Toolbars,
+                 ADR-0023)
 src/styles.css   hoja única: importa tokens, átomos y componentes
 playground/      páginas de prueba manual, una por componente
 docs/research/   datos extraídos del kit de Figma y de Jetpack Compose
@@ -221,6 +223,13 @@ No llamar al conector de Figma salvo que falte un dato imprescindible: tiene lí
     los tres, salvo Firefox con el ancla en un contexto RTL, que la corre casi 300 px
     (`anchor-center` mal resuelto). `placeNextTo` lo detecta y corrige (ADR-0021).
     `popover="hint"` existe en los tres.
+  - Indicador de Tabs (comprobado el 2026-11-26): con anchor positioning, cambiar `anchor-name` de un
+    elemento a otro con `transition` en `left`/`right` anima en Chrome y WebKit y salta en Firefox. La
+    Web Animations API con `translate` y `width`, un keyframe con `offset: 0` (final implícito) y un
+    `linear()` de los tokens como `easing` da lo mismo en los tres; para probarla, `getAnimations()`,
+    `pause()` y `currentTime`. El global `transition: none` de `render.tsx` no la afecta.
+    `hidden="until-found"` (`onbeforematch`) existe en los tres. La ventana de las pruebas mide unos
+    414 px: un componente más ancho hace que el clic desplace la página y corre las medidas.
 - Snackbar (comprobado el 2026-11-26): un `popover` dentro de un `<dialog>` modal abierto se puede
   usar en los tres motores (fuera del diálogo queda inerte). Un F6 real que la página no atrapa
   saca el foco del documento en Firefox: para probar que un componente no atrapa una tecla, despachar

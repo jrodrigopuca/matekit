@@ -33,6 +33,7 @@ import { RadioButtonPage } from './pages/RadioButtonPage.tsx'
 import { ShapesPage } from './pages/ShapesPage.tsx'
 import { SliderPage } from './pages/SliderPage.tsx'
 import { SwitchPage } from './pages/SwitchPage.tsx'
+import { TabsPage } from './pages/TabsPage.tsx'
 import { TextFieldPage } from './pages/TextFieldPage.tsx'
 import { SnackbarPage } from './pages/SnackbarPage.tsx'
 import { TooltipPage } from './pages/TooltipPage.tsx'
@@ -90,6 +91,7 @@ const PAGES = {
   'navigation-bar': { label: 'NavigationBar', group: 'organisms', Page: NavigationBarPage },
   'navigation-rail': { label: 'NavigationRail', group: 'organisms', Page: NavigationRailPage },
   snackbar: { label: 'Snackbar', group: 'organisms', Page: SnackbarPage },
+  tabs: { label: 'Tabs', group: 'organisms', Page: TabsPage },
   tooltip: { label: 'Tooltip', group: 'organisms', Page: TooltipPage },
   layout: { label: 'Disposición', group: 'foundations', Page: LayoutPage },
   tokens: { label: 'Tokens', group: 'foundations', Page: TokensPage },

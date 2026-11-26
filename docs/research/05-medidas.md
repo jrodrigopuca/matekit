@@ -566,6 +566,29 @@ Text only, Text & action o Text & longer action, una o dos líneas y Show close 
 - Cerrar: área de 48 con un círculo de 40 e icono `close` de 24 en `Inverse On Surface`; capa
   `Inverse On Surface` al 8 % y 10 %.
 
+## Tabs
+
+Leído del kit el 2026-11-26 (página Tabs; conjunto `Tabs` 54563:40023 con Configuration Fixed o
+Scrollable, Style Primary o Secondary y Layout Label only, Icon only o Label & icon; pestañas en
+`Primary tabs/{Icon and label, Icon only, Label only}` y `Secondary tabs/{Label only, Icon and
+label}` con Selected y State Enabled, Hovered, Focused, Pressed).
+
+- Barra: fondo `Surface`, divisor inferior de 1 en `Outline Variant` a todo el ancho. Fixed:
+  pestañas de igual ancho que llenan la barra (3 × 120 en 360). Scrollable: pestañas del ancho de
+  su contenido, con 52 de margen al inicio en el kit.
+- Pestaña: relleno 16 a los lados; etiqueta en Title Small.
+- Primary:
+  - Solo etiqueta: 48 de alto. Con icono y etiqueta: 64 de alto, icono de 24 arriba y etiqueta
+    debajo (separación 2, relleno 10 arriba y 8 abajo). Solo icono: 48.
+  - Indicador: 3 de alto, radio completo arriba y 0 abajo, `Primary`, del ancho del contenido
+    (en el kit 20 sobre 24 de contenido: 2 de margen a cada lado), pegado abajo.
+  - Seleccionada: etiqueta `Primary` (e icono, según Compose); sin seleccionar `On Surface Variant`.
+  - Estados: capa `Primary` al 8 % (hover y presionado) y onda al 10 % en la seleccionada.
+- Secondary:
+  - 48 de alto; con icono, icono y etiqueta en línea (separación 8).
+  - Indicador: 2 de alto, a todo el ancho de la pestaña, `Primary`, pegado abajo.
+  - Seleccionada: etiqueta `On Surface`; sin seleccionar `On Surface Variant`.
+
 ## Diferencias con la especificación a revisar
 
 - El indicador con foco del campo de texto mide 3 en el kit. Confirmar en m3.material.io.

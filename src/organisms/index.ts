@@ -113,3 +113,21 @@ export {
   type SnackbarQueue,
   type SnackbarResult,
 } from './Snackbar/snackbar-queue.ts'
+export {
+  Tab,
+  TabList,
+  TabPanel,
+  Tabs,
+  type TabBarProps,
+  type TabListProps,
+  type TabPanelProps,
+  type TabProps,
+  type TabsActivation,
+  type TabsChangeEvent,
+  type TabsLayout,
+  type TabsProps,
+  type TabsVariant,
+} from './Tabs/Tabs.tsx'
+export { TabLabel, type TabLabelProps } from './Tabs/tab-content.tsx'
+export { TabNav, type TabNavProps } from './Tabs/TabNav.tsx'
+export { TabLink, type TabLinkAnchorProps, type TabLinkProps, type TabLinkRenderProps } from './Tabs/TabLink.tsx'

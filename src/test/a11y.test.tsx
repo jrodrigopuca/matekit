@@ -103,6 +103,12 @@ import {
   SnackbarHost,
   SnackbarMessage,
   createSnackbarQueue,
+  Tab,
+  TabLink,
+  TabList,
+  TabNav,
+  TabPanel,
+  Tabs,
 } from '../index.ts'
 import { a11yViolations } from './a11y.ts'
 import { render } from './render.tsx'
@@ -508,6 +514,34 @@ const GALLERIES: Record<string, ReactNode> = {
         <InputChip removeOnly onRemove={() => {}}>Etiqueta</InputChip>
         <InputChip disabled onRemove={() => {}}>Bea</InputChip>
       </ChipGroup>
+    </>
+  ),
+  // Tabs: primary con icono, insignia, solo icono con aria-label y una deshabilitada (con paneles
+  // ocultos y desmontados); secondary scrollable; y la barra de enlaces con aria-current.
+  Tabs: (
+    <>
+      <Tabs defaultValue="inicio">
+        <TabList aria-label="Secciones">
+          <Tab value="inicio"><HomeIcon />Inicio<Badge label="Novedades" /></Tab>
+          <Tab value="favoritos"><StarIcon />Favoritos<Badge label="3 nuevos">3</Badge></Tab>
+          <Tab value="buscar" aria-label="Buscar"><SearchIcon /></Tab>
+          <Tab value="ajustes" disabled>Ajustes</Tab>
+        </TabList>
+        <TabPanel value="inicio">Inicio</TabPanel>
+        <TabPanel value="favoritos">Favoritos</TabPanel>
+        <TabPanel value="buscar" unmount>Buscar</TabPanel>
+        <TabPanel value="ajustes">Ajustes</TabPanel>
+      </Tabs>
+      <Tabs defaultValue="b">
+        <TabList variant="secondary" layout="scrollable" aria-label="Más">
+          {['a', 'b', 'c', 'd', 'e', 'f'].map((v) => <Tab key={v} value={v}>{`Sección ${v}`}</Tab>)}
+        </TabList>
+        {['a', 'b', 'c', 'd', 'e', 'f'].map((v) => <TabPanel key={v} value={v}>{v}</TabPanel>)}
+      </Tabs>
+      <TabNav aria-label="Cuenta">
+        <TabLink href="#perfil" active>Perfil</TabLink>
+        <TabLink href="#pagos">Pagos</TabLink>
+      </TabNav>
     </>
   ),
   // Stack y Group no agregan roles: la semántica la da el elemento de render (lista) o el rol y el

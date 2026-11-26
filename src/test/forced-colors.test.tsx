@@ -76,6 +76,11 @@ import {
   SnackbarHost,
   SnackbarMessage,
   createSnackbarQueue,
+  Tab,
+  TabLink,
+  TabList,
+  TabNav,
+  Tabs,
 } from '../index.ts'
 import { render, style } from './render.tsx'
 import { near, pixelsOf } from './pixels.ts'
@@ -976,5 +981,54 @@ describe('Snackbar', () => {
       expect(style(q(c, '.static .mk-snackbar-message')).color).toBe(systemColor('CanvasText'))
       expect(style(q(c, '.static .mk-snackbar-action')).color).toBe(systemColor('ButtonText'))
     }
+  })
+})
+
+describe('Tabs', () => {
+  const bar = (variant: 'primary' | 'secondary') => (
+    <div style={{ width: 400 }}>
+      <Tabs defaultValue="a">
+        <TabList variant={variant} aria-label="Secciones">
+          <Tab value="a" className="on"><HomeIcon />Inicio</Tab>
+          <Tab value="b" className="off"><StarIcon />Favoritos</Tab>
+          <Tab value="c" className="dis" disabled>Buscar</Tab>
+        </TabList>
+      </Tabs>
+    </div>
+  )
+
+  for (const variant of ['primary', 'secondary'] as const) {
+    test(`${variant}: borde inferior CanvasText; elegida con indicador, etiqueta e icono en Highlight; deshabilitada en GrayText`, async () => {
+      const c = await render(bar(variant))
+      const list = style(q(c, '[role="tablist"]'))
+      expect(list.borderBottomStyle).toBe('solid')
+      expect(list.borderBottomWidth).toBe('1px')
+      expect(list.borderBottomColor).toBe(systemColor('CanvasText'))
+      const ind = q(c, '.on .mk-tab-indicator')
+      expect(style(ind).backgroundColor).toBe(systemColor('Highlight'))
+      expect(style(ind).opacity).toBe('1')
+      expect(ind.getBoundingClientRect().height).toBeGreaterThan(1)
+      expect(style(q(c, '.off .mk-tab-indicator')).opacity).toBe('0')
+      expect(style(q(c, '.on .mk-tab-label')).color).toBe(systemColor('Highlight'))
+      expect(style(q(c, '.on .mk-tab-icon')).color).toBe(systemColor('Highlight'))
+      expect(style(q(c, '.dis .mk-tab-label')).color).toBe(systemColor('GrayText'))
+      // La sin elegir queda con el color de botón del sistema, distinto del de la elegida.
+      if (autoForced) {
+        expect(style(q(c, '.off .mk-tab-label')).color).toBe(systemColor('ButtonText'))
+        expect(systemColor('ButtonText')).not.toBe(systemColor('Highlight'))
+      }
+    })
+  }
+
+  test('TabNav: el enlace actual con indicador y etiqueta en Highlight', async () => {
+    const c = await render(
+      <TabNav aria-label="Cuenta">
+        <TabLink href="#a" active className="on">Perfil</TabLink>
+        <TabLink href="#b" className="off">Pagos</TabLink>
+      </TabNav>,
+    )
+    expect(style(q(c, '.on .mk-tab-indicator')).backgroundColor).toBe(systemColor('Highlight'))
+    expect(style(q(c, '.on .mk-tab-label')).color).toBe(systemColor('Highlight'))
+    if (autoForced) expect(style(q(c, '.off .mk-tab-label')).color).toBe(systemColor('LinkText'))
   })
 })

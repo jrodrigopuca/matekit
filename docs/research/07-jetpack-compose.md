@@ -883,6 +883,60 @@ navigationbar, navigationdrawer, navigationtab, segmentedbutton).
 | Accesibilidad | Sin dato | `liveRegion = Polite` en el visible, `paneTitle` y la acción `dismiss` de accesibilidad | Región viva `role="status"` que existe siempre en el host y recibe el texto un cuadro después (MDC hace algo parecido en `util.ts`: vacía y repone el texto para que se anuncie); F6 y Escape (ADR-0022) |
 | Resultado | Sin dato | `ActionPerformed` o `Dismissed` (el tiempo cuenta como `Dismissed`) | `'action'`, `'dismiss'`, `'timeout'` o `'cancel'` |
 
+## Tabs
+
+Revisado el 2026-11-26 para el ítem 18 (ADR-0023). Archivos en
+`compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/`:
+`tokens/PrimaryNavigationTabTokens.kt` y `tokens/SecondaryNavigationTabTokens.kt` (commit
+`76990c62ac`, 2026-11-24), `Tab.kt` y `TabRow.kt` (commit `c61c795a52`, 2026-11-09), `Badge.kt`
+(commit `bbc070798f`). Uso web: `@material/web` `docs/components/tabs.md` (commit `12ec8884a6`),
+`tabs/internal/tab.ts` (`dba9f5fe40`), `tabs.ts` (`9bbe75a492`), `_tab.scss` (`0a1f511ed8`),
+`_tabs.scss` (`274ce3e4e0`) y `tokens/versions/v0_192/_md-comp-primary-navigation-tab.scss`.
+
+### Lo que confirma
+
+- Barra en `Surface`, sin elevación; etiqueta Title Small; alto 48 (`ContainerHeight`); icono de 24.
+- Primary: indicador de 3 en `Primary`, etiqueta e indicador de la elegida en `Primary`, sin elegir
+  `On Surface Variant`. Secondary: indicador de 2 en `Primary`, elegida `On Surface`.
+- Relleno de 16 a los lados (`HorizontalTextPadding`); icono y etiqueta en línea con 8 de separación
+  (`TextDistanceFromLeadingIcon`); 52 de margen en la scrollable (`ScrollableTabRowEdgeStartPadding`).
+
+### Conflictos
+
+| Dato | Kit | Compose | Decisión |
+|---|---|---|---|
+| Alto con icono y etiqueta (primary) | 64 | `LargeContainerHeight` 64 en los tokens, pero `Tab.kt` usa `LargeTabHeight = 72.dp` | 64 (kit y tokens; el 72 es de la versión anterior del layout de dos líneas) |
+| Forma del indicador primary | Radio completo arriba, 0 abajo | `ActiveIndicatorShape = RoundedCornerShape(3.dp)` en las cuatro esquinas, con un TODO que lo da por desactualizado (b/588071802) | Kit |
+| Ancho del indicador primary | Ancho del contenido menos 2 por lado (20 sobre 24) | Ancho del contenido, mínimo 24 (`maxOf(contentWidth, 24.dp)`, "minimum touch target") | Kit (el mínimo de 24 no tiene sentido para algo que no se toca); el indicador de solo icono mide 20 |
+| Margen de la scrollable | 52 al inicio | 52 a los dos lados (`layoutWidth = padding * 2 + …`) | 52 a los dos lados: el kit muestra solo el principio de la barra |
+
+### Datos nuevos (el kit no los trae)
+
+- Sin elegir con el puntero, el foco o presionada: etiqueta e icono `On Surface`
+  (`Inactive{Hover,Focus,Pressed}{Icon,LabelText}Color`; en la secondary,
+  `{Hover,Focus,Pressed}*`). Icono como la etiqueta en cada estado. Anillo de foco `Secondary`.
+- Capa de estado: `Primary` en la elegida y `On Surface` en las demás (tokens de `@material/web`;
+  Compose usa `selectedContentColor` para la onda de todas, que en la primary es `Primary`). El kit
+  dice "capa Primary al 8 %" sin separar elegida y no elegida: se sigue a `@material/web`.
+- Ancho mínimo de pestaña en la scrollable: 90 (`ScrollableTabRowMinTabWidth`).
+- Movimiento: el indicador va de una pestaña a otra con `DefaultSpatial` (`tabIndicatorAnimationSpec`);
+  el color con `DefaultEffects` al cambiar la elegida; la scrollable centra la elegida con
+  `DefaultSpatial` (`ScrollableTabData.calculateTabOffset`). `@material/web` desliza el indicador
+  con FLIP (`translateX` y `scaleX`, 250 ms con su easing enfatizado) y con movimiento reducido lo
+  hace aparecer con un fundido.
+- Insignia: `Tab` aplica `badgeBounds()` (la insignia de un `BadgedBox` queda dentro de la
+  pestaña); va sobre el icono como en la barra de navegación.
+- Deshabilitada: `Tab(enabled = false)` no cambia el color (`TabTransition` no recibe `enabled`) y
+  `@material/web` no tiene pestañas deshabilitadas. matekit usa el deshabilitado general de Material 3
+  (contenido `On Surface` al 38 %) para que se distinga.
+- Dos líneas de etiqueta (`DoubleLineTextBaselineWithIcon`): no se aplica; en las fijas la etiqueta
+  va en una línea y se recorta (ver ADR-0023).
+- `@material/web`: activación manual por defecto (`autoActivate = false`), anillo de foco por dentro
+  de radio 8 que en la elegida termina 1 arriba del indicador, barra sin barra de desplazamiento
+  (`scrollbar-width: none`) y la pestaña traída a la vista con 48 de margen. matekit usa la
+  activación automática por defecto (APG, con paneles que se muestran al instante) y centra como
+  Compose.
+
 ## No revisado
 
 La tipografía (`TypeScaleTokens.kt`, descargado pero sin comparar).

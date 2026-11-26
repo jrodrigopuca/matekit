@@ -83,6 +83,9 @@ import {
   SnackbarAction,
   SnackbarClose,
   SnackbarMessage,
+  Tab,
+  TabList,
+  Tabs,
 } from '../index.ts'
 import '../tokens/palettes/index.css'
 import { contrastRatio, effectiveBackground, parseColor, textContrast } from './contrast.ts'
@@ -489,6 +492,31 @@ for (const scheme of SCHEMES) {
         expect(contrastRatio(cs(q(c, '.off .mk-badge')).backgroundColor, bar), 'insignia pequeña').toBeGreaterThanOrEqual(NON_TEXT)
         const large = q(c, '.on .mk-badge')
         expect(contrastRatio(cs(large).color, effectiveBackground(large)), 'número de la insignia').toBeGreaterThanOrEqual(TEXT)
+      })
+    }
+
+    // Tabs: etiquetas a 4,5:1 e iconos a 3:1 sobre la barra, elegida y sin elegir (con el puntero o
+    // el foco pasan a On Surface, el contenido de más contraste sobre Surface); el indicador a 3:1 (es lo que marca la elegida en la secondary, donde
+    // la etiqueta solo pasa de On Surface Variant a On Surface) y el anillo de foco a 3:1.
+    for (const variant of ['primary', 'secondary'] as const) {
+      test(`Tabs ${variant}: etiquetas, iconos, indicador y anillo de foco`, async () => {
+        const c = await render(
+          <Themed scheme={scheme}>
+            <Tabs defaultValue="a">
+              <TabList variant={variant} style={{ width: 400 }}>
+                <Tab value="a" className="on"><HomeIcon />Inicio</Tab>
+                <Tab value="b" className="off"><StarIcon />Favoritos</Tab>
+              </TabList>
+            </Tabs>
+          </Themed>,
+        )
+        const bar = effectiveBackground(q(c, '[role="tablist"]'))
+        for (const sel of ['.on', '.off']) {
+          expect(contrastRatio(cs(q(c, `${sel} .mk-tab-label`)).color, bar), `${sel} etiqueta`).toBeGreaterThanOrEqual(TEXT)
+          expect(contrastRatio(cs(q(c, `${sel} .mk-tab-icon`)).color, bar), `${sel} icono`).toBeGreaterThanOrEqual(NON_TEXT)
+          expect(contrastRatio(cs(q(c, `${sel} .mk-focus-ring`)).outlineColor, bar), `${sel} anillo`).toBeGreaterThanOrEqual(NON_TEXT)
+        }
+        expect(contrastRatio(cs(q(c, '.on .mk-tab-indicator')).backgroundColor, bar), 'indicador').toBeGreaterThanOrEqual(NON_TEXT)
       })
     }
 

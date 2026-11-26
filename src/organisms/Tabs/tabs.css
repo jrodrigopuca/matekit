@@ -1,0 +1,291 @@
+/* Tabs de Material 3 Expressive: TabList (pestañas APG) y TabNav (enlaces) comparten la barra y la
+   pestaña (.mk-tab-list, .mk-tab). ADR-0023.
+
+   Fuentes:
+   - Kit de Figma (docs/research/05-medidas.md § Tabs): barra en Surface con divisor inferior de 1
+     en Outline Variant a todo el ancho; fixed de igual ancho; scrollable del ancho del contenido
+     con 52 al inicio; relleno 16 a los lados; etiqueta Title Small. Primary: 48 de alto (solo
+     etiqueta o solo icono), 64 con icono de 24 arriba y etiqueta debajo (separación 2, relleno 10
+     arriba y 8 abajo); indicador de 3, radio completo arriba, Primary, del ancho del contenido con
+     2 a cada lado; seleccionada Primary, sin elegir On Surface Variant; capa Primary al 8 %.
+     Secondary: 48, icono y etiqueta en línea (separación 8); indicador de 2 a todo el ancho;
+     seleccionada On Surface.
+   - Jetpack Compose (compose/material3/material3/src/commonMain/kotlin/androidx/compose/
+     material3/), lo que el kit no trae:
+     - tokens/PrimaryNavigationTabTokens.kt y tokens/SecondaryNavigationTabTokens.kt (commit
+       76990c62ac, 2026-11-24): icono como la etiqueta (Primary elegida, On Surface Variant sin
+       elegir); sin elegir con el puntero, el foco o presionada, On Surface (Inactive{Hover,Focus,
+       Pressed}* y {Hover,Focus,Pressed}*); anillo de foco Secondary (FocusIndicatorColor).
+     - TabRow.kt (commit c61c795a52, 2026-11-09): ancho mínimo de 90 en la scrollable
+       (ScrollableTabRowMinTabWidth) y 52 a los dos lados (ScrollableTabRowEdgeStartPadding; el
+       kit muestra el inicio); el indicador se mueve con el resorte DefaultSpatial; la elegida se
+       centra en la scrollable (tab-motion.ts).
+     - Tab.kt (mismo commit): el color de la selección cambia con DefaultEffects; la insignia va
+       dentro de la pestaña (badgeBounds) sobre el icono (BadgedBox, como NavigationBar).
+     - Conflictos (07-jetpack-compose.md): alto de 72 con icono y etiqueta en Tab.kt (el kit y
+       LargeContainerHeight dicen 64; gana el kit) y radio de 3 en las cuatro esquinas
+       (ActiveIndicatorShape, marcado como desactualizado en Compose; gana el kit). Indicador de
+       ancho mínimo 24 en Compose; el kit lo hace 4 más angosto que el contenido (gana el kit).
+   - @material/web (docs/components/tabs.md, commit 12ec8884a6; tabs/internal/_tab.scss, commit
+     0a1f511ed8; _tabs.scss, commit 274ce3e4e0; tokens/versions/v0_192/_md-comp-primary-navigation-
+     tab.scss): capa de estado Primary en la elegida y On Surface en las demás (tokens
+     md.comp.primary-navigation-tab); anillo de foco por dentro, de radio 8, que en la elegida
+     termina 1 arriba del indicador; barra desplazable sin barra de desplazamiento.
+   - Deshabilitada (ni el kit ni Compose la dibujan): contenido On Surface al 38 %, como el resto de
+     Material 3.
+
+   Elegida: [aria-selected='true'] (Tab) o [aria-current] (TabLink), no una clase. */
+
+@layer matekit.components {
+  .mk-tab-list {
+    display: flex;
+    position: relative;
+    box-sizing: border-box;
+    min-inline-size: 0;
+    margin: 0;
+    padding: 0;
+    /* El divisor es un fondo y no un borde: queda debajo del indicador, que lo tapa como en Compose
+       (el divisor y el indicador están los dos abajo, dentro de los 48), y en la scrollable no se
+       desplaza con las pestañas (fondo del elemento, no del contenido). */
+    background-color: var(--md-sys-color-surface);
+    background-image: linear-gradient(var(--md-sys-color-outline-variant), var(--md-sys-color-outline-variant));
+    background-position: bottom;
+    background-size: 100% 1px;
+    background-repeat: no-repeat;
+  }
+
+  .mk-tab-list[data-layout='scrollable'] {
+    overflow-x: auto;
+    overflow-y: hidden;
+    /* Sin barra de desplazamiento (taparía el indicador y el divisor), como @material/web: se
+       desplaza con el gesto, la rueda con Mayús y el teclado (el foco y la elegida se traen a la
+       vista). */
+    scrollbar-width: none;
+    /* 52 a cada lado (Compose); 52 no está en la escala: 48 + 4. */
+    padding-inline: calc(var(--md-sys-space-600) + var(--md-sys-space-50));
+  }
+  .mk-tab-list[data-layout='scrollable']::-webkit-scrollbar {
+    display: none;
+  }
+
+  .mk-tab {
+    --_label: var(--md-sys-color-on-surface-variant);
+    --_icon: var(--md-sys-color-on-surface-variant);
+    --_layer: var(--md-sys-color-on-surface);
+    --_indicator: var(--md-sys-color-primary);
+    --_indicator-height: 3px;
+    --_height: 48px;
+    --mk-icon-size: 24px;
+    --mk-state-layer-color: var(--_layer);
+    --mk-ripple-color: var(--_layer);
+
+    display: flex;
+    position: relative;
+    justify-content: center;
+    align-items: stretch;
+    box-sizing: border-box;
+    min-inline-size: 0;
+    min-block-size: var(--_height);
+    margin: 0;
+    padding: 0 var(--md-sys-space-200);
+    border: none;
+    background: none;
+    outline: none;
+    color: var(--_label);
+    font-family: var(--md-sys-typescale-title-small-font);
+    font-size: var(--md-sys-typescale-title-small-size);
+    line-height: var(--md-sys-typescale-title-small-line-height);
+    font-weight: var(--md-sys-typescale-title-small-weight);
+    letter-spacing: var(--md-sys-typescale-title-small-tracking);
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: color var(--md-sys-motion-spring-default-effects-duration)
+      var(--md-sys-motion-spring-default-effects-easing);
+  }
+
+  .mk-tab-list[data-layout='fixed'] > .mk-tab {
+    flex: 1 1 0;
+  }
+  .mk-tab-list[data-layout='scrollable'] > .mk-tab {
+    flex: none;
+    min-inline-size: 90px;
+  }
+
+  /* Anillo por dentro (la barra scrollable recorta lo que sobresale; así se ve también en los
+     extremos), de radio 8; en la elegida termina 1 arriba del indicador (@material/web). */
+  .mk-tab > .mk-focus-ring {
+    --mk-focus-ring-offset: calc(-1 * var(--md-sys-state-focus-indicator-thickness));
+    border-radius: var(--md-sys-shape-corner-small);
+  }
+
+  /* Contenido: icono y etiqueta, a todo el alto de la pestaña (el indicador va abajo). */
+  .mk-tab-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    box-sizing: border-box;
+    min-inline-size: 0;
+    max-inline-size: 100%;
+    gap: var(--md-sys-space-25);
+  }
+  /* Primary: el indicador mide el contenido. */
+  .mk-tab-list[data-variant='primary'] .mk-tab-content {
+    position: relative;
+  }
+  /* Primary con icono y etiqueta: 64, icono arriba y etiqueta debajo. */
+  .mk-tab-list[data-variant='primary'] .mk-tab[data-icon][data-label] {
+    --_height: 64px;
+  }
+  .mk-tab-list[data-variant='primary'] .mk-tab[data-icon][data-label] > .mk-tab-content {
+    padding-block: var(--md-sys-space-125) var(--md-sys-space-100);
+  }
+  /* Secondary e insignia sin icono: en línea. */
+  .mk-tab-list[data-variant='secondary'] .mk-tab-content {
+    flex-direction: row;
+    gap: var(--md-sys-space-100);
+  }
+  .mk-tab:not([data-icon]) > .mk-tab-content {
+    flex-direction: row;
+    gap: var(--md-sys-space-50);
+  }
+
+  .mk-tab-icon {
+    display: inline-flex;
+    position: relative;
+    flex: none;
+    inline-size: 24px;
+    block-size: 24px;
+    color: var(--_icon);
+    transition: color var(--md-sys-motion-spring-default-effects-duration)
+      var(--md-sys-motion-spring-default-effects-easing);
+  }
+  .mk-tab-icon > :is(svg, .mk-icon) {
+    inline-size: 24px;
+    block-size: 24px;
+    fill: currentColor;
+  }
+
+  /* Etiqueta: una línea; en las fijas, si no entra, se recorta con puntos suspensivos (como la
+     NavigationBar). Compose admite dos líneas (DoubleLineTextBaselineWithIcon), pero en un ancho
+     chico eso parte las palabras por la mitad ("Ini/cio"): para muchas pestañas o etiquetas largas
+     va la scrollable, donde la etiqueta siempre se ve entera. */
+  .mk-tab-label {
+    min-inline-size: 0;
+    max-inline-size: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  /* Insignia sobre la esquina del icono (Badge.kt, BadgedBox, como NavigationBar): la pequeña a 6
+     del borde final, la grande desde 12 del borde final y 2 por encima. Sin icono, después de la
+     etiqueta; la pequeña, a la altura de la parte de arriba del texto. */
+  .mk-tab-icon > .mk-badge {
+    position: absolute;
+    inset-inline-start: 18px;
+    top: 0;
+  }
+  .mk-tab-icon > .mk-badge[data-size='large'] {
+    inset-inline-start: 12px;
+    top: -2px;
+  }
+  .mk-tab-content > .mk-badge[data-size='small'] {
+    margin-block-end: var(--md-sys-space-150);
+  }
+
+  /* Indicador: de cada pestaña, visible en la elegida; tab-motion.ts lo desliza. Ancho y posición
+     físicos (left, width) para que la animación de `width` y `translate` sea la misma en RTL. */
+  .mk-tab-indicator {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    block-size: var(--_indicator-height);
+    background-color: var(--_indicator);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .mk-tab-list[data-variant='primary'] .mk-tab-indicator {
+    left: var(--md-sys-space-25);
+    width: calc(100% - 2 * var(--md-sys-space-25));
+    /* El radio no anima: corner-full sirve (se reduce a la mitad del alto). */
+    border-start-start-radius: var(--md-sys-shape-corner-full);
+    border-start-end-radius: var(--md-sys-shape-corner-full);
+  }
+  .mk-tab-list[data-variant='secondary'] .mk-tab {
+    --_indicator-height: 2px;
+  }
+
+  /* --- Elegida --- */
+  .mk-tab:is([aria-selected='true'], [aria-current]:not([aria-current='false'])) .mk-tab-indicator {
+    opacity: 1;
+  }
+  .mk-tab:is([aria-selected='true'], [aria-current]:not([aria-current='false'])) > .mk-focus-ring {
+    bottom: calc(var(--_indicator-height) + 1px);
+  }
+  .mk-tab-list[data-variant='primary'] .mk-tab:is([aria-selected='true'], [aria-current]:not([aria-current='false'])) {
+    --_label: var(--md-sys-color-primary);
+    --_icon: var(--md-sys-color-primary);
+    --_layer: var(--md-sys-color-primary);
+  }
+  .mk-tab-list[data-variant='secondary'] .mk-tab:is([aria-selected='true'], [aria-current]:not([aria-current='false'])) {
+    --_label: var(--md-sys-color-on-surface);
+    --_icon: var(--md-sys-color-on-surface);
+  }
+
+  /* --- Sin elegir, con el puntero, el foco o presionada: On Surface (Compose) --- */
+  @media (hover: hover) {
+    .mk-tab:not([aria-selected='true'], [aria-current]:not([aria-current='false'])):hover {
+      --_label: var(--md-sys-color-on-surface);
+      --_icon: var(--md-sys-color-on-surface);
+    }
+  }
+  .mk-tab:not([aria-selected='true'], [aria-current]:not([aria-current='false'])):is(:focus-visible, :active) {
+    --_label: var(--md-sys-color-on-surface);
+    --_icon: var(--md-sys-color-on-surface);
+  }
+
+  /* --- Deshabilitada: contenido On Surface al 38 %, sin capa (state-layer.css) --- */
+  .mk-tab-list .mk-tab:is(:disabled, [aria-disabled='true']) {
+    --_label: color-mix(
+      in srgb,
+      var(--md-sys-color-on-surface) calc(var(--md-sys-state-disabled-content-opacity) * 100%),
+      transparent
+    );
+    --_icon: var(--_label);
+    cursor: default;
+  }
+
+  /* --- Panel --- */
+  .mk-tab-panel:focus-visible {
+    outline: var(--md-sys-state-focus-indicator-thickness) solid var(--md-sys-color-secondary);
+    outline-offset: calc(-1 * var(--md-sys-state-focus-indicator-thickness));
+  }
+
+  /* --- Alto contraste (forced-colors) ---
+     El navegador quita los fondos (también el divisor, que es un fondo): la barra lleva un borde
+     inferior en CanvasText. El indicador de la elegida se dibuja en Highlight y su etiqueta e icono
+     en Highlight; las demás conservan el color de botón o de enlace del sistema, y la deshabilitada
+     va en GrayText. */
+  @media (forced-colors: active) {
+    .mk-tab-list {
+      border-block-end: 1px solid CanvasText;
+    }
+    .mk-tab-indicator {
+      forced-color-adjust: none;
+      background-color: Highlight;
+    }
+    .mk-tab:is([aria-selected='true'], [aria-current]:not([aria-current='false'])) :is(.mk-tab-label, .mk-tab-icon) {
+      forced-color-adjust: none;
+      color: Highlight;
+    }
+    .mk-tab:is(:disabled, [aria-disabled='true']) :is(.mk-tab-label, .mk-tab-icon) {
+      forced-color-adjust: none;
+      color: GrayText;
+    }
+  }
+}

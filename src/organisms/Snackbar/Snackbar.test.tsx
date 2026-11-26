@@ -691,30 +691,89 @@ describe('movimiento', () => {
 
   test('con movimiento reducido, solo opacidad: la salida no cambia la escala', async () => {
     await commands.reduceMotion(true)
-    const { queue, el } = await setup()
-    void queue.show({ message: 'Hola', duration: 'indefinite' })
-    await until(() => shown(el), true)
-    el.setAttribute('data-closing', '')
-    expect(style(el).opacity).toBe('0')
-    expect(['1', 'none']).toContain(style(el).scale)
-    el.removeAttribute('data-closing')
+    try {
+      const { queue, el } = await setup()
+      void queue.show({ message: 'Hola', duration: 'indefinite' })
+      await until(() => shown(el), true)
+      el.setAttribute('data-closing', '')
+      expect(style(el).opacity).toBe('0')
+      expect(['1', 'none']).toContain(style(el).scale)
+      el.removeAttribute('data-closing')
+    } finally {
+      // Sin esto, la emulación sigue en la prueba siguiente: los resortes duran 0 y "la salida
+      // espera la animación" fallaba al correr el archivo completo (comprobado el 2026-11-26).
+      await commands.reduceMotion(false)
+    }
   })
 
-  // Sin transiciones en las pruebas, la salida termina enseguida; esta prueba las activa para ver
-  // que el popover sigue abierto mientras sale y se oculta al terminar.
-  test('la salida espera la animación antes de ocultar el popover', async () => {
-    const { queue, el } = await setup()
+  // Sin transiciones en las pruebas, la salida termina enseguida; estas pruebas las activan.
+  async function withTransitions(fn: () => Promise<void>) {
     const sheet = document.getElementById('mk-test-no-motion') as HTMLStyleElement
     sheet.media = 'not all'
     try {
-      void queue.show({ message: 'Hola', duration: 'indefinite' })
-      await expect.poll(() => shown(el)).toBe(true)
-      queue.dismiss()
-      await expect.poll(() => el.hasAttribute('data-closing')).toBe(true)
-      expect(el.matches(':popover-open')).toBe(true)
-      await expect.poll(() => el.matches(':popover-open'), { timeout: 3000 }).toBe(false)
+      await fn()
     } finally {
       sheet.media = ''
+      await commands.reduceMotion(false)
     }
+  }
+  /** Espera a que termine la entrada: descartar antes acorta la salida (o la anula, en progreso 0). */
+  const entered = (el: Element) => Promise.allSettled(el.getAnimations().map((a) => a.finished))
+
+  test('la salida espera la animación antes de ocultar el popover', async () => {
+    const { queue, el } = await setup()
+    await withTransitions(async () => {
+      void queue.show({ message: 'Hola', duration: 'indefinite' })
+      await expect.poll(() => shown(el)).toBe(true)
+      await entered(el)
+      queue.dismiss()
+      await expect.poll(() => el.hasAttribute('data-closing')).toBe(true)
+      expect(el.getAnimations().length).toBeGreaterThan(0)
+      expect(el.matches(':popover-open')).toBe(true)
+      await expect.poll(() => el.matches(':popover-open'), { timeout: 3000 }).toBe(false)
+    })
+  })
+
+  // El error que esto cubre (2026-11-26): la salida esperaba Promise.all de las transiciones; una
+  // transición cancelada rechazaba la espera, el rechazo se ignoraba y el host quedaba con
+  // data-closing e inert, sin mostrar nunca el siguiente.
+  for (const how of ['movimiento reducido', 'cancel()'] as const) {
+    test(`una salida cancelada (${how}) no traba la cola: se oculta y aparece el siguiente`, async () => {
+      const { queue, el } = await setup()
+      await withTransitions(async () => {
+        const first = track(queue.show({ message: 'Primero', duration: 'indefinite' }))
+        await expect.poll(() => shown(el)).toBe(true)
+        await entered(el)
+        queue.dismiss()
+        void queue.show({ message: 'Segundo', duration: 'indefinite' })
+        await expect.poll(() => el.hasAttribute('data-closing')).toBe(true)
+        expect(el.getAnimations().length).toBeGreaterThan(0)
+        if (how === 'cancel()') for (const a of el.getAnimations()) a.cancel()
+        else await commands.reduceMotion(true)
+        await expect.poll(() => el.querySelector('.mk-snackbar-message')?.textContent, { timeout: 3000 }).toBe('Segundo')
+        expect(shown(el)).toBe(true)
+        expect(el.inert).toBe(false)
+        expect(first.result).toBe('dismiss')
+      })
+    })
+  }
+
+  test('descartar durante la entrada y encolar otro: el siguiente aparece', async () => {
+    const { queue, el } = await setup()
+    await withTransitions(async () => {
+      // En el mismo cuadro en que se abre (progreso 0) y a mitad de la entrada.
+      for (const wait of [false, true]) {
+        const first = track(queue.show({ message: 'Primero', duration: 'indefinite' }))
+        await expect.poll(() => el.querySelector('.mk-snackbar-message')?.textContent).toBe('Primero')
+        if (wait) await new Promise((r) => setTimeout(r, 60))
+        queue.dismiss()
+        void queue.show({ message: 'Segundo', duration: 'indefinite' })
+        await expect.poll(() => el.querySelector('.mk-snackbar-message')?.textContent, { timeout: 3000 }).toBe('Segundo')
+        expect(shown(el)).toBe(true)
+        expect(first.result).toBe('dismiss')
+        queue.dismiss()
+        await expect.poll(() => el.matches(':popover-open'), { timeout: 3000 }).toBe(false)
+      }
+    })
   })
 })

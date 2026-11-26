@@ -12,13 +12,13 @@
 //
 // El foco itinerante se maneja sobre el DOM (`tabIndex` de las paradas, marcadas con
 // `data-chip-stop`), no con estado de React, como @material/web: así cuenta los chips que se
-// agregan, quitan o deshabilitan sin que cada chip se registre, también los de `render`.
+// agregan, quitan o deshabilitan sin que cada chip se registre, también los de `render`. Vive en
+// src/internal/roving-focus.ts, compartido con Tabs (ADR-0023).
 
 import {
   createContext,
   use,
   useCallback,
-  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -32,6 +32,7 @@ import {
 import { Stack } from '../../atoms/Stack/Stack.tsx'
 import { cx } from '../../internal/interactive.tsx'
 import { mergeRefs } from '../../internal/merge-refs.ts'
+import { useRovingFocus } from '../../internal/roving-focus.ts'
 
 export type ChipGroupSelectionMode = 'none' | 'single' | 'multiple'
 export type ChipGroupLayout = 'wrap' | 'scroll'
@@ -111,27 +112,9 @@ interface MultipleSelection {
 
 export type ChipGroupProps = ChipGroupBaseProps & ChipGroupNameProps & (NoSelection | SingleSelection | MultipleSelection)
 
-const STOP = '[data-chip-stop]'
-
-/** Paradas del grupo (acciones de los chips) habilitadas, en orden, sin las de un grupo anidado. */
-export function chipStops(root: Element): HTMLElement[] {
-  return [...root.querySelectorAll<HTMLElement>(STOP)].filter(
-    (el) => !el.matches(':disabled') && el.closest('.mk-chip-group') === root,
-  )
-}
-
-/** Deja una sola parada con tabIndex 0: la enfocada, la que ya lo tenía o la primera. */
-function updateTabStops(root: HTMLElement) {
-  const all = [...root.querySelectorAll<HTMLElement>(STOP)].filter((el) => el.closest('.mk-chip-group') === root)
-  const enabled = all.filter((el) => !el.matches(':disabled'))
-  const active = enabled.find((el) => el === document.activeElement)
-  const current = active ?? enabled.find((el) => el.tabIndex === 0 && el.dataset['chipCurrent'] !== undefined) ?? enabled[0]
-  for (const el of all) {
-    el.tabIndex = el === current ? 0 : -1
-    if (el === current) el.dataset['chipCurrent'] = ''
-    else delete el.dataset['chipCurrent']
-  }
-}
+// Paradas: las acciones de los chips (también el botón de quitar del input chip), sin las de un
+// grupo anidado. El foco itinerante es el de src/internal/roving-focus.ts, compartido con Tabs.
+const ROVING = { stop: '[data-chip-stop]', scope: '.mk-chip-group' } as const
 
 const toArray = (v: string | null | readonly string[] | undefined): readonly string[] =>
   v == null ? [] : typeof v === 'string' ? [v] : v
@@ -193,42 +176,16 @@ export function ChipGroup(props: ChipGroupProps) {
   )
   const context = useMemo<ChipGroupContextValue>(() => ({ selectionMode, value, toggle }), [selectionMode, value, toggle])
 
-  // Al montar y cada vez que cambian los chips o su `disabled`, una sola parada de Tab.
-  useLayoutEffect(() => {
-    const root = rootRef.current
-    if (!root) return
-    updateTabStops(root)
-    const observer = new MutationObserver(() => updateTabStops(root))
-    observer.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ['disabled'] })
-    return () => observer.disconnect()
-  }, [])
+  const roving = useRovingFocus(rootRef, ROVING)
 
   const handleFocus = (event: FocusEvent<HTMLDivElement>) => {
     onFocus?.(event)
-    if (event.target.matches(STOP)) updateTabStops(event.currentTarget)
+    roving.onFocus(event)
   }
 
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     onKeyDown?.(event)
-    if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return
-    const { key } = event
-    if (key !== 'ArrowLeft' && key !== 'ArrowRight' && key !== 'Home' && key !== 'End') return
-    const root = event.currentTarget
-    const target = event.target as HTMLElement
-    const stops = chipStops(root)
-    const index = stops.indexOf(target)
-    if (index === -1 || stops.length < 2) return
-    event.preventDefault()
-    let next: HTMLElement | undefined
-    if (key === 'Home') next = stops[0]
-    else if (key === 'End') next = stops[stops.length - 1]
-    else {
-      // En RTL, la flecha derecha va hacia atrás, como en @material/web (chip-set.ts).
-      const forwards = (key === 'ArrowRight') === (getComputedStyle(root).direction !== 'rtl')
-      next = stops[(index + (forwards ? 1 : -1) + stops.length) % stops.length]
-    }
-    // focusVisible: el foco llegó por teclado; WebKit no lo marca por sí solo al enfocar por script.
-    next?.focus({ focusVisible: true } as FocusOptions)
+    roving.onKeyDown(event)
   }
 
   return (

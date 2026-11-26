@@ -75,6 +75,28 @@ const holds = (el: HTMLElement | null, node: EventTarget | Node | null) =>
   !!el && node instanceof Node && el.contains(node)
 
 /**
+ * Espera a que terminen las animaciones del elemento (las transiciones de salida), sin trabarse:
+ * - `allSettled` y no `all`: una transición cancelada rechaza `finished` (por ejemplo, si se activa
+ *   el movimiento reducido a mitad de la salida, comprobado en los tres motores el 2026-11-26); con
+ *   `all`, el rechazo se perdía y el host quedaba con `data-closing` sin mostrar el siguiente.
+ * - Vuelve a consultar al terminar: una transición cancelada puede dejar otra en su lugar.
+ * - Solo las que corren y tienen fin: una animación infinita o en pausa de quien usa el componente no
+ *   detiene la cola.
+ * Sin animaciones (por ejemplo, una salida pedida antes de que la entrada avance: invertir una
+ * transición en progreso 0 no crea ninguna), termina enseguida. `getAnimations()` fuerza el cálculo
+ * de estilos, así que ya incluye las transiciones que dispara `data-closing`.
+ */
+async function settleAnimations(el: Element, active: () => boolean) {
+  for (;;) {
+    const running = el
+      .getAnimations()
+      .filter((a) => a.playState === 'running' && a.effect?.getComputedTiming().endTime !== Infinity)
+    if (running.length === 0 || !active()) return
+    await Promise.allSettled(running.map((a) => a.finished))
+  }
+}
+
+/**
  * Muestra los snackbars de una cola, de a uno, en la capa superior (Popover), abajo de la ventana.
  * Se monta una vez (por ejemplo en el layout, envolviendo la app) y los componentes de adentro
  * muestran mensajes con `useSnackbar().show(…)`, que devuelve una promesa con el resultado.
@@ -159,17 +181,12 @@ export function SnackbarHost({
     el.setAttribute('data-closing', '')
     el.inert = true
     let active = true
-    // getAnimations() fuerza el cálculo de estilos, así que incluye las transiciones de salida;
-    // sin transiciones (las pruebas), la lista está vacía y se oculta enseguida.
-    Promise.all(el.getAnimations().map((a) => a.finished)).then(
-      () => {
-        if (!active) return
-        el.removeAttribute('data-closing')
-        if (el.matches(':popover-open')) el.hidePopover()
-        setShown(null)
-      },
-      () => {},
-    )
+    void settleAnimations(el, () => active).then(() => {
+      if (!active) return
+      el.removeAttribute('data-closing')
+      if (el.matches(':popover-open')) el.hidePopover()
+      setShown(null)
+    })
     return () => {
       active = false
     }
