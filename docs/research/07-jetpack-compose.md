@@ -712,6 +712,49 @@ adentro que seguían activos, se veía deshabilitada sin estarlo. Si la acción 
 | Borde del outlined con foco | Sin dato | `FocusOutlineColor` = `OnSurface`, pero `outlinedCardBorder` no lo usa | Sin cambio de borde: Compose tampoco lo aplica; el foco lo marca el anillo. Pendiente de mirar en el kit (Focused del outlined). |
 | Capa de presionado | 10 % | Onda (ripple) | 8 % más la onda, como Button y FAB (el kit suma la onda sobre la capa de hover). |
 
+## List
+
+Revisión del 2026-11-25. Archivos (en `compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/`
+de `androidx-main`): `tokens/ListTokens.kt` y `tokens/ExpandedListTokens.kt` (commit `76990c62ac`
+del 2026-11-24), `ListItem.kt` (`a4587705ec`, 2026-11-20) y `ListItemDefaults.kt` (`d70f2bdb44`,
+2026-11-19). Uso y accesibilidad web: `@material/web` `docs/components/list.md` (commit
+`12ec8884a6`): `md-list` con `role="list"`, elementos `type="text" | "link" | "button"` y flechas
+con tabindex itinerante (matekit usa Tab por elemento, ADR-0018).
+
+### Lo que confirma
+
+Relleno 10 arriba y abajo (`ItemTopSpace`/`ItemBottomSpace` = Space125), 16 a los lados y 12 entre
+partes (Space150); texto principal Body Large `OnSurface`, apoyo Body Medium `OnSurfaceVariant`,
+iconos de 20 (`Item*IconExpressiveSize`) en `OnSurfaceVariant`, avatar de 40, imagen de 56, video
+de 114 × 64; reposo `CornerExtraSmall`, hover `CornerMedium`, foco, presionado y seleccionado
+`CornerLarge`; seleccionado `SecondaryContainer` con contenido `OnSecondaryContainer`; segmentada:
+contenedor `CornerLarge`, separación Space25 (2) y elementos `Surface`; acordeón: indicador redondo
+`Surface` cerrado y `SurfaceContainer` abierto.
+
+### Conflictos (se sigue el kit salvo donde se indica)
+
+| Dato | Kit | Compose | matekit |
+|---|---|---|---|
+| Alto mínimo con una, dos y tres líneas | 52, 64, 80 | 56, 72, 88 (`Item*LineContainerHeight`) | Kit. Con la misma tipografía y rellenos de 10, el contenido mide 44, 64 y 80: el kit coincide con el contenido; Compose redondea a los altos de Material 3 anterior. |
+| Overline | Label Medium | Label Small (`ItemOverlineFont`) | Kit |
+| Texto final | Label Large | Label Small (`ItemTrailingSupportingTextFont`) | Kit |
+| Radio de la imagen y el video de inicio | 4 | `CornerSmall` (8) (`ItemLeadingImageExpressiveShape`, `ItemLeadingVideoShape`) | Kit |
+| Caja del icono de inicio | 20 × 28 | 20 | Sin el alto de 28: en la grilla de la fila, un `min-block-size` en la parte de inicio hacía que Chrome agrandara las filas flexibles 2 px. Alineado arriba, el icono se centra en la primera línea (2 de margen). |
+| Seleccionado y deshabilitado, fondo | `OnSurface` al 10 % | `OnSurface` al 38 % (`ItemSelectedDisabledContainerOpacity`) | Kit (y `--md-sys-state-disabled-container-opacity`, como Button) |
+
+### Datos nuevos (el kit no los trae)
+
+| Dato | Fuente | Uso |
+|---|---|---|
+| Prioridad de la forma: presionado > arrastrado > seleccionado > foco > hover > reposo | `shapeForInteraction` | Orden de las reglas de estado en `list.css` |
+| Segmentada: solo la forma de reposo toma las esquinas exteriores; hover, foco, presionado y seleccionado usan su forma en las cuatro esquinas | `segmentedShapes` (cambia solo `shape`) | `--_state-radius` gana sobre las esquinas de Group |
+| Divisores con 16 de sangría a cada lado | `DividerLeadingSpace`/`DividerTrailingSpace` (Space200) | Borde superior de cada elemento salvo el primero |
+| Avatar con iniciales en `PrimaryContainer`/`OnPrimaryContainer`, Title Medium | `ItemLeadingAvatar*` | `ListItemLeading variant="avatar"` |
+| Anillo de foco `Secondary` | `FocusIndicatorColor` | Por dentro; en el seleccionado, `OnSecondaryContainer` (Secondary sobre Secondary Container da 1,4:1) |
+| Selección: en el elemento de selección simple el rol es radio y `selected = checked`; en el múltiple, casilla y `selected = checked` | `ListItem(selected, onClick)` y `ListItem(checked, onCheckedChange)` | Casilla o radio marcados = seleccionado. El switch no (decisión de matekit: es un ajuste) |
+| El control final mide 20 dentro de la fila: el área táctil la da la fila | `TrailingDecorator` (`LocalMinimumInteractiveComponentSize` menos el relleno) | El control se mete en el relleno (casilla a 17 del borde) |
+| Alineación por defecto: centrada en los cortos y arriba en los altos | `ListItemDefaults.verticalAlignment()` | No se copia (CSS no conoce el alto final): `align="top"` explícito |
+
 ## No revisado
 
 La tipografía (`TypeScaleTokens.kt`, descargado pero sin comparar).

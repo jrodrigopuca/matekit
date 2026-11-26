@@ -52,6 +52,12 @@ import {
   CardHeadline,
   CardPrimaryAction,
   Group,
+  List,
+  ListItem,
+  ListItemAction,
+  ListItemHeadline,
+  ListItemLeading,
+  ListItemSupporting,
 } from '../index.ts'
 import { render, style } from './render.tsx'
 import { near, pixelsOf } from './pixels.ts'
@@ -766,5 +772,73 @@ describe('Group', () => {
     expect(x.outlineOffset).toBe('0px')
     expect(style(q(c, '.y')).outlineStyle).toBe('solid')
     expect(style(q(c, '.y')).outlineColor).toBe(systemColor('CanvasText'))
+  })
+})
+
+describe('List', () => {
+  const nav = (props: { segmented?: boolean; dividers?: boolean } = {}) => (
+    <div style={{ width: 300 }}>
+      <List {...(props.segmented ? { variant: 'segmented' as const } : { dividers: props.dividers })}>
+        <ListItem className="cur">
+          <ListItemLeading><StarIcon /></ListItemLeading>
+          <ListItemHeadline><ListItemAction href="#a" current>Actual</ListItemAction></ListItemHeadline>
+          <ListItemSupporting>Apoyo</ListItemSupporting>
+        </ListItem>
+        <ListItem className="other">
+          <ListItemLeading><StarIcon /></ListItemLeading>
+          <ListItemHeadline><ListItemAction href="#b">Otro</ListItemAction></ListItemHeadline>
+        </ListItem>
+        <ListItem className="off">
+          <ListItemLeading><StarIcon /></ListItemLeading>
+          <ListItemHeadline><ListItemAction disabled>No disponible</ListItemAction></ListItemHeadline>
+        </ListItem>
+        <ListItem className="cb">
+          <Checkbox defaultChecked><ListItemHeadline>Marcado</ListItemHeadline></Checkbox>
+        </ListItem>
+      </List>
+    </div>
+  )
+
+  test('seleccionado (aria-current o casilla marcada) en Highlight con el contenido en HighlightText', async () => {
+    const c = await render(nav())
+    for (const sel of ['.cur', '.cb']) {
+      expect(style(q(c, sel)).backgroundColor, sel).toBe(systemColor('Highlight'))
+      expect(style(q(c, `${sel} .mk-list-item-headline`)).color, sel).toBe(systemColor('HighlightText'))
+    }
+    expect(style(q(c, '.cur .mk-list-item-leading')).color).toBe(systemColor('HighlightText'))
+    expect(style(q(c, '.cur .mk-list-item-supporting')).color).toBe(systemColor('HighlightText'))
+  })
+
+  test('con el puntero, contorno de 2 px en Highlight por dentro', async () => {
+    const c = await render(nav())
+    await userEvent.hover(q(c, '.other'))
+    const s = style(q(c, '.other'))
+    expect(s.outlineWidth).toBe('2px')
+    expect(s.outlineColor).toBe(systemColor('Highlight'))
+    expect(s.outlineOffset).toBe('-2px')
+  })
+
+  test('deshabilitado en GrayText, sin la opacidad que lo haría casi invisible', async () => {
+    const c = await render(nav())
+    expect(style(q(c, '.off .mk-list-item-headline')).color).toBe(systemColor('GrayText'))
+    expect(style(q(c, '.off .mk-list-item-headline')).opacity).toBe('1')
+    expect(style(q(c, '.off .mk-list-item-leading')).color).toBe(systemColor('GrayText'))
+  })
+
+  test('segmentada: cada bloque con el contorno CanvasText de Group; el seleccionado sigue en Highlight', async () => {
+    const c = await render(nav({ segmented: true }))
+    const s = style(q(c, '.other'))
+    expect(s.outlineStyle).toBe('solid')
+    expect(s.outlineColor).toBe(systemColor('CanvasText'))
+    expect(style(q(c, '.cur')).backgroundColor).toBe(systemColor('Highlight'))
+  })
+
+  // Los divisores son un borde de color outline-variant: el reemplazo por CanvasText lo hace el
+  // navegador (no WebKit, que no reemplaza colores).
+  test.skipIf(!autoForced)('los divisores son un borde visible en CanvasText', async () => {
+    const c = await render(nav({ dividers: true }))
+    const line = getComputedStyle(q(c, '.other'), '::before')
+    expect(line.borderTopStyle).toBe('solid')
+    expect(line.borderTopColor).toBe(systemColor('CanvasText'))
   })
 })

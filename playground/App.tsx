@@ -10,6 +10,7 @@ import { FabPage } from './pages/FabPage.tsx'
 import { IconButtonPage } from './pages/IconButtonPage.tsx'
 import { IconsPage } from './pages/IconsPage.tsx'
 import { LayoutPage } from './pages/LayoutPage.tsx'
+import { ListPage } from './pages/ListPage.tsx'
 import { LoadingIndicatorPage } from './pages/LoadingIndicatorPage.tsx'
 import { MenuPage } from './pages/MenuPage.tsx'
 import { NavigationBarPage } from './pages/NavigationBarPage.tsx'
@@ -49,6 +50,7 @@ const PAGES = {
   'progress-indicator': { label: 'Progreso', Page: ProgressIndicatorPage },
   divider: { label: 'Divider', Page: DividerPage },
   card: { label: 'Card', Page: CardPage },
+  list: { label: 'List', Page: ListPage },
   layout: { label: 'Disposición', Page: LayoutPage },
   examples: { label: 'Ejemplos', Page: ExamplesPage },
   icons: { label: 'Iconos', Page: IconsPage },

@@ -41,7 +41,7 @@ src/atoms/       primitivas: StateLayer, FocusRing, Ripple, Icon, Shape, Divider
                  disposición Stack y Group (ADR-0017)
 src/molecules/   controles y piezas con significado propio: Button, Checkbox, Badge,
                  LoadingIndicator, …
-src/organisms/   combinan controles: Dialog, Menu, NavigationBar, …
+src/organisms/   combinan controles: Dialog, Menu, NavigationBar, List, …
 src/icons/       iconos generados
 src/internal/    ayudas compartidas entre componentes, no exportadas (interactive.tsx: <a>, <button>
                  o el elemento de render, ADR-0010, de Button, IconButton, los FAB y la
@@ -173,6 +173,14 @@ No llamar al conector de Figma salvo que falte un dato imprescindible: tiene lí
     primero, flecha arriba tampoco), y el radio al que se llega con flechas pierde
     `:focus-visible`. `RadioButton` corrige lo segundo con `data-focus-visible`; lo primero es la
     conducta de Safari y se saltea en las pruebas.
+  - WebKit en macOS tampoco lleva el foco con Tab a los `<input>` de casillas, radios y switches;
+    a un `<summary>` sí (comprobado el 2026-11-25). Para probar el estado de foco de teclado en
+    WebKit sin Tab: `el.focus({ focusVisible: true })` (un `.focus()` común no aplica
+    `:focus-visible` en WebKit); el recorrido con Tab se prueba aparte y en local falla.
+  - Grilla con filas `1fr` para centrar (List, comprobado el 2026-11-25): un `min-block-size` en un
+    hijo que cruza esas filas hace que Chrome las agrande de más; usar el alto o nada.
+  - `<details>`/`<summary>` (List): `display: grid` en el `<summary>`, Enter, Espacio y `name` (uno
+    abierto a la vez) iguales en los tres motores.
   - Firefox: un segundo `commands.pressDown` en la misma prueba no activa `:active`
     (comprobado el 2026-11-25); una prueba por presionado.
   - `<input type="range">` (Slider, comprobado el 2026-11-25): en RTL, WebKit invierte las

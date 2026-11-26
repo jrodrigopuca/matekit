@@ -1,0 +1,674 @@
+/* List de Material 3 Expressive: estándar y segmentada, con elementos de contenido, que son enlaces
+   o botones (ListItemAction), de selección (Checkbox, RadioButton o Switch) y que se expanden
+   (ListItemDetails).
+
+   Medidas, tipografía, colores y radios por estado: kit de Figma (docs/research/05-medidas.md §
+   List). Lo que el kit no trae: Jetpack Compose, androidx/androidx,
+   compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/
+   tokens/ListTokens.kt y tokens/ExpandedListTokens.kt (commit 76990c62ac del 2026-11-24),
+   ListItem.kt (a4587705ec del 2026-11-20) y ListItemDefaults.kt (d70f2bdb44 del 2026-11-19):
+   prioridad de las formas por estado (shapeForInteraction), segmentedShapes, divisores, avatar y
+   colores del seleccionado y deshabilitado. Conflictos en docs/research/07-jetpack-compose.md §
+   List.
+
+   Semántica y estructura (ADR-0018):
+   - La fila es el <li> (una grilla), salvo en el acordeón, donde es el <summary>.
+   - Columnas: inicio | texto | final | control (o el indicador del acordeón). Filas: espacio
+     flexible arriba | overline | texto principal | apoyo | final en anchos chicos | espacio
+     flexible abajo; los espacios flexibles centran el texto (middle) o quedan en 0 arriba (top).
+     Las separaciones de 12 son márgenes de cada parte, no `gap`: una columna vacía no deja hueco.
+   - Acción (enlace o botón): no se posiciona, así que su ::after (el área), su capa, su onda y su
+     anillo se ubican contra el <li> y lo cubren (patrón de CardPrimaryAction, ADR-0015). Los otros
+     controles quedan encima (z-index 2).
+   - Selección: el <label> del control ocupa texto, final y control con subgrid; su ::after cubre
+     el <li>, así que toda la fila activa el control nativo. Los átomos del control se ocultan y la
+     fila usa los del <li> (ListItem siempre los dibuja; fuera de una fila de selección, ocultos).
+   Apilado dentro del <li> (isolation): fondo < capa y onda (-1) < contenido < área (1) < otros
+   controles (2).
+
+   Radios (Compose shapeForInteraction: presionado > seleccionado > foco > hover > reposo): reposo
+   4 (Corner/Extra-small; en Group, 16 afuera y 4 adentro, ADR-0017), hover 12 (Corner/Medium) y
+   foco, presionado y seleccionado 16 (Corner/Large), en las cuatro esquinas también en la
+   segmentada (segmentedShapes solo cambia la forma de reposo). --_state-radius manda sobre la del
+   grupo; --_c-* son las cuatro esquinas resueltas en el <li>, para los átomos de adentro.
+
+   Disposición: la lista es contenedor (mk-list), así que se adapta a su propio ancho. */
+
+@layer matekit.components {
+  .mk-list {
+    container: mk-list / inline-size;
+    /* Se estira en una columna flex que alinea al inicio (RadioGroup): sin ancho propio, un
+       contenedor de tamaño en línea mediría 0. */
+    align-self: stretch;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    min-inline-size: 0;
+  }
+
+  .mk-list-item {
+    --_container: transparent;
+    --_headline: var(--md-sys-color-on-surface);
+    --_supporting: var(--md-sys-color-on-surface-variant);
+    --_overline: var(--md-sys-color-on-surface-variant);
+    --_leading: var(--md-sys-color-on-surface-variant);
+    --_trailing: var(--md-sys-color-on-surface-variant);
+    --_layer: var(--md-sys-color-on-surface);
+    /* Anillo de foco (Compose ListTokens.FocusIndicatorColor). Por dentro, sobre el fondo del
+       elemento: en el seleccionado pasa a On Secondary Container (Secondary sobre Secondary
+       Container no llega a 3:1; medido en contrast.test.tsx). */
+    --_ring: var(--md-sys-color-secondary);
+    --_rest-radius: var(--md-sys-shape-corner-extra-small);
+    /* Sin estado: guaranteed-invalid, así se usa la forma de reposo (y no la de un ancestro). */
+    --_state-radius: initial;
+    --_c-ss: var(--_state-radius, var(--mk-group-corner-start-start, var(--_rest-radius)));
+    --_c-se: var(--_state-radius, var(--mk-group-corner-start-end, var(--_rest-radius)));
+    --_c-es: var(--_state-radius, var(--mk-group-corner-end-start, var(--_rest-radius)));
+    --_c-ee: var(--_state-radius, var(--mk-group-corner-end-end, var(--_rest-radius)));
+
+    position: relative;
+    isolation: isolate;
+    box-sizing: border-box;
+    min-inline-size: 0;
+    margin: 0;
+    border-start-start-radius: var(--_c-ss);
+    border-start-end-radius: var(--_c-se);
+    border-end-start-radius: var(--_c-es);
+    border-end-end-radius: var(--_c-ee);
+    background-color: var(--_container);
+    color: var(--_headline);
+    font-family: var(--md-sys-typescale-body-large-font);
+    font-size: var(--md-sys-typescale-body-large-size);
+    line-height: var(--md-sys-typescale-body-large-line-height);
+    font-weight: var(--md-sys-typescale-body-large-weight);
+    letter-spacing: var(--md-sys-typescale-body-large-tracking);
+    /* El texto corta línea también dentro de palabras largas o direcciones. */
+    overflow-wrap: anywhere;
+    transition:
+      border-start-start-radius var(--md-sys-motion-spring-fast-spatial-duration)
+        var(--md-sys-motion-spring-fast-spatial-easing),
+      border-start-end-radius var(--md-sys-motion-spring-fast-spatial-duration)
+        var(--md-sys-motion-spring-fast-spatial-easing),
+      border-end-start-radius var(--md-sys-motion-spring-fast-spatial-duration)
+        var(--md-sys-motion-spring-fast-spatial-easing),
+      border-end-end-radius var(--md-sys-motion-spring-fast-spatial-duration)
+        var(--md-sys-motion-spring-fast-spatial-easing),
+      background-color var(--md-sys-motion-spring-fast-effects-duration)
+        var(--md-sys-motion-spring-fast-effects-easing);
+  }
+
+  /* Segmentada (kit: cada elemento con fondo Surface; Compose ItemSegmentedContainerColor). La
+     separación y las esquinas por posición las pone Group. */
+  :where(.mk-list[data-variant='segmented']) > .mk-list-item {
+    --_container: var(--md-sys-color-surface);
+  }
+
+  /* Divisores de la estándar: una línea de 1 en el borde superior de cada elemento salvo el
+     primero, con 16 de sangría a cada lado (Compose ListTokens.DividerLeadingSpace y
+     DividerTrailingSpace = Space200; color de DividerTokens). Sin <hr>: no puede ser hijo de <ul>. */
+  :where(.mk-list[data-dividers]) > .mk-list-item + .mk-list-item::before {
+    content: '';
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline: var(--md-sys-space-200);
+    border-block-start: 1px solid var(--md-sys-color-outline-variant);
+    pointer-events: none;
+  }
+
+  /* --- La fila: el <li>, o el <summary> del acordeón ---
+     Kit: relleno 10 arriba y abajo y 16 a los lados (Compose Space125 y Space200), alto mínimo 52
+     con una línea y 64 con dos (Compose: 56 y 72, ver 07-jetpack-compose.md); con tres, sale del
+     contenido (80 con overline, texto y apoyo). */
+  .mk-list-item:not(:has(> .mk-list-item-details)),
+  .mk-list-item-summary {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    grid-template-rows: 1fr auto auto auto auto 1fr;
+    box-sizing: border-box;
+    min-block-size: 52px;
+    padding-block: var(--md-sys-space-125);
+    padding-inline: var(--md-sys-space-200);
+  }
+  .mk-list-item:not(:has(> .mk-list-item-details)):has(.mk-list-item-overline, .mk-list-item-supporting),
+  .mk-list-item-summary:has(.mk-list-item-overline, .mk-list-item-supporting) {
+    min-block-size: 64px;
+  }
+  /* Alineación arriba: sin espacio flexible arriba; inicio y final a 10 del borde (kit). */
+  .mk-list-item[data-align='top']:not(:has(> .mk-list-item-details)),
+  .mk-list-item[data-align='top'] .mk-list-item-summary {
+    grid-template-rows: 0 auto auto auto auto 1fr;
+  }
+
+  /* --- Partes --- */
+  .mk-list-item-leading {
+    grid-column: 1;
+    grid-row: 1 / -1;
+    align-self: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    /* Kit: icono de 20 (en una caja de 20 × 28 en Figma; acá sin el alto de 28: un min-block-size
+       en una parte que cruza las filas flexibles hace que Chrome las agrande 2 px de más). Vacío,
+       es la sangría de 20. */
+    min-inline-size: 20px;
+    margin-inline-end: var(--md-sys-space-150);
+    color: var(--_leading);
+    --mk-icon-size: 20px;
+  }
+  /* Avatar de 40 (kit), redondo; con iniciales, Primary Container y Title Medium (Compose
+     ItemLeadingAvatar*). Imagen de 56 con radio 4 y borde Outline Variant y video de 114 × 64
+     con radio 4 (kit; Compose usa Corner/Small, 8). */
+  .mk-list-item-leading:is([data-variant='avatar'], [data-variant='image'], [data-variant='video']) {
+    overflow: hidden;
+  }
+  .mk-list-item-leading[data-variant='avatar'] {
+    inline-size: 40px;
+    block-size: 40px;
+    border-radius: 50%;
+    background-color: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+    font-family: var(--md-sys-typescale-title-medium-font);
+    font-size: var(--md-sys-typescale-title-medium-size);
+    line-height: var(--md-sys-typescale-title-medium-line-height);
+    font-weight: var(--md-sys-typescale-title-medium-weight);
+    letter-spacing: var(--md-sys-typescale-title-medium-tracking);
+  }
+  .mk-list-item-leading[data-variant='image'] {
+    inline-size: 56px;
+    block-size: 56px;
+    border-radius: var(--md-sys-shape-corner-extra-small);
+    /* El contorno se dibuja encima de la imagen, por dentro. */
+    outline: 1px solid var(--md-sys-color-outline-variant);
+    outline-offset: -1px;
+  }
+  /* Fluido: 114 en una lista de 360 o más; en una angosta, el 32 % de su ancho (64 a 200 px). */
+  .mk-list-item-leading[data-variant='video'] {
+    inline-size: min(114px, 32cqi);
+    block-size: 64px;
+    border-radius: var(--md-sys-shape-corner-extra-small);
+  }
+  .mk-list-item-leading:is([data-variant='avatar'], [data-variant='image'], [data-variant='video']) > :is(img, video, picture, svg) {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+  }
+  .mk-list-item-overline {
+    grid-column: 2;
+    grid-row: 2;
+    display: block;
+    color: var(--_overline);
+    font-family: var(--md-sys-typescale-label-medium-font);
+    font-size: var(--md-sys-typescale-label-medium-size);
+    line-height: var(--md-sys-typescale-label-medium-line-height);
+    font-weight: var(--md-sys-typescale-label-medium-weight);
+    letter-spacing: var(--md-sys-typescale-label-medium-tracking);
+  }
+  .mk-list-item-headline {
+    grid-column: 2;
+    grid-row: 3;
+    display: block;
+    color: var(--_headline);
+    font-family: var(--md-sys-typescale-body-large-font);
+    font-size: var(--md-sys-typescale-body-large-size);
+    line-height: var(--md-sys-typescale-body-large-line-height);
+    font-weight: var(--md-sys-typescale-body-large-weight);
+    letter-spacing: var(--md-sys-typescale-body-large-tracking);
+  }
+  /* El apoyo es una vista previa: se recorta (por defecto, a 2 líneas, la lista de tres líneas de
+     Material); el texto principal es el nombre del elemento y no se recorta. */
+  .mk-list-item-supporting {
+    grid-column: 2;
+    grid-row: 4;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: var(--mk-list-item-supporting-lines, 2);
+    overflow: hidden;
+    color: var(--_supporting);
+    font-family: var(--md-sys-typescale-body-medium-font);
+    font-size: var(--md-sys-typescale-body-medium-size);
+    line-height: var(--md-sys-typescale-body-medium-line-height);
+    font-weight: var(--md-sys-typescale-body-medium-weight);
+    letter-spacing: var(--md-sys-typescale-body-medium-tracking);
+  }
+  /* Final: texto en Label Large (kit; Compose Label Small) y/o icono de 20, separación 8. */
+  .mk-list-item-trailing {
+    grid-column: 3;
+    grid-row: 1 / -1;
+    align-self: center;
+    display: flex;
+    align-items: center;
+    gap: var(--md-sys-space-100);
+    margin-inline-start: var(--md-sys-space-150);
+    color: var(--_trailing);
+    white-space: nowrap;
+    font-family: var(--md-sys-typescale-label-large-font);
+    font-size: var(--md-sys-typescale-label-large-size);
+    line-height: var(--md-sys-typescale-label-large-line-height);
+    font-weight: var(--md-sys-typescale-label-large-weight);
+    letter-spacing: var(--md-sys-typescale-label-large-tracking);
+    --mk-icon-size: 20px;
+  }
+  .mk-list-item[data-align='top'] :is(.mk-list-item-leading, .mk-list-item-trailing, .mk-list-item-expand) {
+    align-self: start;
+  }
+  /* Arriba, el icono queda centrado en la primera línea del texto principal (24 de alto). */
+  .mk-list-item[data-align='top'] .mk-list-item-leading[data-variant='icon'] {
+    margin-block-start: var(--md-sys-space-25);
+  }
+
+  /* --- Átomos del <li>: solo en la fila de selección --- */
+  .mk-list-item > :is(.mk-state-layer, .mk-ripple, .mk-focus-ring) {
+    display: none;
+  }
+  .mk-list-item:where(:has(> :is(.mk-checkbox, .mk-switch, .mk-radio-button))) > :is(.mk-state-layer, .mk-ripple, .mk-focus-ring) {
+    display: block;
+  }
+  .mk-list-item > :is(.mk-state-layer, .mk-ripple),
+  .mk-list-item-action > :is(.mk-state-layer, .mk-ripple),
+  .mk-list-item-summary > :is(.mk-state-layer, .mk-ripple) {
+    --mk-state-layer-color: var(--_layer);
+    --mk-ripple-color: var(--_layer);
+  }
+  /* Anillo hacia adentro (como @material/web): en la estándar los elementos están pegados y en la
+     segmentada hay 2 de separación; uno hacia afuera taparía al vecino. */
+  .mk-list-item > .mk-focus-ring,
+  .mk-list-item-action > .mk-focus-ring,
+  .mk-list-item-summary > .mk-focus-ring {
+    --mk-focus-ring-offset: calc(-1 * var(--md-sys-state-focus-indicator-thickness));
+    --mk-focus-ring-color: var(--_ring);
+  }
+
+  /* --- Acción: enlace o botón cuyo área cubre el elemento --- */
+  .mk-list-item-action {
+    /* Sin posición propia: el área y los átomos se ubican contra el <li>. Gana sobre la posición
+       que los átomos le dan a su padre (capa matekit.atoms). */
+    position: static;
+    isolation: auto;
+    appearance: none;
+    margin: 0;
+    padding: 0;
+    border: none;
+    background: none;
+    color: inherit;
+    font: inherit;
+    letter-spacing: inherit;
+    text-align: inherit;
+    text-decoration: none;
+    cursor: pointer;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .mk-list-item-action::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+  }
+  .mk-list-item-action::after,
+  .mk-list-item-action > :is(.mk-state-layer, .mk-ripple, .mk-focus-ring) {
+    border-start-start-radius: var(--_c-ss);
+    border-start-end-radius: var(--_c-se);
+    border-end-start-radius: var(--_c-es);
+    border-end-end-radius: var(--_c-ee);
+    transition:
+      border-start-start-radius var(--md-sys-motion-spring-fast-spatial-duration)
+        var(--md-sys-motion-spring-fast-spatial-easing),
+      border-start-end-radius var(--md-sys-motion-spring-fast-spatial-duration)
+        var(--md-sys-motion-spring-fast-spatial-easing),
+      border-end-start-radius var(--md-sys-motion-spring-fast-spatial-duration)
+        var(--md-sys-motion-spring-fast-spatial-easing),
+      border-end-end-radius var(--md-sys-motion-spring-fast-spatial-duration)
+        var(--md-sys-motion-spring-fast-spatial-easing),
+      opacity var(--md-sys-motion-spring-fast-effects-duration) var(--md-sys-motion-spring-fast-effects-easing);
+  }
+  /* Los otros controles del elemento (un IconButton al inicio o al final), encima del área.
+     :where() deja la especificidad en 0: la posición propia de cualquier componente gana (los
+     inputs de los controles de selección siguen en absoluto). */
+  :where(.mk-list-item) :where(a[href], button, input, select, textarea, [tabindex]):not(.mk-list-item-action) {
+    position: relative;
+    z-index: 2;
+  }
+
+  /* --- Selección: el control envuelve el texto; su etiqueta ocupa la fila --- */
+  .mk-list-item > :is(.mk-checkbox, .mk-switch, .mk-radio-button) {
+    grid-column: 2 / -1;
+    grid-row: 1 / -1;
+    display: grid;
+    grid-template-columns: subgrid;
+    grid-template-rows: subgrid;
+    min-inline-size: 0;
+    color: inherit;
+    font: inherit;
+    letter-spacing: inherit;
+    -webkit-tap-highlight-color: transparent;
+  }
+  /* El área de la etiqueta: cubre todo el <li> (la etiqueta no se posiciona). */
+  .mk-list-item > :is(.mk-checkbox, .mk-switch, .mk-radio-button)::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+  }
+  .mk-list-item > :is(.mk-checkbox, .mk-switch, .mk-radio-button) > :is(.mk-checkbox-label, .mk-switch-label, .mk-radio-button-label) {
+    grid-column: 1;
+    grid-row: 2 / 5;
+    display: flex;
+    flex-direction: column;
+    min-inline-size: 0;
+    padding: 0;
+  }
+  .mk-list-item > :is(.mk-checkbox, .mk-switch, .mk-radio-button) > :is(.mk-checkbox-control, .mk-switch-control, .mk-radio-button-control) {
+    grid-column: 3;
+    grid-row: 1 / -1;
+    align-self: center;
+    /* El círculo de 40 (con el área de 48 del input) se mete 4 en el relleno de arriba y abajo (una
+       fila de una línea sigue en 52) y 10 en el del final: la casilla y el radio quedan a 16-17 del
+       borde, como en Compose, donde el control mide 20 dentro de la fila (TrailingDecorator). */
+    margin-block: calc(-1 * var(--md-sys-space-50));
+    margin-inline: var(--md-sys-space-150) calc(-1 * var(--md-sys-space-125));
+  }
+  /* El switch (área de 52 × 48, pista de 52 × 32) termina a 16 del borde. */
+  .mk-list-item > .mk-switch > .mk-switch-control {
+    margin-inline: var(--md-sys-space-150) 0;
+  }
+  .mk-list-item[data-align='top'] > :is(.mk-checkbox, .mk-switch, .mk-radio-button) > :is(.mk-checkbox-control, .mk-switch-control, .mk-radio-button-control) {
+    align-self: start;
+  }
+  /* La fila tiene sus propios átomos (los del <li>): sin la capa, la onda ni el anillo del control. */
+  .mk-list-item > :is(.mk-checkbox, .mk-switch, .mk-radio-button) :is(.mk-state-layer, .mk-ripple, .mk-focus-ring) {
+    display: none;
+  }
+
+  /* --- Acordeón --- */
+  .mk-list-item-details {
+    border-radius: inherit;
+  }
+  .mk-list-item-summary {
+    position: relative;
+    isolation: isolate;
+    border-radius: inherit;
+    list-style: none;
+    cursor: pointer;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .mk-list-item-summary::-webkit-details-marker {
+    display: none;
+  }
+  .mk-list-item-details[open] > .mk-list-item-summary {
+    border-end-start-radius: 0;
+    border-end-end-radius: 0;
+  }
+  /* Kit: botón de 32 × 40 con radio completo e icono de 20; cerrado, Surface; abierto, Surface
+     Container (ExpandedListTokens). Es el indicador de la fila (la fila entera es el botón), por
+     eso sin capa propia. */
+  .mk-list-item-expand {
+    grid-column: 4;
+    grid-row: 1 / -1;
+    align-self: center;
+    display: grid;
+    place-items: center;
+    inline-size: 32px;
+    block-size: 40px;
+    /* Se mete 4 en el relleno de arriba y abajo: una fila de una línea sigue en 52. */
+    margin-block: calc(-1 * var(--md-sys-space-50));
+    margin-inline-start: var(--md-sys-space-150);
+    border-radius: var(--md-sys-shape-corner-full);
+    background-color: var(--md-sys-color-surface);
+    color: var(--md-sys-color-on-surface);
+    --mk-icon-size: 20px;
+  }
+  .mk-list-item-expand > .mk-icon {
+    transition: transform var(--md-sys-motion-spring-fast-spatial-duration)
+      var(--md-sys-motion-spring-fast-spatial-easing);
+  }
+  .mk-list-item-details[open] > .mk-list-item-summary > .mk-list-item-expand {
+    background-color: var(--md-sys-color-surface-container);
+  }
+  .mk-list-item-details[open] > .mk-list-item-summary > .mk-list-item-expand > .mk-icon {
+    transform: rotate(180deg);
+  }
+  .mk-list-item:has(> .mk-list-item-details[open]) {
+    --_container: var(--md-sys-color-surface);
+  }
+  /* Contenido del acordeón abierto: alineado con los bordes de la fila. */
+  .mk-list-item-details > :not(summary) {
+    margin: 0;
+    padding-inline: var(--md-sys-space-200);
+    color: var(--md-sys-color-on-surface-variant);
+    font-family: var(--md-sys-typescale-body-medium-font);
+    font-size: var(--md-sys-typescale-body-medium-size);
+    line-height: var(--md-sys-typescale-body-medium-line-height);
+    font-weight: var(--md-sys-typescale-body-medium-weight);
+    letter-spacing: var(--md-sys-typescale-body-medium-tracking);
+  }
+  .mk-list-item-details > :not(summary) + :not(summary) {
+    padding-block-start: var(--md-sys-space-100);
+  }
+  .mk-list-item-details > :last-child:not(summary) {
+    padding-block-end: var(--md-sys-space-200);
+  }
+
+  /* --- Estados ---
+     Las condiciones van en :where(): todas las reglas pesan como .mk-list-item y gana el orden, que
+     sigue la prioridad de Compose (hover < foco < seleccionado < presionado; deshabilitado al
+     final). Kit: capa On Surface 8 % hover y 10 % foco; presionado 8 % más la onda al 10 %. */
+  @media (hover: hover) {
+    .mk-list-item:where(
+        :has(.mk-list-item-action:hover:not(:disabled)),
+        :has(> :is(.mk-checkbox, .mk-switch, .mk-radio-button):hover),
+        :has(> .mk-list-item-details:not([open]) > .mk-list-item-summary:hover)
+      ) {
+      --_state-radius: var(--md-sys-shape-corner-medium);
+    }
+  }
+  .mk-list-item:where(
+      :has(.mk-list-item-action:focus-visible),
+      :has(> :is(.mk-checkbox, .mk-switch, .mk-radio-button) input:is(:focus-visible, [data-focus-visible])),
+      :has(> .mk-list-item-details:not([open]) > .mk-list-item-summary:focus-visible)
+    ) {
+    --_state-radius: var(--md-sys-shape-corner-large);
+  }
+  .mk-list-item:where(:has(> :is(.mk-checkbox, .mk-switch, .mk-radio-button) input:is(:focus-visible, [data-focus-visible]))) > .mk-state-layer {
+    --mk-state-layer-opacity: var(--md-sys-state-focus-state-layer-opacity);
+  }
+  .mk-list-item:where(:has(> :is(.mk-checkbox, .mk-switch, .mk-radio-button) input:is(:focus-visible, [data-focus-visible]))) > .mk-focus-ring {
+    --mk-focus-ring-visible: 1;
+  }
+
+  /* Seleccionado (kit: Secondary Container, con texto, iconos y capas en On Secondary Container):
+     el destino actual (aria-current) o el control marcado de una casilla o un radio. Un switch
+     encendido no selecciona el elemento: es un ajuste, no una elección entre elementos. */
+  .mk-list-item:where(
+      :has(.mk-list-item-action:is([aria-current]:not([aria-current='false']))),
+      :has(> :is(.mk-checkbox, .mk-radio-button) input:checked)
+    ) {
+    --_container: var(--md-sys-color-secondary-container);
+    --_headline: var(--md-sys-color-on-secondary-container);
+    --_supporting: var(--md-sys-color-on-secondary-container);
+    --_overline: var(--md-sys-color-on-secondary-container);
+    --_leading: var(--md-sys-color-on-secondary-container);
+    --_trailing: var(--md-sys-color-on-secondary-container);
+    --_layer: var(--md-sys-color-on-secondary-container);
+    --_ring: var(--md-sys-color-on-secondary-container);
+    --_state-radius: var(--md-sys-shape-corner-large);
+  }
+
+  /* La casilla y el radio marcados son contenido final del seleccionado: On Secondary Container
+     (kit), con la marca en Secondary Container. Su Primary sobre Secondary Container no es un par
+     garantizado y no llega a 3:1 en los niveles medio y alto (contrast.test.tsx, ADR-0008). */
+  .mk-list-item > .mk-checkbox .mk-checkbox-control:has(> .mk-checkbox-input:checked:enabled) {
+    --_outline: var(--md-sys-color-on-secondary-container);
+    --_container: var(--md-sys-color-on-secondary-container);
+    --_icon: var(--md-sys-color-secondary-container);
+  }
+  .mk-list-item > .mk-radio-button .mk-radio-button-control:has(> .mk-radio-button-input:checked:enabled) {
+    --_color: var(--md-sys-color-on-secondary-container);
+  }
+
+  .mk-list-item:where(
+      :has(.mk-list-item-action:active:not(:disabled)),
+      :has(> :is(.mk-checkbox, .mk-switch, .mk-radio-button):active),
+      :has(> .mk-list-item-details:not([open]) > .mk-list-item-summary:active)
+    ) {
+    --_state-radius: var(--md-sys-shape-corner-large);
+  }
+  /* Con la onda presente, la capa de presionado queda en la de hover y la onda suma la suya. */
+  .mk-list-item:active > .mk-state-layer,
+  .mk-list-item-action:active:not(:disabled) > .mk-state-layer,
+  .mk-list-item-summary:active > .mk-state-layer {
+    opacity: var(--md-sys-state-hover-state-layer-opacity);
+  }
+
+  /* Deshabilitado (kit): inicio, contenido y final al 38 %; seleccionado y deshabilitado, fondo On
+     Surface al 10 % y contenido On Surface (Compose ItemSelectedDisabled*). En la fila de
+     selección, el control ya atenúa su caja y su texto: acá, solo el inicio y el final. */
+  .mk-list-item:where(:has(.mk-list-item-action:disabled)) > :is(
+      .mk-list-item-leading,
+      .mk-list-item-overline,
+      .mk-list-item-headline,
+      .mk-list-item-supporting,
+      .mk-list-item-trailing
+    ),
+  .mk-list-item:where(:has(> :is(.mk-checkbox, .mk-switch, .mk-radio-button) input:disabled)) > :is(
+      .mk-list-item-leading,
+      .mk-list-item-trailing
+    ) {
+    opacity: var(--md-sys-state-disabled-content-opacity);
+  }
+  .mk-list-item:where(
+      :has(.mk-list-item-action:disabled),
+      :has(> :is(.mk-checkbox, .mk-switch, .mk-radio-button) input:disabled)
+    ) {
+    --_state-radius: initial;
+  }
+  .mk-list-item:where(:has(> :is(.mk-checkbox, .mk-switch, .mk-radio-button) input:disabled)) > :is(.mk-state-layer, .mk-ripple) {
+    display: none;
+  }
+  .mk-list-item:where(:has(> :is(.mk-checkbox, .mk-radio-button) input:disabled:checked)) {
+    --_container: color-mix(
+      in srgb,
+      var(--md-sys-color-on-surface) calc(var(--md-sys-state-disabled-container-opacity) * 100%),
+      transparent
+    );
+    --_headline: var(--md-sys-color-on-surface);
+    --_supporting: var(--md-sys-color-on-surface);
+    --_overline: var(--md-sys-color-on-surface);
+    --_leading: var(--md-sys-color-on-surface);
+    --_trailing: var(--md-sys-color-on-surface);
+    --_state-radius: var(--md-sys-shape-corner-large);
+  }
+  .mk-list-item-action:disabled {
+    cursor: default;
+  }
+
+  /* --- Anchos chicos (container query sobre la lista) ---
+     Bajo 20rem (320 px; un panel de lista de Material 3 mide 360), el texto final que no
+     acompaña a un control ni a un icono pasa debajo del texto principal: así el texto principal
+     no queda en unas pocas letras por línea. Un control o un icono se quedan al final. */
+  @container mk-list (width < 20rem) {
+    .mk-list-item-trailing:not(:has(a, button, input, select, textarea, svg, img, video, [tabindex])) {
+      grid-column: 2;
+      grid-row: 5;
+      align-self: start;
+      justify-self: start;
+      margin-inline-start: 0;
+      white-space: normal;
+    }
+  }
+  /* Bajo 15rem (240 px), una imagen o un video de inicio dejarían al texto en unos 80 px: pasan
+     arriba del texto (el video, a todo el ancho del texto con la proporción del kit, 114 / 64). */
+  @container mk-list (width < 15rem) {
+    .mk-list-item:has(> .mk-list-item-leading:is([data-variant='image'], [data-variant='video'])),
+    .mk-list-item-summary:has(> .mk-list-item-leading:is([data-variant='image'], [data-variant='video'])) {
+      grid-template-rows: auto auto auto auto auto 1fr;
+    }
+    .mk-list-item-leading:is([data-variant='image'], [data-variant='video']) {
+      grid-column: 1 / 3;
+      grid-row: 1;
+      align-self: start;
+      justify-self: start;
+      margin-inline-end: 0;
+      margin-block-end: var(--md-sys-space-100);
+    }
+    .mk-list-item-leading[data-variant='video'] {
+      inline-size: 100%;
+      block-size: auto;
+      aspect-ratio: 114 / 64;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .mk-list-item-expand > .mk-icon {
+      transition: none;
+    }
+  }
+
+  /* --- Alto contraste (forced-colors) ---
+     El navegador quita los fondos: el seleccionado se dibuja en Highlight con el contenido en
+     HighlightText (saliendo del ajuste automático), el hover con un contorno de 2 en Highlight
+     por dentro, y el deshabilitado en GrayText sin opacidad. El foco es el anillo (contorno, que el
+     navegador pinta con un color del sistema). En la segmentada, Group dibuja el contorno de cada
+     bloque (ADR-0017). Los divisores son bordes: el navegador los pinta en CanvasText. */
+  @media (forced-colors: active) {
+    @media (hover: hover) {
+      .mk-list-item:where(
+          :has(.mk-list-item-action:hover:not(:disabled)),
+          :has(> :is(.mk-checkbox, .mk-switch, .mk-radio-button):hover):not(:has(input:disabled)),
+          :has(> .mk-list-item-details > .mk-list-item-summary:hover)
+        ) {
+        outline: 2px solid Highlight;
+        outline-offset: -2px;
+      }
+    }
+    .mk-list-item:where(
+        :has(.mk-list-item-action:is([aria-current]:not([aria-current='false']))),
+        :has(> :is(.mk-checkbox, .mk-radio-button) input:checked:not(:disabled))
+      ) {
+      forced-color-adjust: none;
+      --_container: Highlight;
+      --_headline: HighlightText;
+      --_supporting: HighlightText;
+      --_overline: HighlightText;
+      --_leading: HighlightText;
+      --_trailing: HighlightText;
+      --_layer: HighlightText;
+    }
+    .mk-list-item:where(
+        :has(.mk-list-item-action:disabled),
+        :has(> :is(.mk-checkbox, .mk-switch, .mk-radio-button) input:disabled)
+      ) {
+      forced-color-adjust: none;
+      --_container: Canvas;
+      --_headline: GrayText;
+      --_supporting: GrayText;
+      --_overline: GrayText;
+      --_leading: GrayText;
+      --_trailing: GrayText;
+    }
+    .mk-list-item:where(:has(.mk-list-item-action:disabled)) > :is(
+        .mk-list-item-leading,
+        .mk-list-item-overline,
+        .mk-list-item-headline,
+        .mk-list-item-supporting,
+        .mk-list-item-trailing
+      ),
+    .mk-list-item:where(:has(> :is(.mk-checkbox, .mk-switch, .mk-radio-button) input:disabled)) > :is(
+        .mk-list-item-leading,
+        .mk-list-item-trailing
+      ) {
+      opacity: 1;
+    }
+    .mk-list-item-leading[data-variant='avatar'] {
+      outline: 1px solid CanvasText;
+      outline-offset: -1px;
+    }
+    .mk-list-item-expand {
+      outline: 1px solid CanvasText;
+      outline-offset: -1px;
+    }
+  }
+}

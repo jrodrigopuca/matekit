@@ -38,3 +38,6 @@
 @import './organisms/NavigationBar/navigation-bar.css';
 /* Después de navigation-bar.css: usa su base común de destinos y la sobrescribe por orden. */
 @import './organisms/NavigationRail/navigation-rail.css';
+/* Después de los controles (checkbox.css, switch.css, radio-button.css) y de group.css: ubica el
+   control de selección en la fila y le gana a sus estilos sueltos por orden y especificidad. */
+@import './organisms/List/list.css';

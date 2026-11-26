@@ -73,6 +73,16 @@ import {
   CardSubhead,
   Stack,
   Group,
+  List,
+  ListItem,
+  ListItemAction,
+  ListItemDetails,
+  ListItemHeadline,
+  ListItemLeading,
+  ListItemOverline,
+  ListItemSummary,
+  ListItemSupporting,
+  ListItemTrailing,
 } from '../index.ts'
 import { a11yViolations } from './a11y.ts'
 import { render } from './render.tsx'
@@ -391,6 +401,70 @@ const GALLERIES: Record<string, ReactNode> = {
           <p>No disponible.</p>
         </CardContent>
       </Card>
+    </>
+  ),
+  // List: los cinco casos de semántica (contenido, enlaces con aria-current, acciones con un
+  // IconButton secundario y una deshabilitada, selección con casilla, radio y switch, y acordeón),
+  // estándar y segmentada: sin interactivos anidados (axe: nested-interactive) ni etiquetas vacías.
+  List: (
+    <>
+      <List aria-label="Contactos" dividers>
+        <ListItem>
+          <ListItemLeading variant="avatar"><span aria-hidden="true">AR</span></ListItemLeading>
+          <ListItemOverline>Equipo</ListItemOverline>
+          <ListItemHeadline>Ana Rivas</ListItemHeadline>
+          <ListItemSupporting>ana@example.com</ListItemSupporting>
+          <ListItemTrailing>Admin</ListItemTrailing>
+        </ListItem>
+      </List>
+      <List variant="segmented" aria-label="Mensajes">
+        <ListItem>
+          <ListItemLeading><StarIcon /></ListItemLeading>
+          <ListItemHeadline><ListItemAction href="#m1" current>Reunión del jueves</ListItemAction></ListItemHeadline>
+          <ListItemSupporting>Ana Rivas</ListItemSupporting>
+          <ListItemTrailing>10:24</ListItemTrailing>
+        </ListItem>
+        <ListItem>
+          <ListItemHeadline><ListItemAction href="#m2">Fotos del viaje</ListItemAction></ListItemHeadline>
+          <ListItemTrailing><IconButton label="Más opciones de Fotos del viaje" size="sm"><MoreVertIcon /></IconButton></ListItemTrailing>
+        </ListItem>
+      </List>
+      <List aria-label="Acciones">
+        <ListItem>
+          <ListItemLeading><EditIcon /></ListItemLeading>
+          <ListItemHeadline><ListItemAction>Editar</ListItemAction></ListItemHeadline>
+        </ListItem>
+        <ListItem>
+          <ListItemLeading><DeleteIcon /></ListItemLeading>
+          <ListItemHeadline><ListItemAction disabled>Borrar</ListItemAction></ListItemHeadline>
+        </ListItem>
+      </List>
+      <List variant="segmented" aria-label="Compras">
+        <ListItem><Checkbox defaultChecked><ListItemHeadline>Leche</ListItemHeadline><ListItemSupporting>1 unidad</ListItemSupporting></Checkbox></ListItem>
+        <ListItem><Checkbox disabled><ListItemHeadline>Pan</ListItemHeadline></Checkbox></ListItem>
+        <ListItem><Switch defaultChecked><ListItemHeadline>Avisarme</ListItemHeadline></Switch></ListItem>
+      </List>
+      <RadioGroup name="a11y-list-envio" defaultValue="correo">
+        <RadioGroupLabel>Envío</RadioGroupLabel>
+        <List>
+          <ListItem><RadioButton value="correo"><ListItemHeadline>Correo</ListItemHeadline></RadioButton></ListItem>
+          <ListItem><RadioButton value="retiro"><ListItemHeadline>Retiro</ListItemHeadline></RadioButton></ListItem>
+        </List>
+      </RadioGroup>
+      <List variant="segmented" aria-label="Preguntas">
+        <ListItem>
+          <ListItemDetails open name="a11y-faq">
+            <ListItemSummary><ListItemHeadline>¿Cuánto tarda?</ListItemHeadline></ListItemSummary>
+            <p>Entre 2 y 5 días.</p>
+          </ListItemDetails>
+        </ListItem>
+        <ListItem>
+          <ListItemDetails name="a11y-faq">
+            <ListItemSummary><ListItemHeadline>¿Puedo devolverlo?</ListItemHeadline></ListItemSummary>
+            <p>Sí, en 30 días.</p>
+          </ListItemDetails>
+        </ListItem>
+      </List>
     </>
   ),
   // Stack y Group no agregan roles: la semántica la da el elemento de render (lista) o el rol y el

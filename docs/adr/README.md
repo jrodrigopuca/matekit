@@ -22,3 +22,4 @@ nueva la reemplaza y la anterior pasa a "superseded by".
 | [0015](0015-card-superficie-con-accion-principal-extendida-y-container-queries.md) | Card como superficie con una acción principal extendida a toda la tarjeta, y disposición por container queries sobre su propio ancho | accepted |
 | [0016](0016-escala-de-espaciado-y-cortes-de-ventana.md) | Escala de espaciado como `--md-sys-space-*` y cortes de ventana como datos, no como variables CSS | accepted |
 | [0017](0017-stack-y-group.md) | `Stack` como capa delgada sobre flex y `Group` con esquinas por posición en variables que leen los hijos | accepted |
+| [0018](0018-list-semantica-por-caso-y-partes.md) | List con semántica por caso (contenido, enlaces o botones con un área extendida, selección con el control envolviendo el texto, acordeón con `<details>`), partes de frase y estados derivados de los controles | accepted |

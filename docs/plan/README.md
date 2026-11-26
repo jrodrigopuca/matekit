@@ -25,6 +25,7 @@ siguiente. Convenciones en [`CLAUDE.md`](../../CLAUDE.md).
 | Divider y DividerSubhead | átomo | universal; `<hr>` (rol separator implícito; la vertical con `aria-orientation`, aceptada por axe), `inset` al inicio o a ambos lados con márgenes lógicos (RTL) y `--mk-divider-inset`, `decorative` lo oculta; se estira en flex y grid (`align-self`/`justify-self: stretch`); `DividerSubhead` envuelve el encabezado del usuario con la línea decorativa; `MenuDivider` lo usa (solo conserva su margen); resuelto por agente el 2026-11-25 |
 | Slider y RangeSlider | molécula | cliente (excepción al ADR-0003, ADR-0014): control dibujado con el `<input type="range">` nativo e invisible encima (thumb de 12, así el navegador ubica los valores donde está el handle, de 6 a L − 6, igual en los tres motores según una sonda); standard, `centered` y `RangeSlider` con `RangeSliderStart`/`RangeSliderEnd` (dos inputs nativos recortados con `clip-path` en el punto medio, sin cruzarse, con el "flip" de `@material/web` cuando están iguales; un `name` y un nombre accesible por handle); 5 tamaños del kit, vertical con `writing-mode` (el mismo CSS lógico sirve para RTL), `ticks`, controlado y no controlado (`onValueChange`), reinicio del formulario; handle de 4 que pasa a 2 al presionar y con foco (anillo y 4 más de separación, InsetRing de Compose) con resortes sobre propiedades registradas; indicador de valor al presionar, arrastrar y con foco de teclado, con `format` (función o `Intl.NumberFormat`) y `aria-valuetext` igual; flechas izquierda y derecha propias en vertical y RTL, donde los motores no coinciden; pasos sobre la pista activa en `on-primary` (Compose y `@material/web`, no el `secondary-container` del kit); conflictos en `07-jetpack-compose.md`; resuelto por agente el 2026-11-25 |
 | Card | molécula | universal (ADR-0015): superficie (`<div>`) en elevated, filled y outlined; interactiva con `CardPrimaryAction` (enlace, botón o `render`, ADR-0010) dentro del título, con el área extendida a toda la tarjeta por un `::after` y los otros controles encima, enfocables por separado (sin interactivos anidados); foco en el borde de la tarjeta; sin estado deshabilitado (el kit no lo tiene; quitado el 2026-11-25: con la acción principal como `<button disabled>`, la tarjeta solo deja de reaccionar); partes `CardHeader`, `CardHeadline` (`<h3>`, `level`), `CardSubhead`, `CardMedia`, `CardContent` y `CardActions`; fluida y adaptada a su propio ancho con container queries (vertical con la imagen al costado desde 37,5rem, horizontal apilada bajo 20rem, acciones apiladas bajo 15rem; `adaptive={false}` lo desactiva), imagen con `aspect-ratio` 360/188 y `object-fit: cover`, textos que cortan línea sin recortarse; grillas con CSS grid (`auto-fill`, mostrado en el playground); sin arrastre (la API lo deja abierto); conflictos con Compose en `07-jetpack-compose.md`; resuelto por agente el 2026-11-25 |
+| List | organismo | universal (ADR-0018): `List` (`<ul role="list">`, por VoiceOver en Safari sin viñetas; `variant` standard o segmented sobre `Group`; `dividers` como borde, sin `<hr>`) y `ListItem` (`<li>`, `align` middle o top) con partes de frase (`ListItemLeading` icono, avatar, imagen o video; `ListItemOverline`, `ListItemHeadline`, `ListItemSupporting`, `ListItemTrailing`); elementos que son enlaces o botones con `ListItemAction` dentro del texto principal (área extendida al `<li>` como la Card, IconButton secundario encima; `current` pone `aria-current` y el seleccionado del kit, para lista y detalle); selección con el Checkbox, RadioButton o Switch envolviendo el texto (su `<label>` da el nombre, `subgrid` lo ubica al final y un `::after` hace que toda la fila lo active; casilla o radio marcados = seleccionado, el switch no); acordeón con `ListItemDetails`/`ListItemSummary` (`<details>`/`<summary>`, elegido con una sonda en los tres motores; indicador de 32 × 40); Tab por elemento (sin `listbox`); forma por estado de Compose (4, hover 12, foco/presionado/seleccionado 16, también en la segmentada); anillo por dentro; fluida con container queries (apoyo recortado a 2 líneas con `--mk-list-item-supporting-lines`, texto final debajo bajo 20rem, imagen o video arriba bajo 15rem); sin Draggable ni Swipe (la API los deja abiertos: `[data-dragged]` en StateLayer y colores por variables); conflictos con Compose en `07-jetpack-compose.md`; pendiente comprobar VoiceOver a mano; resuelto por agente el 2026-11-25 |
 | Escala de espaciado, cortes de ventana, Stack y Group | tokens y átomos | ADR-0016 y ADR-0017; `--md-sys-space-*` (el nombre de `@material/web` labs, con los 18 pasos y la numeración de Compose `MeasurementTokens.kt`: `200` = 16) generado por `pnpm tokens`, con `SPACE`/`SpaceStep` en TypeScript; cortes de `WindowSizeClass.kt` como `WINDOW_WIDTH`/`WINDOW_HEIGHT` (JSON y TypeScript, sin variables CSS); `pnpm lint:css` revisa `gap`, `padding` y `margin` en todo archivo menos los 12 de `SPACING_PENDING`; `Stack` universal (`direction`, `gap` tipado en la escala, `wrap`, `align`, `justify`, `switchAt` con el patrón "switcher" elegido por una sonda en los tres motores, `render`); `Group` universal (`orientation`, `render`; esquinas por posición en `--mk-group-corner-*` registradas sin herencia, a partir de `--mk-group-gap`, `--mk-group-outer-radius` y `--mk-group-inner-radius`, que el uso define también por estado; sin roles propios; contorno en alto contraste); ejemplos de List segmentada y botones conectados en el playground; Button y Card todavía no leen las variables (propuesta en ADR-0017); resuelto por agente el 2026-11-25 |
 | 32 iconos | icons | ADR-0006 |
 | Formas decorativas (entrega 1): portación de `androidx.graphics.shapes`, 35 formas y átomo Shape | átomo | ADR-0011; universal, recorta con `mask-image` (se estira al tamaño del elemento); `pnpm shapes` genera `shapes/material-shapes.json`, el tipo `ShapeName`, `SHAPES` y las máscaras; resuelto por agente el 2026-11-25 |
@@ -295,13 +296,36 @@ Pendiente (2026-11-25):
   como respaldo; ADR-0017): se hace con el ítem 25 (Button groups) y cuando haga falta agrupar
   tarjetas.
 
-**14. List** (organismo, universal). `List` y `ListItem` con partes (`ListItemLeading`,
+**14. List** (organismo, universal; hecho, ver "Hecho" y ADR-0018). `List` y `ListItem` con partes (`ListItemLeading`,
 `ListItemHeadline`, `ListItemSupporting`, `ListItemTrailing`), una, dos y tres líneas, y
 elementos interactivos (`ListTokens.kt`). Usa Divider, Checkbox, Radio y Switch como contenido
 final; la segmentada usa `Group` (13). Responsive: ancho fluido, textos que cortan línea o se
 recortan según el caso, elementos finales que se reacomodan en anchos chicos, y un uso razonable
 en paneles de lista y detalle. Riesgo bajo a medio: la semántica (lista de enlaces, de acciones
 o de selección).
+
+Pendiente de la List (2026-11-25):
+- Comprobar a mano con VoiceOver en Safari que la lista se anuncia como lista (con `role="list"`; no
+  se pudo automatizar: Playwright no expone el árbol de accesibilidad de WebKit).
+- Draggable y Swipe del kit: ítem propio (gestos, reordenar con teclado). La API los deja abiertos
+  (ADR-0018).
+- En una fila de selección con un control secundario, presionarlo también dispara la onda de la fila.
+
+**Playground: navegación y disposición** (prioridad, antes de Chips; pedido por el autor el
+2026-11-25). Con más de 20 páginas, la barra de navegación de la cabecera (una fila de enlaces
+sin envoltura) mide unos 1740 px y desborda en horizontal en todas las páginas; a 320 px también
+se salen controles sueltos (por ejemplo `label.pg-field` en la página de la Card). Objetivos:
+- Navegación que escale con la cantidad de páginas: agrupada (por ejemplo átomos, moléculas,
+  organismos, tokens y ejemplos), con la página actual marcada, y adaptada al ancho (panel lateral
+  en pantallas anchas, menú o panel desplegable en las chicas). Usar los componentes de matekit
+  donde sirvan (List con elementos que son enlaces y `aria-current`, NavigationRail, Menu, Stack),
+  como prueba de uso real, sin forzarlos.
+- Sin desborde horizontal de la página a 320 px en ninguna página; los selectores de tema, paleta,
+  contraste y movimiento se reacomodan.
+- Mantener las URLs de las páginas (las capturas y los enlaces de las notas las usan).
+- Opcional: buscar o filtrar páginas.
+No cambia la librería; si un componente no alcanza para el playground, se anota como pendiente en
+el plan en lugar de agrandarlo para este uso.
 
 **15. Chips** (molécula). Assist, filter, input y suggestion (`AssistChipTokens.kt`,
 `FilterChipTokens.kt`, `InputChipTokens.kt`, `SuggestionChipTokens.kt`). Filter como toggle

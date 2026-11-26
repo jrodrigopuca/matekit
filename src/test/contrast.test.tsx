@@ -55,6 +55,17 @@ import {
   CardHeadline,
   CardPrimaryAction,
   CardSubhead,
+  List,
+  ListItem,
+  ListItemAction,
+  ListItemDetails,
+  ListItemHeadline,
+  ListItemLeading,
+  ListItemOverline,
+  ListItemSummary,
+  ListItemSupporting,
+  ListItemTrailing,
+  ChevronRightIcon,
 } from '../index.ts'
 import '../tokens/palettes/index.css'
 import { contrastRatio, effectiveBackground, parseColor, textContrast } from './contrast.ts'
@@ -317,6 +328,64 @@ for (const scheme of SCHEMES) {
         const ring = cs(q(c, `.${v} .mk-focus-ring`)).outlineColor
         expect(contrastRatio(ring, effectiveBackground(q(c, 'main'))), `${v} anillo`).toBeGreaterThanOrEqual(NON_TEXT)
       }
+    })
+
+    // List: el texto (overline, principal, apoyo y final) a 4,5:1, y los iconos de inicio y final,
+    // el del acordeón y la casilla marcada a 3:1, en reposo (sobre la página o, en la segmentada,
+    // sobre Surface) y seleccionado (Secondary Container). El anillo de foco se dibuja por dentro,
+    // sobre el fondo del elemento: 3:1 sobre el de reposo y el seleccionado. No se miden los
+    // bordes entre bloques de la segmentada ni los divisores: agrupan, no identifican un control
+    // (lo identifica el texto, que es el nombre), y Material los quiere tenues (como el Divider).
+    test('List: texto e iconos en reposo y seleccionado, casilla marcada, acordeón y anillo de foco', async () => {
+      const item = (cls: string, current: boolean) => (
+        <ListItem className={cls}>
+          <ListItemLeading><StarIcon /></ListItemLeading>
+          <ListItemOverline>Overline</ListItemOverline>
+          <ListItemHeadline><ListItemAction href="#" current={current}>Principal</ListItemAction></ListItemHeadline>
+          <ListItemSupporting>Apoyo</ListItemSupporting>
+          <ListItemTrailing>3<ChevronRightIcon /></ListItemTrailing>
+        </ListItem>
+      )
+      const c = await render(
+        <Themed scheme={scheme}>
+          <List className="std">{item('rest', false)}{item('sel', true)}</List>
+          <div style={{ background: 'var(--md-sys-color-surface-container)', padding: 8 }}>
+            <List variant="segmented" className="seg">
+              {item('rest', false)}
+              <ListItem className="cb"><Checkbox defaultChecked><ListItemHeadline>Casilla</ListItemHeadline></Checkbox></ListItem>
+              <ListItem className="rb"><RadioButton name="contraste-list" defaultChecked><ListItemHeadline>Radio</ListItemHeadline></RadioButton></ListItem>
+              <ListItem className="acc">
+                <ListItemDetails><ListItemSummary><ListItemHeadline>Acordeón</ListItemHeadline></ListItemSummary><p>x</p></ListItemDetails>
+              </ListItem>
+              <ListItem className="acc-open">
+                <ListItemDetails open><ListItemSummary><ListItemHeadline>Abierto</ListItemHeadline></ListItemSummary><p>Contenido</p></ListItemDetails>
+              </ListItem>
+            </List>
+          </div>
+        </Themed>,
+      )
+      for (const li of ['.std .rest', '.std .sel', '.seg .rest']) {
+        for (const part of ['overline', 'headline', 'supporting', 'trailing']) {
+          expect(textContrast(q(c, `${li} .mk-list-item-${part}`)), `${li} ${part}`).toBeGreaterThanOrEqual(TEXT)
+        }
+        for (const icon of ['.mk-list-item-leading', '.mk-list-item-trailing']) {
+          const el = q(c, `${li} ${icon}`)
+          expect(contrastRatio(cs(el).color, effectiveBackground(el)), `${li} icono ${icon}`).toBeGreaterThanOrEqual(NON_TEXT)
+        }
+        const ring = q(c, `${li} a > .mk-focus-ring`)
+        expect(contrastRatio(cs(ring).outlineColor, effectiveBackground(q(c, li))), `${li} anillo`).toBeGreaterThanOrEqual(NON_TEXT)
+      }
+      expect(textContrast(q(c, '.cb .mk-list-item-headline'))).toBeGreaterThanOrEqual(TEXT)
+      const box = q(c, '.cb .mk-checkbox-box')
+      expect(contrastRatio(cs(box).backgroundColor, effectiveBackground(q(c, '.cb'))), 'casilla marcada').toBeGreaterThanOrEqual(NON_TEXT)
+      const dot = q(c, '.rb .mk-radio-button-dot')
+      expect(contrastRatio(cs(dot).backgroundColor, effectiveBackground(q(c, '.rb'))), 'radio marcado').toBeGreaterThanOrEqual(NON_TEXT)
+      for (const acc of ['.acc', '.acc-open']) {
+        expect(textContrast(q(c, `${acc} .mk-list-item-headline`))).toBeGreaterThanOrEqual(TEXT)
+        const exp = q(c, `${acc} .mk-list-item-expand`)
+        expect(contrastRatio(cs(exp).color, effectiveBackground(exp)), `${acc} icono`).toBeGreaterThanOrEqual(NON_TEXT)
+      }
+      expect(textContrast(q(c, '.acc-open p'))).toBeGreaterThanOrEqual(TEXT)
     })
 
     test('Dialog: título y texto sobre el contenedor', async () => {
