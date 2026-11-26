@@ -24,12 +24,12 @@
 // el rail conozca a sus hijos ni que fab.css dependa del rail.
 
 import type { HTMLAttributes, Ref } from 'react'
-import {
-  cx,
-  type ButtonElementProps,
-  type LinkElementProps,
-  type RenderElementProps,
-} from '../../internal/interactive.tsx'
+import type {
+  ButtonElementProps,
+  LinkElementProps,
+  RenderElementProps,
+} from '../../atoms/Interactive/Interactive.tsx'
+import { cx } from '../../internal/interactive.tsx'
 import { navigationItem, type NavigationItemOwnProps } from '../../internal/navigation-item.tsx'
 
 export type NavigationRailVariant = 'docked' | 'floating'

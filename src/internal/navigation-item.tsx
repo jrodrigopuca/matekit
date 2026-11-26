@@ -9,12 +9,12 @@ import { FocusRing } from '../atoms/FocusRing/FocusRing.tsx'
 import { Ripple } from '../atoms/Ripple/Ripple.tsx'
 import { StateLayer } from '../atoms/StateLayer/StateLayer.tsx'
 import {
-  cx,
-  interactiveElement,
+  Interactive,
   type ButtonElementProps,
   type LinkElementProps,
   type RenderElementProps,
-} from './interactive.tsx'
+} from '../atoms/Interactive/Interactive.tsx'
+import { assertRenderElement, cx } from './interactive.tsx'
 
 export interface NavigationItemOwnProps {
   /**
@@ -40,16 +40,14 @@ export type NavigationItemProps = NavigationItemOwnProps &
 export function navigationItem(name: string, base: string, props: NavigationItemProps) {
   const { active, className, children, ...rest } = props
   const current = active ? { 'aria-current': 'page' as const } : {}
-  return interactiveElement(
-    name,
-    cx(base, className),
-    { ...current, ...rest },
-    <>
+  assertRenderElement(name, rest.render)
+  return (
+    <Interactive {...current} {...rest} className={cx(base, className)}>
       <span className={`${base}-indicator`} aria-hidden="true" />
       <StateLayer />
       <Ripple />
       <FocusRing />
       {children}
-    </>,
+    </Interactive>
   )
 }

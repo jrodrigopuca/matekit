@@ -37,16 +37,18 @@ scripts/lib/shapes/  portación a TypeScript de androidx.graphics.shapes (con Mo
                  origen en cada archivo; ADR-0011); mismas reglas que scripts/lib/
 shapes/          contornos SVG generados de las 35 formas decorativas (pnpm shapes)
 src/tokens/      CSS generado (y space.ts y breakpoints.ts para TypeScript): no editar a mano
-src/atoms/       primitivas: StateLayer, FocusRing, Ripple, Icon, Shape, Divider, y las de
-                 disposición Stack y Group (ADR-0017)
+src/atoms/       primitivas: StateLayer, FocusRing, Ripple, Interactive (el <a>, <button> o
+                 elemento de render de ADR-0010, pública por ADR-0020), Icon, Shape, Divider, y
+                 las de disposición Stack y Group (ADR-0017)
 src/molecules/   controles y piezas con significado propio: Button, Checkbox, Badge,
                  LoadingIndicator, …
 src/organisms/   combinan controles: Dialog, Menu, NavigationBar, List, …
 src/icons/       iconos generados
-src/internal/    ayudas compartidas entre componentes, no exportadas (interactive.tsx: <a>, <button>
-                 o el elemento de render, ADR-0010, de Button, IconButton, los FAB y la
-                 navegación; navigation-item.tsx: base de los destinos de NavigationBar y
-                 NavigationRail; merge-refs.ts: mergeRefs une varias ref con la limpieza de
+src/internal/    ayudas compartidas entre componentes, no exportadas (interactive.tsx: cx,
+                 assertRenderElement, el error de render con el nombre del componente, y los
+                 tipos de botón que también es enlace, ToggleButtonOrLinkProps;
+                 navigation-item.tsx: base de los destinos de NavigationBar y NavigationRail;
+                 merge-refs.ts: mergeRefs une varias ref con la limpieza de
                  React 19, sin hooks: memorizarla al llamarla, como Dialog y Menu;
                  accessible-name.ts: AccessibleNameProps, el nombre obligatorio por label,
                  aria-labelledby o aria-label de los indicadores; activity-pulse.css: el latido
@@ -74,9 +76,11 @@ exporta desde el `index.ts` de su capa y su CSS se importa en `src/styles.css`.
 - **Props:** se extienden los atributos del elemento nativo principal; `ref` como prop
   (React 19). Props opcionales tipadas como `T | undefined` (por `exactOptionalPropertyTypes`).
 - **Átomos:** usar `StateLayer`, `FocusRing` y `Ripple` como hijos directos del elemento
-  interactivo. Si el foco o el puntero están en otro elemento (por ejemplo un `<input>`
-  oculto), activar con las variables `--mk-state-layer-opacity` y `--mk-focus-ring-visible`.
-  Ejemplo completo: `src/molecules/Checkbox/`.
+  interactivo. Un control que es enlace, botón o `render` dibuja `<Interactive>` (ADR-0010,
+  ADR-0020) y llama antes `assertRenderElement('Nombre', rest.render)`, como Button. Si el foco
+  o el puntero están en otro elemento (por ejemplo un `<input>` oculto), activar con las
+  variables `--mk-state-layer-opacity` y `--mk-focus-ring-visible`. Ejemplo completo:
+  `src/molecules/Checkbox/`.
 - **Iconos:** los de `src/icons/` o cualquier SVG dentro de `<Icon>`. El componente define
   `--mk-icon-size` para el tamaño. Un estado activo o seleccionado rellena el icono con
   `filled` (todos lo aceptan). El grado -25 en tema oscuro es automático (ADR-0006): no

@@ -5,19 +5,15 @@
 //
 // Enlaces y enrutadores (ADR-0010), como Button: con `href`, un `<a>`; con
 // `render={<Link href="/" />}`, el elemento que se pase; sin ninguno, un `<button type="button">`
-// (src/internal/interactive.tsx). En modo enlace los tipos rechazan `selected`, `disabled` y
+// (el átomo Interactive). En modo enlace los tipos rechazan `selected`, `disabled` y
 // `aria-disabled` (ver LinkModeExclusions y el comentario de Button.tsx).
 
 import type { ReactNode } from 'react'
 import { FocusRing } from '../../atoms/FocusRing/FocusRing.tsx'
 import { Ripple } from '../../atoms/Ripple/Ripple.tsx'
 import { StateLayer } from '../../atoms/StateLayer/StateLayer.tsx'
-import {
-  cx,
-  interactiveElement,
-  type InteractiveElementProps,
-  type ToggleButtonOrLinkProps,
-} from '../../internal/interactive.tsx'
+import { Interactive } from '../../atoms/Interactive/Interactive.tsx'
+import { assertRenderElement, cx, type ToggleButtonOrLinkProps } from '../../internal/interactive.tsx'
 
 export type IconButtonVariant = 'standard' | 'filled' | 'tonal' | 'outlined'
 export type IconButtonSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl'
@@ -84,20 +80,22 @@ export function IconButton(props: IconButtonProps) {
     children,
     ...rest
   } = props
-  return interactiveElement(
-    'IconButton',
-    cx('mk-icon-button', className),
-    {
-      ...(selected === undefined ? {} : { 'aria-pressed': selected }),
-      ...rest,
-      'aria-label': label,
-      ...{ 'data-variant': variant, 'data-size': size, 'data-width': width, 'data-shape': shape },
-    } as InteractiveElementProps,
-    <>
+  assertRenderElement('IconButton', rest.render)
+  return (
+    <Interactive
+      {...(selected === undefined ? {} : { 'aria-pressed': selected })}
+      {...rest}
+      aria-label={label}
+      data-variant={variant}
+      data-size={size}
+      data-width={width}
+      data-shape={shape}
+      className={cx('mk-icon-button', className)}
+    >
       <StateLayer />
       <Ripple />
       <FocusRing />
       {children}
-    </>,
+    </Interactive>
   )
 }

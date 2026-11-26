@@ -21,6 +21,7 @@ import { ExamplesPage } from './pages/ExamplesPage.tsx'
 import { FabPage } from './pages/FabPage.tsx'
 import { IconButtonPage } from './pages/IconButtonPage.tsx'
 import { IconsPage } from './pages/IconsPage.tsx'
+import { InteractivePage } from './pages/InteractivePage.tsx'
 import { LayoutPage } from './pages/LayoutPage.tsx'
 import { ListPage } from './pages/ListPage.tsx'
 import { LoadingIndicatorPage } from './pages/LoadingIndicatorPage.tsx'
@@ -68,6 +69,7 @@ const PAGES = {
   divider: { label: 'Divider', group: 'atoms', Page: DividerPage },
   shapes: { label: 'Formas', group: 'atoms', Page: ShapesPage },
   icons: { label: 'Iconos', group: 'atoms', Page: IconsPage },
+  interactive: { label: 'Interactive', group: 'atoms', Page: InteractivePage },
   button: { label: 'Button', group: 'molecules', Page: ButtonPage },
   card: { label: 'Card', group: 'molecules', Page: CardPage },
   checkbox: { label: 'Checkbox', group: 'molecules', Page: CheckboxPage },

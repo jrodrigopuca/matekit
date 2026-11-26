@@ -28,13 +28,12 @@ import { FocusRing } from '../../atoms/FocusRing/FocusRing.tsx'
 import { Ripple } from '../../atoms/Ripple/Ripple.tsx'
 import { StateLayer } from '../../atoms/StateLayer/StateLayer.tsx'
 import {
-  cx,
-  interactiveElement,
+  Interactive,
   type ButtonElementProps,
-  type InteractiveElementProps,
   type LinkElementProps,
   type RenderElementProps,
-} from '../../internal/interactive.tsx'
+} from '../../atoms/Interactive/Interactive.tsx'
+import { assertRenderElement, cx } from '../../internal/interactive.tsx'
 
 /** Estilo de Material 3: con sombra, relleno o con borde. */
 export type CardVariant = 'elevated' | 'filled' | 'outlined'
@@ -148,16 +147,14 @@ export type CardPrimaryActionProps =
  */
 export function CardPrimaryAction(props: CardPrimaryActionProps) {
   const { className, children, ...rest } = props
-  return interactiveElement(
-    'CardPrimaryAction',
-    cx('mk-card-primary-action', className),
-    rest as InteractiveElementProps,
-    <>
+  assertRenderElement('CardPrimaryAction', rest.render)
+  return (
+    <Interactive {...rest} className={cx('mk-card-primary-action', className)}>
       <StateLayer />
       <Ripple />
       <FocusRing />
       {children}
-    </>,
+    </Interactive>
   )
 }
 

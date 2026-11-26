@@ -21,17 +21,17 @@
 // Enlaces y enrutadores (ADR-0010): con `href`, un `<a>`; sin `href`, un `<button>`; con
 // `render={<Link href="/" />}`, el elemento que se pase, clonado con las clases, `aria-current`
 // y las partes como hijos. Así sirve el `Link` de Next.js o el de React Router sin depender de
-// ninguno. La lógica vive en src/internal/interactive.tsx, compartida con los FAB, y la del
-// destino (aria-current, indicador y átomos), en src/internal/navigation-item.tsx, compartida
-// con NavigationRailItem.
+// ninguno. La lógica vive en el átomo Interactive (src/atoms/Interactive/), compartida con los
+// FAB, y la del destino (aria-current, indicador y átomos), en src/internal/navigation-item.tsx,
+// compartida con NavigationRailItem.
 
 import type { HTMLAttributes, Ref } from 'react'
-import {
-  cx,
-  type ButtonElementProps,
-  type LinkElementProps,
-  type RenderElementProps,
-} from '../../internal/interactive.tsx'
+import type {
+  ButtonElementProps,
+  LinkElementProps,
+  RenderElementProps,
+} from '../../atoms/Interactive/Interactive.tsx'
+import { cx } from '../../internal/interactive.tsx'
 import { navigationItem, type NavigationItemOwnProps } from '../../internal/navigation-item.tsx'
 
 export type NavigationBarLayout = 'vertical' | 'horizontal'

@@ -713,3 +713,39 @@ body {
 .pg-button-group > .mk-button[aria-pressed='true'] {
   --mk-group-inner-radius: calc(var(--_height) / 2);
 }
+
+/* Control propio de la página Interactive: lo que escribiría quien usa matekit. Solo forma,
+   color y disposición; capa, onda y anillo de foco los dan los átomos con pseudo-clases. */
+.pg-topic {
+  --mk-icon-size: 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--md-sys-space-100);
+  block-size: 36px;
+  padding-inline: var(--md-sys-space-150) var(--md-sys-space-200);
+  border: 0;
+  /* El anillo de foco lo dibuja FocusRing: sin esto, el navegador suma el suyo. */
+  outline: none;
+  border-radius: var(--md-sys-shape-corner-small);
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+  font: inherit;
+  font-size: var(--md-sys-typescale-label-large-size);
+  text-decoration: none;
+  cursor: pointer;
+}
+.pg-topic:disabled {
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) 10%, transparent);
+  color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
+  cursor: default;
+}
+@media (forced-colors: active) {
+  .pg-topic {
+    border: 1px solid ButtonText;
+    color: ButtonText;
+  }
+  .pg-topic:disabled {
+    border-color: GrayText;
+    color: GrayText;
+  }
+}

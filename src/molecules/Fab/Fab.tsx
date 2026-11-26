@@ -14,7 +14,7 @@
 // Enlaces y enrutadores (ADR-0010): con `href`, un `<a>`; sin `href`, un `<button>`; con
 // `render={<Link href="/nuevo" />}`, el elemento que se pase. Un FAB suele abrir una pantalla
 // ("Redactar", "Nuevo"), que en una aplicación con enrutador es un enlace. La lógica es la de
-// NavigationBarItem, compartida en src/internal/interactive.tsx.
+// NavigationBarItem, en el átomo Interactive.
 //
 // Sin `disabled`: ni el kit ni Compose definen un FAB deshabilitado (FloatingActionButton no
 // tiene parámetro `enabled`). La guía de Material es ocultarlo cuando la acción no está
@@ -25,13 +25,12 @@ import { FocusRing } from '../../atoms/FocusRing/FocusRing.tsx'
 import { Ripple } from '../../atoms/Ripple/Ripple.tsx'
 import { StateLayer } from '../../atoms/StateLayer/StateLayer.tsx'
 import {
-  cx,
-  interactiveElement,
+  Interactive,
   type ButtonElementProps,
-  type InteractiveElementProps,
   type LinkElementProps,
   type RenderElementProps,
-} from '../../internal/interactive.tsx'
+} from '../../atoms/Interactive/Interactive.tsx'
+import { assertRenderElement, cx } from '../../internal/interactive.tsx'
 
 /**
  * Color: contenedor `X` con icono y texto `on-X`. Los tres `*-container` son los de siempre;
@@ -126,14 +125,12 @@ const atoms = (
  */
 export function Fab(props: FabProps) {
   const { label, variant = 'primary-container', size = 'sm', lowered, className, children, ...rest } = props
-  return interactiveElement(
-    'Fab',
-    cx('mk-fab', className),
-    { ...rest, 'aria-label': label, ...dataAttributes(variant, size, lowered) } as InteractiveElementProps,
-    <>
+  assertRenderElement('Fab', rest.render)
+  return (
+    <Interactive {...rest} aria-label={label} {...dataAttributes(variant, size, lowered)} className={cx('mk-fab', className)}>
       {atoms}
       {children}
-    </>,
+    </Interactive>
   )
 }
 
@@ -153,16 +150,14 @@ export function Fab(props: FabProps) {
  */
 export function ExtendedFab(props: ExtendedFabProps) {
   const { expanded = true, variant = 'primary-container', size = 'sm', lowered, className, children, ...rest } = props
-  return interactiveElement(
-    'ExtendedFab',
-    cx('mk-extended-fab', className),
-    { ...rest, ...dataAttributes(variant, size, lowered, expanded) } as InteractiveElementProps,
-    <>
+  assertRenderElement('ExtendedFab', rest.render)
+  return (
+    <Interactive {...rest} {...dataAttributes(variant, size, lowered, expanded)} className={cx('mk-extended-fab', className)}>
       {atoms}
       {/* La grilla anima el ancho del texto entre 0fr y 1fr; el recorte va en la etiqueta. */}
       <span className="mk-extended-fab-content">
         <span className="mk-extended-fab-label">{children}</span>
       </span>
-    </>,
+    </Interactive>
   )
 }

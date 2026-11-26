@@ -30,14 +30,12 @@ import { Ripple } from '../../atoms/Ripple/Ripple.tsx'
 import { StateLayer } from '../../atoms/StateLayer/StateLayer.tsx'
 import { ExpandMoreIcon } from '../../icons/icons.tsx'
 import {
-  cx,
-  interactiveElement,
+  Interactive,
   type ButtonElementProps,
-  type InteractiveElementProps,
   type LinkElementProps,
-  type LinkModeExclusions,
   type RenderElementProps,
-} from '../../internal/interactive.tsx'
+} from '../../atoms/Interactive/Interactive.tsx'
+import { assertRenderElement, cx, type LinkModeExclusions } from '../../internal/interactive.tsx'
 
 /**
  * Tipo de lista del kit: `standard` (elementos pegados) o `segmented` (bloques separados 2 px,
@@ -248,16 +246,14 @@ export type ListItemActionProps =
 export function ListItemAction(props: ListItemActionProps) {
   const { current, className, children, ...rest } = props
   const aria = current ? { 'aria-current': 'page' as const } : {}
-  return interactiveElement(
-    'ListItemAction',
-    cx('mk-list-item-action', className),
-    { ...aria, ...rest } as InteractiveElementProps,
-    <>
+  assertRenderElement('ListItemAction', rest.render)
+  return (
+    <Interactive {...aria} {...rest} className={cx('mk-list-item-action', className)}>
       <StateLayer />
       <Ripple />
       <FocusRing />
       {children}
-    </>,
+    </Interactive>
   )
 }
 

@@ -5,7 +5,7 @@
 //
 // Enlaces y enrutadores (ADR-0010): con `href`, un `<a>`; con `render={<Link href="/" />}`, el
 // elemento que se pase; sin ninguno de los dos, un `<button type="button">`. La elección es la de
-// src/internal/interactive.tsx (la misma que los FAB y la navegación). Un botón que navega ("Ver
+// del átomo Interactive (la misma que los FAB y la navegación). Un botón que navega ("Ver
 // detalle") es un enlace: abre en otra pestaña, se copia, lo anuncia como enlace el lector.
 // En modo enlace los tipos rechazan `selected` (un enlace no es un toggle) y `disabled` /
 // `aria-disabled` (ARIA in HTML indica quitar el `href` para un enlace no disponible: acá,
@@ -15,12 +15,8 @@ import type { ReactNode } from 'react'
 import { FocusRing } from '../../atoms/FocusRing/FocusRing.tsx'
 import { Ripple } from '../../atoms/Ripple/Ripple.tsx'
 import { StateLayer } from '../../atoms/StateLayer/StateLayer.tsx'
-import {
-  cx,
-  interactiveElement,
-  type InteractiveElementProps,
-  type ToggleButtonOrLinkProps,
-} from '../../internal/interactive.tsx'
+import { Interactive } from '../../atoms/Interactive/Interactive.tsx'
+import { assertRenderElement, cx, type ToggleButtonOrLinkProps } from '../../internal/interactive.tsx'
 
 export type ButtonVariant = 'filled' | 'tonal' | 'outlined' | 'elevated' | 'text'
 export type ButtonSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl'
@@ -64,20 +60,21 @@ export type ButtonProps = ToggleButtonOrLinkProps<ButtonOwnProps>
  */
 export function Button(props: ButtonProps) {
   const { variant = 'filled', size = 'sm', shape = 'round', selected, className, children, ...rest } = props
-  return interactiveElement(
-    'Button',
-    cx('mk-button', className),
-    {
+  assertRenderElement('Button', rest.render)
+  return (
+    <Interactive
       // Antes de las props del uso: un aria-pressed propio gana, como antes.
-      ...(selected === undefined ? {} : { 'aria-pressed': selected }),
-      ...rest,
-      ...{ 'data-variant': variant, 'data-size': size, 'data-shape': shape },
-    } as InteractiveElementProps,
-    <>
+      {...(selected === undefined ? {} : { 'aria-pressed': selected })}
+      {...rest}
+      data-variant={variant}
+      data-size={size}
+      data-shape={shape}
+      className={cx('mk-button', className)}
+    >
       <StateLayer />
       <Ripple />
       <FocusRing />
       {children}
-    </>,
+    </Interactive>
   )
 }
