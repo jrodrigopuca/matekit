@@ -439,6 +439,69 @@ Pressed y Disabled (no hay Focused), y Value 0, 50 y 100 (−50, 0 y +50 en cent
 - Range: dos handles con la pista activa entre ellos; con los dos en el mismo valor, un punto en
   el centro ("Track dot - centered").
 
+## Card
+
+Leído del kit el 2026-11-25 (página Cards; conjuntos `Stacked card` 52346:27573 y
+`Horizontal card` 52350:27876, con Style Outlined, Elevated o Filled y Layout "Media & text" o
+"Slot"; estados en `.Building Blocks/Card states/{Outlined,Elevated,Filled}`).
+
+- Radio 12 (`Corner/Medium`) en los tres estilos.
+
+| Estilo | Contenedor | Enabled | Hovered | Focused | Pressed | Dragged |
+|---|---|---|---|---|---|---|
+| Elevated | `Surface Container Low` | elevación 1 | elevación 2, capa 8 % | capa 10 % | elevación 1, capa 10 % | elevación 4, capa 16 % |
+| Filled | `Surface Container Highest` | sin elevación | elevación 1, capa 8 % | (no extraído) | elevación 1, capa 10 % | (no extraído) |
+| Outlined | `Surface` y borde 1 interior `Outline Variant` | sin elevación | elevación 1, capa 8 % | capa 10 % | capa 10 % | elevación 3, capa 16 % |
+
+La capa de estado es siempre `On Surface`.
+
+- Ejemplo apilado ("Media & text", 360 × 480):
+  - Cabecera de 72: relleno 12 arriba y abajo, 16 al inicio y 4 al final. Avatar de 40 y,
+    separado 16, el título en Title Medium y el subtítulo en Body Medium (los dos en
+    `On Surface`, separación 4). Al final, un icon button standard Small.
+  - Imagen de 188 de alto a todo el ancho (`Surface Container High` de fondo).
+  - Texto: relleno 16 y separación 32 entre bloques. Título en Body Large (`On Surface`),
+    subtítulo y texto de apoyo en Body Medium (`On Surface Variant`). Acciones alineadas al
+    final, separación 8: un botón outlined Small y uno filled Small.
+- Ejemplo horizontal (360 × 80): contenido con relleno 16 y separación 16 (avatar de 40,
+  título y subtítulo) e imagen de 80 × 80 al final.
+- "Slot": contenido libre que ocupa toda la tarjeta (el kit muestra una zona de 16 de margen).
+
+## List
+
+Leído del kit el 2026-11-25 (página Lists). El kit trae dos generaciones: los conjuntos
+"baseline" anteriores (`List item/List Item: 0 Density (baseline)`, con densidades 0, −2 y −4)
+y los de Expressive, que son los que se usan acá: `List` 59106:13028 (Type Standard, Segmented
+(filled), Expandable, Draggable; Multi-line), `List item` 59106:13183 (Alignment Middle o Top,
+State Enabled, Hovered, Focused, Pressed, Dragged, Disabled; Selected), `List item - Accordion`,
+`List Item - Swipe` y las piezas en `Building blocks/`.
+
+- Elemento: relleno 10 arriba y abajo y 16 a los lados; separación 12 entre partes. Alto: 52
+  con una línea, 64 con dos y 80 con tres (100 alineado arriba en el ejemplo del kit).
+- Contenido: overline en Label Medium `On Surface Variant`; texto principal en Body Large
+  `On Surface`; texto de apoyo en Body Medium `On Surface Variant`.
+- Inicio (leading): icono de 20 (en una caja de 20 × 28), sangría de 20, imagen de 56 × 56
+  (radio 4, borde 1 `Outline Variant`; seleccionada lleva un check de 20 en `Primary`), video
+  de 114 × 64 (radio 4), avatar de 40 o icon button.
+- Final (trailing): texto en Label Large `On Surface Variant` y/o icono de 20 (separación 8);
+  checkbox o radio (48), switch (52 × 32) o icon button tonal angosto; el texto puede
+  acompañar a cualquiera.
+- Alineación Middle (todo centrado en el alto) o Top (inicio y final arriba, a 10 del borde).
+- Radio del elemento: 4 (`Corner/Extra-small`) en reposo; la capa de hover tiene radio 12
+  (`Corner/Medium`); con foco, presionado o seleccionado, radio 16 (`Corner/Large`).
+- Estados (capa `On Surface`): hover 8 %, foco 10 %, presionado 8 % más la onda al 10 %.
+- Seleccionado: fondo `Secondary Container`, icono relleno, texto final y capas en
+  `On Secondary Container` (8 % hover, 10 % foco).
+- Deshabilitado: inicio, contenido y final al 38 %; seleccionado y deshabilitado, fondo
+  `On Surface` al 10 %.
+- Arrastrado: el elemento en `Tertiary Container` con capa `On Tertiary Container` al 16 %,
+  sobre un hueco en `Surface Container`.
+- Tipos de lista: Standard (elementos pegados); Segmented (filled): separación 2, cada
+  elemento con fondo `Surface` y el contenedor con radio 16; Expandable: acordeón con un botón
+  de 32 × 40 (radio completo, icono de 20 `keyboard_arrow_down`/`up`, capa
+  `On Surface Variant`); expandido, el elemento con fondo `Surface` y el botón en
+  `Surface Container`; Draggable; y Swipe (acciones que aparecen al deslizar).
+
 ## Diferencias con la especificación a revisar
 
 - El indicador con foco del campo de texto mide 3 en el kit. Confirmar en m3.material.io.

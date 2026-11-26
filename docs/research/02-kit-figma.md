@@ -20,14 +20,14 @@ Los identificadores sirven para volver a consultar cada página con el conector 
 | App bars | 55141:14169 | no |
 | Badges | 55141:14167 | no |
 | Buttons | 55141:14168 | sí |
-| Cards | 55141:14171 | no |
+| Cards | 55141:14171 | sí |
 | Carousel | 55141:14172 | no |
 | Checkboxes | 55141:14173 | sí |
 | Chips | 55141:14174 | no |
 | Date & time pickers | 55141:14175 | no |
 | Dialogs | 55141:14176 | sí |
 | Dividers | 55141:14177 | sí |
-| Lists | 55141:14249 | no |
+| Lists | 55141:14249 | sí |
 | Loading & progress | 55141:14252 | sí |
 | Menu | 55141:14250 | sí |
 | Navigation | 55141:14251 | sí |
