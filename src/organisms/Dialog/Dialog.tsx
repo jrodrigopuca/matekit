@@ -26,6 +26,7 @@ import {
   type SyntheticEvent,
 } from 'react'
 import { mergeRefs } from '../../internal/merge-refs.ts'
+import { settleAnimations } from '../../internal/settle-animations.ts'
 
 interface DialogContextValue {
   headlineId: string
@@ -220,18 +221,16 @@ export function Dialog({
     const token = {}
     closing.current = token
     dialog.setAttribute('data-closing', '')
-    Promise.all(dialog.getAnimations().map((a) => a.finished)).then(
-      () => {
-        if (closing.current !== token) return
-        closing.current = null
-        dialog.removeAttribute('data-closing')
-        if (!dialog.open) return
-        selfClose.current = true
-        dialog.close()
-      },
-      // Una transición reemplazada (se volvió a abrir) rechaza `finished`: no hay que cerrar.
-      () => {},
-    )
+    // src/internal/settle-animations.ts: una transición cancelada no deja el diálogo abierto (y la
+    // página inerte). Si se volvió a abrir, `closing` ya no es esta ficha: no se cierra.
+    void settleAnimations(dialog, () => closing.current === token).then(() => {
+      if (closing.current !== token) return
+      closing.current = null
+      dialog.removeAttribute('data-closing')
+      if (!dialog.open) return
+      selfClose.current = true
+      dialog.close()
+    })
   }, [open, dialogRef])
 
   // Al desmontar no queda ningún cierre pendiente.

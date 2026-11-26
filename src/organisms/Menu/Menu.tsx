@@ -37,6 +37,7 @@ import { FocusRing } from '../../atoms/FocusRing/FocusRing.tsx'
 import { Ripple } from '../../atoms/Ripple/Ripple.tsx'
 import { StateLayer } from '../../atoms/StateLayer/StateLayer.tsx'
 import { mergeRefs } from '../../internal/merge-refs.ts'
+import { settleAnimations } from '../../internal/settle-animations.ts'
 import { followAnchor, placeNextTo } from '../../internal/anchor-position.ts'
 
 /** Elemento que recibe el foco al abrir. */
@@ -331,16 +332,13 @@ export function MenuContent({
     const token = {}
     closing.current = token
     menu.setAttribute('data-closing', '')
-    Promise.all(menu.getAnimations().map((a) => a.finished)).then(
-      () => {
-        if (closing.current !== token) return
-        closing.current = null
-        menu.removeAttribute('data-closing')
-        if (matchesOpen(menu)) menu.hidePopover()
-      },
-      // Una transición reemplazada (se volvió a abrir) rechaza `finished`: no hay que ocultar.
-      () => {},
-    )
+    // src/internal/settle-animations.ts. Si se volvió a abrir, `closing` ya no es esta ficha.
+    void settleAnimations(menu, () => closing.current === token).then(() => {
+      if (closing.current !== token) return
+      closing.current = null
+      menu.removeAttribute('data-closing')
+      if (matchesOpen(menu)) menu.hidePopover()
+    })
   }, [open, focusRequest, contentRef, triggerRef, focusTarget, returnFocus, place])
 
   useLayoutEffect(

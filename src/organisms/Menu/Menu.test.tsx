@@ -9,6 +9,7 @@ import { IconButton } from '../../molecules/IconButton/IconButton.tsx'
 import { Dialog, DialogContent, DialogHeadline } from '../Dialog/Dialog.tsx'
 import { CheckIcon, DeleteIcon, EditIcon, MoreVertIcon, ShareIcon } from '../../icons/icons.tsx'
 import { render, roleColor, style, withMotion } from '../../test/render.tsx'
+import { CANCEL_WAYS, cancelExit, entered, withTransitions } from '../../test/exit.ts'
 
 const q = <T extends Element = HTMLElement>(c: ParentNode, sel: string) => c.querySelector(sel) as T
 // El menú está en la capa superior, pero sigue en el contenedor de la prueba (es un popover).
@@ -754,4 +755,35 @@ describe('Menu: props nativas y ref', () => {
     await userEvent.click(trigger(c))
     expect(isOpen(c)).toBe(false)
   })
+})
+
+// Salida cancelada (2026-11-26): antes se esperaba Promise.all de las transiciones e ignoraba el
+// rechazo; con una transición cancelada, el menú quedaba abierto con data-closing. Ahora espera
+// src/internal/settle-animations.ts.
+describe('salida cancelada', () => {
+  let setOpen: (open: boolean) => void = () => {}
+  function Controlled() {
+    const [open, set] = useState(true)
+    setOpen = set
+    return (
+      <Menu open={open} onOpenChange={set}>
+        <MenuTrigger><Button>Opciones</Button></MenuTrigger>
+        <MenuContent><MenuItem>Editar</MenuItem></MenuContent>
+      </Menu>
+    )
+  }
+  for (const how of CANCEL_WAYS) {
+    test(`(${how}) se oculta igual`, async () => {
+      const c = await render(<Controlled />)
+      const el = c.querySelector('.mk-menu') as HTMLElement
+      await withTransitions(async () => {
+        await expect.poll(() => el.matches(':popover-open')).toBe(true)
+        await entered(el)
+        setOpen(false)
+        await cancelExit(el, how)
+        await expect.poll(() => el.matches(':popover-open'), { timeout: 3000 }).toBe(false)
+        expect(el.hasAttribute('data-closing')).toBe(false)
+      })
+    })
+  }
 })

@@ -1,4 +1,4 @@
-import { createRef, type CSSProperties, type ReactNode } from 'react'
+import { createRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { commands, userEvent } from 'vitest/browser'
 import { Tooltip } from './Tooltip.tsx'
@@ -21,6 +21,7 @@ import { Menu, MenuContent, MenuItem, MenuTrigger } from '../Menu/Menu.tsx'
 import { Dialog, DialogContent, DialogHeadline } from '../Dialog/Dialog.tsx'
 import { DeleteIcon, EditIcon, InfoIcon, ShareIcon } from '../../icons/icons.tsx'
 import { render, roleColor, style, withMotion } from '../../test/render.tsx'
+import { CANCEL_WAYS, cancelExit, entered, withTransitions } from '../../test/exit.ts'
 
 const q = <T extends Element = HTMLElement>(c: ParentNode, sel: string) => {
   const el = c.querySelector(sel)
@@ -830,4 +831,30 @@ describe('RichTooltip con acciones (diálogo no modal)', () => {
     expect(d.dataset['x']).toBe('y')
     expect(d.style.minWidth).toBe('200px')
   })
+})
+
+// Salida cancelada (2026-11-26): antes se esperaba Promise.all de las transiciones e ignoraba el
+// rechazo; con una transición cancelada, el tooltip quedaba abierto con data-closing. Ahora espera
+// src/internal/settle-animations.ts.
+describe('salida cancelada', () => {
+  let setOpen: (open: boolean) => void = () => {}
+  function Controlled() {
+    const [open, set] = useState(true)
+    setOpen = set
+    return <Tooltip open={open} onOpenChange={set} text="Se guarda en la nube"><Button>Guardar</Button></Tooltip>
+  }
+  for (const how of CANCEL_WAYS) {
+    test(`(${how}) se oculta igual`, async () => {
+      const c = await render(<Controlled />)
+      const el = plain(c)
+      await withTransitions(async () => {
+        await expect.poll(() => el.matches(':popover-open')).toBe(true)
+        await entered(el)
+        setOpen(false)
+        await cancelExit(el, how)
+        await expect.poll(() => el.matches(':popover-open'), { timeout: 3000 }).toBe(false)
+        expect(el.hasAttribute('data-closing')).toBe(false)
+      })
+    })
+  }
 })

@@ -57,7 +57,9 @@ src/internal/    ayudas compartidas entre componentes, no exportadas (interactiv
                  posición de una capa junto a su ancla, respaldo sin anchor positioning, de Menu y
                  Tooltip, ADR-0007 y ADR-0021; roving-focus.ts: useRovingFocus, el foco
                  itinerante de una sola parada de Tab de ChipGroup y Tabs, para las Toolbars,
-                 ADR-0023)
+                 ADR-0023; settle-animations.ts: settleAnimations, la espera de la salida
+                 animada de Snackbar, Tooltip, Menu y Dialog, que no se traba si una transición
+                 se cancela)
 src/styles.css   hoja única: importa tokens, átomos y componentes
 playground/      páginas de prueba manual, una por componente
 docs/research/   datos extraídos del kit de Figma y de Jetpack Compose

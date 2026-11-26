@@ -18,6 +18,7 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react'
 import { followAnchor, placeNextTo, type PlacementOptions } from '../../internal/anchor-position.ts'
+import { settleAnimations } from '../../internal/settle-animations.ts'
 
 export const SHOW_DELAY_MS = 500
 export const HIDE_DELAY_MS = 600
@@ -146,18 +147,14 @@ export function usePopover(
     const token = {}
     closing.current = token
     el.setAttribute('data-closing', '')
-    // getAnimations() fuerza el cálculo de estilos, así que ya incluye las transiciones de salida;
-    // sin transiciones, la lista está vacía y se oculta enseguida.
-    Promise.all(el.getAnimations().map((a) => a.finished)).then(
-      () => {
-        if (closing.current !== token) return
-        closing.current = null
-        el.removeAttribute('data-closing')
-        if (el.matches(':popover-open')) el.hidePopover()
-      },
-      // Una transición reemplazada (se volvió a abrir) rechaza `finished`: no hay que ocultar.
-      () => {},
-    )
+    // Espera la salida (src/internal/settle-animations.ts). Si se volvió a abrir, `closing` ya no es
+    // esta ficha: la espera termina y no se oculta.
+    void settleAnimations(el, () => closing.current === token).then(() => {
+      if (closing.current !== token) return
+      closing.current = null
+      el.removeAttribute('data-closing')
+      if (el.matches(':popover-open')) el.hidePopover()
+    })
   }, [open, contentRef, place])
 
   useLayoutEffect(
