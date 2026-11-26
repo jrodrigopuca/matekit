@@ -67,22 +67,27 @@
     --mk-group-corner-end-end: var(--mk-group-inner-radius, var(--md-sys-shape-corner-extra-small));
   }
 
+  /* El primero y el último se cuentan sin los hijos con popover: un Tooltip deja su popover como
+     hermano del disparador (ADR-0021), también oculto, y con :first-child/:last-child el último
+     botón de una barra con tooltips perdía sus esquinas exteriores. `:nth-child(1 of S)`: Chrome
+     111, Firefox 113, Safari 9. */
+
   /* En fila: exteriores las del inicio del primero y las del final del último. */
-  .mk-group[data-orientation='horizontal'] > :first-child {
+  .mk-group[data-orientation='horizontal'] > :nth-child(1 of :not([popover])) {
     --mk-group-corner-start-start: var(--mk-group-outer-radius, var(--md-sys-shape-corner-large));
     --mk-group-corner-end-start: var(--mk-group-outer-radius, var(--md-sys-shape-corner-large));
   }
-  .mk-group[data-orientation='horizontal'] > :last-child {
+  .mk-group[data-orientation='horizontal'] > :nth-last-child(1 of :not([popover])) {
     --mk-group-corner-start-end: var(--mk-group-outer-radius, var(--md-sys-shape-corner-large));
     --mk-group-corner-end-end: var(--mk-group-outer-radius, var(--md-sys-shape-corner-large));
   }
 
   /* En columna: exteriores las de arriba del primero y las de abajo del último. */
-  .mk-group[data-orientation='vertical'] > :first-child {
+  .mk-group[data-orientation='vertical'] > :nth-child(1 of :not([popover])) {
     --mk-group-corner-start-start: var(--mk-group-outer-radius, var(--md-sys-shape-corner-large));
     --mk-group-corner-start-end: var(--mk-group-outer-radius, var(--md-sys-shape-corner-large));
   }
-  .mk-group[data-orientation='vertical'] > :last-child {
+  .mk-group[data-orientation='vertical'] > :nth-last-child(1 of :not([popover])) {
     --mk-group-corner-end-start: var(--mk-group-outer-radius, var(--md-sys-shape-corner-large));
     --mk-group-corner-end-end: var(--mk-group-outer-radius, var(--md-sys-shape-corner-large));
   }

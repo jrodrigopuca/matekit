@@ -3,7 +3,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest'
 import { commands, userEvent } from 'vitest/browser'
 import { Menu, MenuContent, MenuItem, MenuTrigger, type MenuContentProps, type MenuProps } from './Menu.tsx'
 import { MenuDivider, MenuItemLeading, MenuItemTrailing } from './MenuSlots.tsx'
-import { fallbackPosition, observedPlacement } from './position.ts'
+import { fallbackPosition, observedPlacement } from '../../internal/anchor-position.ts'
 import { Button } from '../../molecules/Button/Button.tsx'
 import { IconButton } from '../../molecules/IconButton/IconButton.tsx'
 import { Dialog, DialogContent, DialogHeadline } from '../Dialog/Dialog.tsx'
@@ -616,7 +616,7 @@ describe('Menu: posición junto al disparador', () => {
   })
 })
 
-describe('Menu: posición de respaldo sin anchor positioning (position.ts)', () => {
+describe('Menu: posición de respaldo sin anchor positioning (src/internal/anchor-position.ts)', () => {
   const viewport = { width: 400, height: 800 }
   const menuSize = { width: 200, height: 150 }
   const box = (top: number, left: number, w = 40, h = 40) => ({ top, left, right: left + w, bottom: top + h })

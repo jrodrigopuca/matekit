@@ -101,6 +101,34 @@ describe('Group: forma según la posición', () => {
     expect(all(c, '.one .block')).toEqual([[O, O, O, O]])
   })
 
+  // Un Tooltip deja su popover como hermano del disparador (ADR-0021), también oculto: sin
+  // ignorarlo, el último botón de una barra con tooltips perdía sus esquinas exteriores.
+  test('ignora los hijos con popover (un Tooltip) al decidir el primero y el último', async () => {
+    const c = await render(
+      <>
+        <Group className="h">
+          <div popover="manual">antes</div>
+          <Block /><Block /><Block />
+          <div popover="manual">después</div>
+        </Group>
+        <Group orientation="vertical" className="v">
+          <div popover="manual">antes</div>
+          <Block /><Block />
+          <div popover="manual">después</div>
+        </Group>
+      </>,
+    )
+    expect(all(c, '.h .block')).toEqual([
+      [O, I, I, O],
+      [I, I, I, I],
+      [I, O, O, I],
+    ])
+    expect(all(c, '.v .block')).toEqual([
+      [O, O, I, I],
+      [I, I, O, O],
+    ])
+  })
+
   test('vertical con 3, 2 y 1: exteriores arriba del primero y abajo del último', async () => {
     const c = await render(
       <>
