@@ -252,60 +252,96 @@ invisible encima, como el Switch.
 `FilledCardTokens.kt`, `OutlinedCardTokens.kt`); como superficie o interactiva (enlace o botón
 con `href`/`render`, ADR-0010, sin anidar interactivos). Riesgo bajo.
 
-**13. List** (organismo, universal). `List` y `ListItem` con partes (`ListItemLeading`,
+**13. Disposición: escala de espaciado, Stack y Group** (agregado el 2026-11-25, antes de
+List). Muchos diseños de Material 3 agrupan el contenido en bloques, no en grillas rígidas, y
+Expressive repite un patrón de bloques conectados (List segmentada del kit: separación 2, radio
+16 afuera y 4 adentro; grupos de botones conectados de la tanda D). Investigación previa en
+[`docs/research/11-disposicion-adaptable-compose.md`](../research/11-disposicion-adaptable-compose.md)
+(clases de tamaño de ventana, paneles, navegación adaptable y espaciado en Compose). Cuatro piezas:
+- **Escala de espaciado** como tokens, tomada de `tokens/MeasurementTokens.kt` de Compose
+  (versión 41.1.19, commit `76990c62ac` del 2026-11-20; interna en Compose, pero ya la usan List,
+  Chips, Buttons, AppBar y Toolbars): 0, 2, 4, 6, 8, 10, 12, 14, 16, 20, 24, 32, 36, 40, 48, 56,
+  64 y 72, con la numeración de Compose (`Space25` = 2, `Space100` = 8…). JSON y CSS generado
+  como los demás tokens; nombre de las variables y regla en `pnpm lint:css` (espaciado con
+  variables en `gap`, `padding` y `margin`) a decidir en un ADR.
+- **Cortes de ventana** de Compose (`window-core/WindowSizeClass.kt`) como datos documentados
+  (JSON y constantes de TypeScript para `matchMedia`), no como variables CSS (las media y
+  container queries no aceptan `var()`): ancho 600, 840, 1200 y 1600; alto 480 y 900. Solo para
+  la disposición de la página; los componentes se adaptan con container queries.
+- **`Stack`** (átomo o molécula, universal): flex con dirección, `gap` en la escala, `wrap`,
+  `align` y `justify`, y cambio de dirección por el espacio disponible (por el contenedor, no
+  la ventana; la investigación propone el patrón "switcher" con `flex-basis`, que acepta una
+  variable y no necesita un contenedor extra). Elemento configurable (`render` o `as`) para no
+  agregar `<div>` sin semántica. El equivalente al `weight` de Compose va en el hijo, no en el
+  Stack.
+- **`Group`** (universal): bloques conectados con separación mínima y forma según la posición
+  (esquinas exteriores grandes, interiores chicas), horizontal o vertical, para que List
+  segmentada, tarjetas agrupadas y los Button groups no repitan la lógica de las esquinas. Que
+  la forma por posición funcione con CSS (`:first-child`, `:last-child`, `:only-child`) y que
+  los hijos puedan animar su forma (Button groups la hacen crecer al presionar). Valores de
+  Compose: List segmentada (`segmentedShapes`) 16 afuera, 4 adentro y separación 2; grupo de
+  botones conectado 8 adentro (4 al presionar) y separación 2; grupo estándar, separación 12.
+Riesgo medio: elegir una API chica que no compita con CSS plano, y que Group sirva de verdad a
+List y a Button groups (revisar los dos antes de cerrarla).
+
+**14. List** (organismo, universal). `List` y `ListItem` con partes (`ListItemLeading`,
 `ListItemHeadline`, `ListItemSupporting`, `ListItemTrailing`), una, dos y tres líneas, y
 elementos interactivos (`ListTokens.kt`). Usa Divider, Checkbox, Radio y Switch como contenido
-final. Riesgo bajo a medio: la semántica (lista de enlaces, de acciones o de selección).
+final; la segmentada usa `Group` (13). Responsive: ancho fluido, textos que cortan línea o se
+recortan según el caso, elementos finales que se reacomodan en anchos chicos, y un uso razonable
+en paneles de lista y detalle. Riesgo bajo a medio: la semántica (lista de enlaces, de acciones
+o de selección).
 
-**14. Chips** (molécula). Assist, filter, input y suggestion (`AssistChipTokens.kt`,
+**15. Chips** (molécula). Assist, filter, input y suggestion (`AssistChipTokens.kt`,
 `FilterChipTokens.kt`, `InputChipTokens.kt`, `SuggestionChipTokens.kt`). Filter como toggle
 (`aria-pressed`) o en grupo de selección; input con botón de quitar. Riesgo medio: la
 navegación con teclado de un grupo de chips.
 
-**15. Tooltip** (organismo, cliente). Plain y rich (`PlainTooltipTokens.kt`,
+**16. Tooltip** (organismo, cliente). Plain y rich (`PlainTooltipTokens.kt`,
 `RichTooltipTokens.kt`), con Popover y anchor positioning como el Menu (ADR-0007), y el patrón
 APG de tooltip (hover y foco, Escape, sin contenido interactivo en el plain). Riesgo medio:
 mostrar y ocultar con demora sin parpadeos y en dispositivos táctiles.
 
-**16. Snackbar** (organismo, cliente). Mensaje con acción opcional y botón de cerrar
+**17. Snackbar** (organismo, cliente). Mensaje con acción opcional y botón de cerrar
 (`SnackbarTokens.kt`), en la capa superior (Popover), con región viva (`role="status"`) y una
 cola para varios mensajes. Riesgo medio: la API de la cola sin acoplarse a un estado global.
 
 ### Tanda C: estructura de pantalla
 
-**17. Tabs** (organismo, cliente). Primary y secondary (`PrimaryNavigationTabTokens.kt`,
+**18. Tabs** (organismo, cliente). Primary y secondary (`PrimaryNavigationTabTokens.kt`,
 `SecondaryNavigationTabTokens.kt`), con el patrón APG de pestañas (`tablist`, flechas, Inicio y
 Fin, activación automática o manual) y el indicador animado. Variante de enlaces para navegar
 entre páginas (no pestañas). Riesgo medio.
 
-**18. Top app bar** (organismo). Small, medium y large, y las "flexible" de Expressive
+**19. Top app bar** (organismo). Small, medium y large, y las "flexible" de Expressive
 (`AppBarSmallTokens.kt`, `AppBarMediumFlexibleTokens.kt`, `AppBarLargeFlexibleTokens.kt`), con
 título, subtítulo y acciones; el cambio al desplazar (fondo y tamaño) con CSS
 (`animation-timeline: scroll()` donde exista) o con un respaldo. Riesgo medio a alto.
 
-**19. Sheets** (organismo, cliente). Bottom sheet modal y side sheet (`SheetBottomTokens.kt`),
+**20. Sheets** (organismo, cliente). Bottom sheet modal y side sheet (`SheetBottomTokens.kt`),
 sobre `<dialog>` como el Dialog; el arrastre para cerrar del bottom sheet es lo que agrega
 riesgo. Riesgo alto.
 
-**20. Search** (organismo, cliente). Search bar y search view (`SearchBarTokens.kt`,
+**21. Search** (organismo, cliente). Search bar y search view (`SearchBarTokens.kt`,
 `SearchViewTokens.kt`), con el patrón APG de combobox para las sugerencias. Riesgo alto.
 
-**21. Toolbars** (organismo). Docked y floating de Expressive (`DockedToolbarTokens.kt`,
+**22. Toolbars** (organismo). Docked y floating de Expressive (`DockedToolbarTokens.kt`,
 `FloatingToolbarTokens.kt`, `VibrantToolbarTokens.kt`), con el patrón APG de toolbar (una sola
 parada de Tab y flechas). Riesgo medio.
 
 ### Tanda D: botones de Expressive
 
-**22. Button groups** (organismo). Standard y connected (`StandardButtonGroupSmallTokens.kt`,
+**23. Button groups** (organismo). Standard y connected (`StandardButtonGroupSmallTokens.kt`,
 `ConnectedButtonGroupSmallTokens.kt`), con el cambio de forma por posición (esquinas interiores
-más chicas que crecen al presionar); de ahí sale también el reemplazo de los segmented buttons.
-**23. Split button** (`SplitButton*Tokens.kt`) y **24. FAB menu** (`FabMenu*Tokens.kt`), que
+más chicas que crecen al presionar), sobre `Group` (13); de ahí sale también el reemplazo de
+los segmented buttons.
+**24. Split button** (`SplitButton*Tokens.kt`) y **25. FAB menu** (`FabMenu*Tokens.kt`), que
 reutiliza el Menu. Riesgo medio: la forma por posición y el foco.
 
 ### Tanda E: lo más complejo
 
-**25. Date y time pickers** (`DatePickerModalTokens.kt`, `TimePickerTokens.kt`): calendario
-con el patrón APG de grilla, entrada de texto y localización (`Intl`). **26. Carousel**. Riesgo
+**26. Date y time pickers** (`DatePickerModalTokens.kt`, `TimePickerTokens.kt`): calendario
+con el patrón APG de grilla, entrada de texto y localización (`Intl`). **27. Carousel**. Riesgo
 alto; se planifican en detalle cuando lleguemos.
 
 ### Fuera de esta etapa
