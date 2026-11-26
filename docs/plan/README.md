@@ -24,6 +24,7 @@ siguiente. Convenciones en [`CLAUDE.md`](../../CLAUDE.md).
 | RadioButton y RadioGroup | molécula | cliente (excepción al ADR-0003, ADR-0012): el grupo reparte por contexto `name` (generado si falta), el valor (`value`/`defaultValue`, `onValueChange(value, event)`), `disabled` y `required`; `useRadioGroup()` para componer radios propios; `orientation`; `RadioGroup` es un `<fieldset role="radiogroup">` (nombre por `RadioGroupLabel`, un `<legend>`); inputs nativos (flechas y envío del navegador), con `data-focus-visible` para el foco por flechas que WebKit no marca; anillo y punto en CSS, el punto crece con el resorte FastSpatial de Compose; capa al presionar según el kit, confirmada con los tokens de `@material/web`; comparación de librerías en `docs/research/10-radio-group-en-librerias.md`; resuelto por agente el 2026-11-25 |
 | Divider y DividerSubhead | átomo | universal; `<hr>` (rol separator implícito; la vertical con `aria-orientation`, aceptada por axe), `inset` al inicio o a ambos lados con márgenes lógicos (RTL) y `--mk-divider-inset`, `decorative` lo oculta; se estira en flex y grid (`align-self`/`justify-self: stretch`); `DividerSubhead` envuelve el encabezado del usuario con la línea decorativa; `MenuDivider` lo usa (solo conserva su margen); resuelto por agente el 2026-11-25 |
 | Slider y RangeSlider | molécula | cliente (excepción al ADR-0003, ADR-0014): control dibujado con el `<input type="range">` nativo e invisible encima (thumb de 12, así el navegador ubica los valores donde está el handle, de 6 a L − 6, igual en los tres motores según una sonda); standard, `centered` y `RangeSlider` con `RangeSliderStart`/`RangeSliderEnd` (dos inputs nativos recortados con `clip-path` en el punto medio, sin cruzarse, con el "flip" de `@material/web` cuando están iguales; un `name` y un nombre accesible por handle); 5 tamaños del kit, vertical con `writing-mode` (el mismo CSS lógico sirve para RTL), `ticks`, controlado y no controlado (`onValueChange`), reinicio del formulario; handle de 4 que pasa a 2 al presionar y con foco (anillo y 4 más de separación, InsetRing de Compose) con resortes sobre propiedades registradas; indicador de valor al presionar, arrastrar y con foco de teclado, con `format` (función o `Intl.NumberFormat`) y `aria-valuetext` igual; flechas izquierda y derecha propias en vertical y RTL, donde los motores no coinciden; pasos sobre la pista activa en `on-primary` (Compose y `@material/web`, no el `secondary-container` del kit); conflictos en `07-jetpack-compose.md`; resuelto por agente el 2026-11-25 |
+| Card | molécula | universal (ADR-0015): superficie (`<div>`) en elevated, filled y outlined; interactiva con `CardPrimaryAction` (enlace, botón o `render`, ADR-0010) dentro del título, con el área extendida a toda la tarjeta por un `::after` y los otros controles encima, enfocables por separado (sin interactivos anidados); foco en el borde de la tarjeta; deshabilitado solo como botón (colores de Compose); partes `CardHeader`, `CardHeadline` (`<h3>`, `level`), `CardSubhead`, `CardMedia`, `CardContent` y `CardActions`; fluida y adaptada a su propio ancho con container queries (vertical con la imagen al costado desde 37,5rem, horizontal apilada bajo 20rem, acciones apiladas bajo 15rem; `adaptive={false}` lo desactiva), imagen con `aspect-ratio` 360/188 y `object-fit: cover`, textos que cortan línea sin recortarse; grillas con CSS grid (`auto-fill`, mostrado en el playground); sin arrastre (la API lo deja abierto); conflictos con Compose en `07-jetpack-compose.md`; resuelto por agente el 2026-11-25 |
 | 32 iconos | icons | ADR-0006 |
 | Formas decorativas (entrega 1): portación de `androidx.graphics.shapes`, 35 formas y átomo Shape | átomo | ADR-0011; universal, recorta con `mask-image` (se estira al tamaño del elemento); `pnpm shapes` genera `shapes/material-shapes.json`, el tipo `ShapeName`, `SHAPES` y las máscaras; resuelto por agente el 2026-11-25 |
 | LoadingIndicator (formas decorativas, entrega 2): portación de `Morph` | molécula | ADR-0011; universal, SVG con SMIL (`<animate>` y `<animateTransform>`) sin JavaScript; indeterminado (7 formas, giro y resorte de Compose, a menos de 0,2 dp de Compose) y determinado (`value`); `contained`; con movimiento reducido, quieto en la primera forma y latiendo en opacidad con el mismo latido que los indicadores de progreso (`src/internal/activity-pulse.css`, ajuste del 2026-11-25), el determinado sin latir; `pnpm shapes` genera `loading-indicator-data.ts`; resuelto por agente y revisado el 2026-11-25 |
@@ -248,7 +249,7 @@ invisible encima, como el Switch.
 
 ### Tanda B: contenido
 
-**12. Card** (molécula, universal). Elevated, filled y outlined (`ElevatedCardTokens.kt`,
+**12. Card** (molécula, universal; hecho, ver "Hecho" y ADR-0015). Elevated, filled y outlined (`ElevatedCardTokens.kt`,
 `FilledCardTokens.kt`, `OutlinedCardTokens.kt`); como superficie o interactiva (enlace o botón
 con `href`/`render`, ADR-0010, sin anidar interactivos). Riesgo bajo.
 
@@ -329,19 +330,49 @@ riesgo. Riesgo alto.
 `FloatingToolbarTokens.kt`, `VibrantToolbarTokens.kt`), con el patrón APG de toolbar (una sola
 parada de Tab y flechas). Riesgo medio.
 
+**23. NavigationSuite: navegación adaptable** (organismo, universal; agregado el 2026-11-25).
+Componente nuevo que elige solo entre barra y rail según la ventana, como
+`NavigationSuiteScaffold` de Compose (`docs/research/11-disposicion-adaptable-compose.md` § 3).
+NavigationBar y NavigationRail no cambian: quien quiera elegir a mano los sigue usando
+directamente, y `NavigationSuite` es una opción más, no un reemplazo (decidido con el autor el
+2026-11-25).
+- Regla por defecto, la de Compose: ancho compact, barra con elementos verticales; alto compact
+  (o ancho medium con alto compact), barra con elementos horizontales; el resto, rail contraído.
+  Compose nunca elige solo el rail expandido ni el drawer: decidir si matekit lo hace desde 1200.
+- Los destinos se escriben una sola vez (por ejemplo `NavigationSuiteItem`, sobre la base
+  compartida de `src/internal/navigation-item.tsx`) y el componente los presenta como barra o
+  rail.
+- Elección forzada opcional (por ejemplo `layout="bar" | "rail" | "auto"`) para quien quiera la
+  regla automática en general pero fijar la presentación en una pantalla.
+- Con media queries (los cortes de ventana del ítem 13), sin JavaScript si se puede: barra y
+  rail tienen distinto DOM, así que evaluar si alcanza con renderizar una estructura cuyo CSS
+  cambia de presentación, o si hace falta elegir en el cliente (y cómo evitar el salto al
+  hidratar).
+Riesgo medio.
+
+**24. Scaffold de paneles** (organismo, universal; agregado el 2026-11-25). Paneles de lista y
+detalle y de contenido con panel de apoyo, como `ListDetailPaneScaffold` y
+`SupportingPaneScaffold` de Compose (§ 2 de la misma investigación): 1 panel en compact y
+medium, 2 en expanded y 3 desde 1200; el secundario de 360 (412 desde 1200), el principal con
+el resto y 24 entre paneles; la app indica el panel actual (sin historial ni "atrás predictivo").
+Lo que no entra: ocultar (Hide, por defecto en lista y detalle), debajo (Reflow, columna CSS) o
+flotando (Levitate, reutilizando Sheets o Dialog). Con media queries para la cantidad de paneles
+y la List (14) diseñada para vivir en un panel de 360. El divisor arrastrable es opcional y de
+prioridad baja. Riesgo medio.
+
 ### Tanda D: botones de Expressive
 
-**23. Button groups** (organismo). Standard y connected (`StandardButtonGroupSmallTokens.kt`,
+**25. Button groups** (organismo). Standard y connected (`StandardButtonGroupSmallTokens.kt`,
 `ConnectedButtonGroupSmallTokens.kt`), con el cambio de forma por posición (esquinas interiores
 más chicas que crecen al presionar), sobre `Group` (13); de ahí sale también el reemplazo de
 los segmented buttons.
-**24. Split button** (`SplitButton*Tokens.kt`) y **25. FAB menu** (`FabMenu*Tokens.kt`), que
+**26. Split button** (`SplitButton*Tokens.kt`) y **27. FAB menu** (`FabMenu*Tokens.kt`), que
 reutiliza el Menu. Riesgo medio: la forma por posición y el foco.
 
 ### Tanda E: lo más complejo
 
-**26. Date y time pickers** (`DatePickerModalTokens.kt`, `TimePickerTokens.kt`): calendario
-con el patrón APG de grilla, entrada de texto y localización (`Intl`). **27. Carousel**. Riesgo
+**28. Date y time pickers** (`DatePickerModalTokens.kt`, `TimePickerTokens.kt`): calendario
+con el patrón APG de grilla, entrada de texto y localización (`Intl`). **29. Carousel**. Riesgo
 alto; se planifican en detalle cuando lleguemos.
 
 ### Fuera de esta etapa

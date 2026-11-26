@@ -19,3 +19,4 @@ nueva la reemplaza y la anterior pasa a "superseded by".
 | [0012](0012-radiogroup-con-estado-por-contexto.md) | `RadioGroup` con estado compartido por contexto y `onValueChange`, como excepción al ADR-0003 | accepted |
 | [0013](0013-indicadores-de-progreso-dibujados-con-css.md) | Indicadores de progreso universales dibujados con CSS (consultas de contenedor, `@property` y guiones SVG) | accepted |
 | [0014](0014-slider-dibujado-sobre-input-range-nativo.md) | Slider dibujado sobre un `<input type="range">` nativo e invisible, como componente cliente (excepción al ADR-0003) | accepted |
+| [0015](0015-card-superficie-con-accion-principal-extendida-y-container-queries.md) | Card como superficie con una acción principal extendida a toda la tarjeta, y disposición por container queries sobre su propio ancho | accepted |
