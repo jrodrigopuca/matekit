@@ -98,3 +98,13 @@
     foco, Enter).
   - axe-core sin violaciones (`src/test/a11y.test.tsx`), con controles dentro de tarjetas enlace y
     botón.
+- Actualización (2026-11-25): se quitó el deshabilitado de la tarjeta (los colores de Compose, el
+  GrayText de alto contraste y el rechazo de `disabled` en las formas de enlace de
+  `CardPrimaryAction`). Motivo: el kit no tiene estado deshabilitado en las Cards (Enabled,
+  Hovered, Focused, Pressed, Dragged); Compose lo tiene solo en la Card clicable, donde la tarjeta
+  entera es un botón; en matekit creaba una ambigüedad (la tarjeta se veía deshabilitada pero los
+  controles de adentro seguían activos). Si hay que deshabilitar algo, se deshabilita el control
+  concreto. `CardPrimaryAction` como botón conserva el `disabled` nativo: entonces la tarjeta deja
+  de reaccionar (sin capa, onda ni cambio de elevación con el puntero o al presionar, cursor
+  normal) y sus colores no cambian. Comprobado en `Card.test.tsx` y
+  `src/test/forced-colors.test.tsx`.

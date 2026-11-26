@@ -1,12 +1,16 @@
 /* Card de Material 3: elevated, filled y outlined.
    Radio, contenedores, elevación y capa por estilo y estado, y los ejemplos apilado y
    horizontal: kit de Figma (docs/research/05-medidas.md § Card).
-   Lo que el kit no trae (foco y arrastre del filled, deshabilitado de los tres): Jetpack Compose,
+   Lo que el kit no trae (foco y arrastre del filled): Jetpack Compose,
    androidx/androidx en el commit 0594f962db80b7deafaaa83d08d4edbe55aa4ccd,
    compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/
    tokens/ElevatedCardTokens.kt, tokens/FilledCardTokens.kt, tokens/OutlinedCardTokens.kt y
-   Card.kt (CardDefaults.*CardColors, outlinedCardBorder). Conflictos entre ambos en
+   Card.kt (CardDefaults.*CardElevation). Conflictos entre ambos en
    docs/research/07-jetpack-compose.md § Card.
+
+   Sin estado deshabilitado de la tarjeta (ADR-0015, enmienda del 2026-11-25): el kit no lo tiene.
+   Si CardPrimaryAction es un <button disabled>, la tarjeta solo deja de reaccionar (sin capa,
+   onda ni cambio de elevación, cursor normal); sus colores no cambian.
 
    Patrón interactivo (ADR-0015): la tarjeta es una superficie; .mk-card-primary-action (enlace
    o botón, dentro del título) no se posiciona, así que su ::after, su capa, su onda y su anillo
@@ -34,11 +38,6 @@
     --_headline: var(--md-sys-color-on-surface);
     --_header-subhead: var(--md-sys-color-on-surface);
     --_supporting: var(--md-sys-color-on-surface-variant);
-    --_disabled-content: color-mix(
-      in srgb,
-      var(--md-sys-color-on-surface) calc(var(--md-sys-state-disabled-content-opacity) * 100%),
-      transparent
-    );
 
     container: mk-card / inline-size;
     position: relative;
@@ -384,42 +383,21 @@
   }
   /* Con la onda presente, la capa de presionado queda en la de hover y la onda suma la suya
      (como Button y FAB). */
-  .mk-card-primary-action:active > .mk-state-layer {
+  .mk-card-primary-action:active:not(:disabled) > .mk-state-layer {
     opacity: var(--md-sys-state-hover-state-layer-opacity);
   }
 
-  /* Deshabilitado (Compose, CardDefaults): contenido On Surface al 38 %; contenedor Surface en
-     el elevated (elevación 1), Surface Variant al 38 % sobre el suyo en el filled (elevación 0) y
-     borde Outline al 12 % sobre Surface Container Low en el outlined. Las imágenes no se
-     atenúan (en Compose, el color de contenido no las alcanza). La opacidad de 0,38 del
-     contenedor es la misma que la del contenido (DisabledContainerOpacity). */
-  .mk-card:has(.mk-card-primary-action:disabled) {
-    --_headline: var(--_disabled-content);
-    --_header-subhead: var(--_disabled-content);
-    --_supporting: var(--_disabled-content);
-    --_elevation: var(--_elevation-rest);
-  }
-  .mk-card[data-variant='elevated']:has(.mk-card-primary-action:disabled) {
-    --_container: var(--md-sys-color-surface);
-  }
-  .mk-card[data-variant='filled']:has(.mk-card-primary-action:disabled) {
-    --_container: color-mix(
-      in srgb,
-      var(--md-sys-color-surface-variant) calc(var(--md-sys-state-disabled-content-opacity) * 100%),
-      var(--md-sys-color-surface-container-highest)
-    );
-  }
-  .mk-card[data-variant='outlined']:has(.mk-card-primary-action:disabled) {
-    --_outline: color-mix(in srgb, var(--md-sys-color-outline) 12%, var(--md-sys-color-surface-container-low)); /* lint-css-allow: OutlinedCardTokens.DisabledOutlineOpacity, sin token de sistema */
-  }
+  /* Acción principal como <button disabled>: la tarjeta no reacciona (las reglas de arriba piden
+     :not(:disabled); la capa y la onda ya se apagan en los átomos) y no parece clicable. Sin
+     colores propios: el kit no tiene Card deshabilitada. */
   .mk-card-primary-action:disabled {
     cursor: default;
   }
 
   /* --- Alto contraste (forced-colors) ---
      El navegador quita fondo y sombras: el contorno (que ya existe en los tres estilos) se
-     dibuja en CanvasText. Con el puntero o al presionar, 2 px en Highlight; deshabilitada,
-     GrayText. El foco lo dibuja el anillo, por fuera. El título enlace queda en LinkText (lo
+     dibuja en CanvasText. Con el puntero o al presionar, 2 px en Highlight (no con la acción
+     principal deshabilitada: ahí el navegador pinta el título en GrayText). El foco lo dibuja el anillo, por fuera. El título enlace queda en LinkText (lo
      fuerza el navegador): en una tarjeta, el título subrayable es el enlace, a diferencia del
      Button enlace, que se ve como botón. */
   @media (forced-colors: active) {
@@ -430,12 +408,6 @@
     .mk-card:has(.mk-card-primary-action:is(:hover, :active):not(:disabled))::before {
       border-width: 2px;
       border-color: Highlight;
-    }
-    .mk-card:has(.mk-card-primary-action:disabled)::before {
-      border-color: GrayText;
-    }
-    .mk-card:has(.mk-card-primary-action:disabled) :is(.mk-card-headline, .mk-card-subhead, .mk-card-content) {
-      color: GrayText;
     }
   }
 }

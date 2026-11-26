@@ -121,7 +121,7 @@ export function CardPage() {
               <option value="surface">ninguna (superficie)</option>
               <option value="link">enlace</option>
               <option value="button">botón</option>
-              <option value="disabled">botón deshabilitado</option>
+              <option value="disabled">botón deshabilitado (la tarjeta no reacciona)</option>
             </select>
           </label>
           <label className="pg-field">
@@ -132,7 +132,7 @@ export function CardPage() {
             </select>
           </label>
           <label className="pg-field">
-            Ancho del contenedor: {width} px
+            Ancho: {width} px
             <input type="range" min={180} max={1000} step={10} value={width} onChange={(e) => setWidth(Number(e.target.value))} />
           </label>
           <label className="pg-check">
@@ -166,9 +166,9 @@ export function CardPage() {
         <div className="pg-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, min(100%, 360px))', alignItems: 'start' }}>
           {VARIANTS.map((v) => <Stacked key={v} variant={v} mode="link" />)}
           {VARIANTS.map((v) => <Horizontal key={v} variant={v} mode="link" />)}
-          {VARIANTS.map((v) => <Stacked key={`d-${v}`} variant={v} mode="disabled" text="Deshabilitada" />)}
+          {VARIANTS.map((v) => <Horizontal key={`b-${v}`} variant={v} mode="button" text="Acción como botón" />)}
         </div>
-        <p className="pg-hint">Fila 1: apilada; fila 2: horizontal; fila 3: deshabilitada (acción principal como botón).</p>
+        <p className="pg-hint">Fila 1: apilada (acción principal como enlace); fila 2: horizontal; fila 3: horizontal con la acción principal como botón (abre la consola). La tarjeta no tiene estado deshabilitado (el kit no lo tiene): con la acción principal como botón deshabilitado (control de arriba), solo deja de reaccionar.</p>
       </section>
 
       <section className="pg-section">

@@ -36,16 +36,6 @@ const shadowLevel = (el: Element): 0 | 1 | 2 | 3 | 4 => {
   throw new Error(`sombra desconocida: ${s}`)
 }
 
-/** Color calculado de una expresión CSS (para color-mix), con el mismo formato que el componente. */
-function cssColor(expr: string, within: Element): string {
-  const probe = document.createElement('span')
-  probe.style.backgroundColor = expr
-  within.append(probe)
-  const value = getComputedStyle(probe).backgroundColor
-  probe.remove()
-  return value
-}
-
 // Enlace propio que imita al Link de Next.js o React Router (ADR-0010).
 function FakeLink({ to, ref, ...props }: AnchorHTMLAttributes<HTMLAnchorElement> & { to: string; ref?: Ref<HTMLAnchorElement> }) {
   return <a {...props} ref={ref} href={to} data-router="" />
@@ -207,18 +197,18 @@ describe('Card: estructura y accesibilidad', () => {
     expect(a.querySelectorAll(':scope > .mk-state-layer, :scope > .mk-ripple, :scope > .mk-focus-ring')).toHaveLength(3)
   })
 
-  test('los tipos rechazan el deshabilitado en un enlace', () => {
+  test('tipos: el botón acepta sus atributos nativos; la tarjeta no tiene disabled', () => {
     // Solo comprobación de tipos (pnpm typecheck); no se dibuja nada.
     const ok = [
-      <CardPrimaryAction key="1" disabled>No</CardPrimaryAction>,
+      <CardPrimaryAction key="1" disabled>Botón nativo</CardPrimaryAction>,
       <CardPrimaryAction key="2" href="/x">Enlace</CardPrimaryAction>,
       <CardPrimaryAction key="3" render={<FakeLink to="/x" />}>Enlace</CardPrimaryAction>,
     ]
     const wrong = [
       // @ts-expect-error: un <a> no tiene disabled.
       <CardPrimaryAction key="4" href="/x" disabled>Enlace</CardPrimaryAction>,
-      // @ts-expect-error: aria-disabled en un <a href> no lo deshabilita (ARIA in HTML).
-      <CardPrimaryAction key="5" render={<FakeLink to="/x" />} aria-disabled="true">Enlace</CardPrimaryAction>,
+      // @ts-expect-error: la tarjeta no tiene estado deshabilitado (el kit no lo tiene).
+      <Card key="5" disabled />,
     ]
     expect(ok.length + wrong.length).toBe(5)
   })
@@ -446,49 +436,52 @@ describe('Card: colores y elevación por estilo y estado', () => {
   })
 })
 
-describe('Card: deshabilitada (Compose)', () => {
-  const disabledContent = (within: Element) =>
-    cssColor('color-mix(in srgb, var(--md-sys-color-on-surface) calc(var(--md-sys-state-disabled-content-opacity) * 100%), transparent)', within)
-
-  test('contenedor por estilo, contenido al 38 %, sin capa ni cambio de elevación y sin activarse', async () => {
-    const expected: Record<CardVariant, { bg: string; outline: string | null; level: number }> = {
-      elevated: { bg: 'var(--md-sys-color-surface)', outline: null, level: 1 },
-      filled: {
-        bg: 'color-mix(in srgb, var(--md-sys-color-surface-variant) 38%, var(--md-sys-color-surface-container-highest))',
-        outline: null,
-        level: 0,
-      },
-      outlined: {
-        bg: 'var(--md-sys-color-surface)',
-        outline: 'color-mix(in srgb, var(--md-sys-color-outline) 12%, var(--md-sys-color-surface-container-low))',
-        level: 0,
-      },
-    }
-    for (const variant of ['elevated', 'filled', 'outlined'] as const) {
+// La tarjeta no tiene estado deshabilitado (el kit no lo tiene; ADR-0015, enmienda). Si la acción
+// principal es un <button disabled>, la tarjeta solo deja de reaccionar, sin colores propios.
+describe('Card: acción principal como botón deshabilitado', () => {
+  for (const variant of ['elevated', 'filled', 'outlined'] as const) {
+    test(`${variant}: mismos colores que habilitada, sin capa ni elevación nueva, cursor normal, sin activarse`, async () => {
+      const ref = await render(<Stacked variant={variant} title={<CardPrimaryAction>Abrir</CardPrimaryAction>} />)
+      const enabled = {
+        bg: style(q(ref, '.mk-card')).backgroundColor,
+        outline: before(q(ref, '.mk-card')).borderTopColor,
+        level: shadowLevel(q(ref, '.mk-card')),
+        colors: ['.mk-card-header > .mk-card-headline', '.mk-card-header > .mk-card-subhead', '.mk-card-content > p:not(.mk-card-subhead)'].map(
+          (sel) => style(q(ref, sel)).color,
+        ),
+      }
       let clicks = 0
       const c = await render(
         <Stacked variant={variant} title={<CardPrimaryAction disabled onClick={() => clicks++}>Abrir</CardPrimaryAction>} />,
       )
       const card = q(c, '.mk-card')
-      const e = expected[variant]
-      expect(style(card).backgroundColor, variant).toBe(cssColor(e.bg, card))
-      if (e.outline) expect(before(card).borderTopColor, variant).toBe(cssColor(e.outline, card))
-      expect(shadowLevel(card), variant).toBe(e.level)
-      for (const sel of ['.mk-card-header > .mk-card-headline', '.mk-card-header > .mk-card-subhead', '.mk-card-content > p:not(.mk-card-subhead)']) {
-        expect(style(q(c, sel)).color, `${variant} ${sel}`).toBe(disabledContent(card))
-      }
       const action = page.getByRole('button', { name: 'Abrir' }).element() as HTMLButtonElement
       expect(action.disabled).toBe(true)
+      expect(style(card).backgroundColor).toBe(enabled.bg)
+      expect(before(card).borderTopColor).toBe(enabled.outline)
+      expect(
+        ['.mk-card-header > .mk-card-headline', '.mk-card-header > .mk-card-subhead', '.mk-card-content > p:not(.mk-card-subhead)'].map(
+          (sel) => style(q(c, sel)).color,
+        ),
+      ).toEqual(enabled.colors)
+      expect(style(action).cursor).toBe('default')
       await userEvent.hover(action)
       expect(Number(style(q(c, '.mk-state-layer')).opacity)).toBe(0)
-      expect(shadowLevel(card)).toBe(e.level)
+      expect(shadowLevel(card)).toBe(enabled.level)
       const media = rect(q(c, '.mk-card-media'))
       await commands.pressAt('.mk-card-media', media.width / 2, media.height / 2)
-      await commands.pressUp()
+      try {
+        expect(Number(style(q(c, '.mk-state-layer')).opacity)).toBe(0)
+        expect(shadowLevel(card)).toBe(enabled.level)
+        expect(c.querySelector('.mk-ripple-wave')).toBeNull()
+      } finally {
+        await commands.pressUp()
+      }
       expect(clicks).toBe(0)
-      expect(c.querySelector('.mk-ripple-wave')).toBeNull()
-    }
-  })
+      // Los otros controles siguen activos.
+      expect((page.getByRole('button', { name: 'Principal' }).element() as HTMLButtonElement).disabled).toBe(false)
+    })
+  }
 })
 
 describe('Card: adaptación al ancho de la propia tarjeta (container queries)', () => {

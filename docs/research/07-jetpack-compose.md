@@ -695,6 +695,12 @@ en nivel 1.
 | Deshabilitada, contenedor: elevated `Surface` al 38 % sobre `Surface` (o sea `Surface`) con nivel 1; filled `SurfaceVariant` al 38 % sobre `SurfaceContainerHighest`, nivel 0 (con un TODO: "valor desactualizado"); outlined `Surface` | `defaultElevatedCardColors`, `defaultCardColors`, `defaultOutlinedCardColors`, `DisabledContainerElevation` |
 | Deshabilitada, borde del outlined: `Outline` al 12 % sobre `SurfaceContainerLow` | `outlinedCardBorder(enabled = false)` |
 | Al pasar a deshabilitada, la elevación salta sin animación | `animateElevation` (`snapTo`) |
+
+Los datos de deshabilitada no se usan (decisión del autor, 2026-11-25; ADR-0015, actualización):
+el kit no tiene Card deshabilitada (Enabled, Hovered, Focused, Pressed, Dragged) y Compose la
+tiene solo en la Card clicable, donde toda la tarjeta es el botón. En matekit, con controles
+adentro que seguían activos, se veía deshabilitada sin estarlo. Si la acción principal es un
+`<button disabled>`, la tarjeta solo deja de reaccionar, sin colores propios.
 | Anillo de foco en `Secondary` | `*CardTokens.FocusIndicatorColor` |
 
 ### Conflictos y decisiones

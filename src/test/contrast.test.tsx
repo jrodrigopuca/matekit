@@ -291,7 +291,7 @@ for (const scheme of SCHEMES) {
     // identifica el título, que es el nombre y el texto de la acción principal) y agrupan como el
     // Divider, que Material quiere tenue (WCAG 1.4.11 pide 3:1 a lo necesario para identificar
     // un componente). El anillo de foco, que es lo que marca la tarjeta enfocada, sí: 3:1 sobre
-    // la superficie de la página, donde se dibuja (por fuera). La deshabilitada está exenta.
+    // la superficie de la página, donde se dibuja (por fuera).
     test('Card: texto de cada estilo sobre su contenedor y anillo de foco sobre la página', async () => {
       const c = await render(
         <Themed scheme={scheme}>

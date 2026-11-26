@@ -1,5 +1,5 @@
 // Molécula universal (ADR-0003): sin estado, efectos, contexto ni eventos; no lleva 'use client'.
-// Estados (hover, foco, presionado, deshabilitado) y disposición (container queries) son CSS
+// Estados (hover, foco, presionado) y disposición (container queries) son CSS
 // (card.css). CardPrimaryAction contiene la onda (Ripple), un átomo cliente: un componente
 // universal puede renderizar uno cliente, así que la tarjeta sirve desde un Server Component
 // (como Button y los FAB).
@@ -33,7 +33,6 @@ import {
   type ButtonElementProps,
   type InteractiveElementProps,
   type LinkElementProps,
-  type LinkModeExclusions,
   type RenderElementProps,
 } from '../../internal/interactive.tsx'
 
@@ -121,21 +120,23 @@ interface CardPrimaryActionOwnProps {
 
 /**
  * Props de `CardPrimaryAction`: con `href`, un `<a>`; con `render`, el elemento que se pase
- * (`<Link href="…" />` del enrutador, ADR-0010); sin ninguno, un `<button type="button">`. Solo
- * el botón acepta `disabled` (un enlace no se deshabilita: se quita el `href`).
+ * (`<Link href="…" />` del enrutador, ADR-0010); sin ninguno, un `<button type="button">` con
+ * sus atributos nativos.
  */
 export type CardPrimaryActionProps =
   | (CardPrimaryActionOwnProps & Omit<ButtonElementProps, keyof CardPrimaryActionOwnProps>)
-  | (CardPrimaryActionOwnProps & LinkModeExclusions & Omit<LinkElementProps, keyof LinkModeExclusions>)
-  | (CardPrimaryActionOwnProps & LinkModeExclusions & Omit<RenderElementProps, keyof LinkModeExclusions>)
+  | (CardPrimaryActionOwnProps & Omit<LinkElementProps, keyof CardPrimaryActionOwnProps>)
+  | (CardPrimaryActionOwnProps & Omit<RenderElementProps, keyof CardPrimaryActionOwnProps>)
 
 /**
  * La acción principal de la tarjeta: un enlace o botón cuyo área cubre toda la tarjeta (con un
  * pseudoelemento), con la capa de estado, la onda y el anillo de foco dibujados en el borde de la
  * tarjeta. Los otros controles de la tarjeta quedan por encima y se enfocan por separado.
  *
- * Va una por tarjeta, normalmente envolviendo el texto del título. Con `disabled` (solo como
- * botón), la tarjeta se ve deshabilitada; los otros controles siguen como estén.
+ * Va una por tarjeta, normalmente envolviendo el texto del título. La tarjeta no tiene estado
+ * deshabilitado (el kit no lo tiene): si hace falta, se deshabilita el control concreto. Como
+ * botón, el `disabled` nativo hace que la tarjeta deje de reaccionar al puntero (sin capa, onda
+ * ni cambio de elevación), sin cambiar sus colores.
  *
  * Mientras cubre la tarjeta, el texto de la tarjeta no se puede seleccionar con el puntero
  * (sí el de los controles de encima).

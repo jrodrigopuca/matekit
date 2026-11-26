@@ -348,7 +348,7 @@ const GALLERIES: Record<string, ReactNode> = {
       <CircularProgressIndicator aria-labelledby="a11y-cp-label" />
     </>
   ),
-  // Tarjetas en los tres estilos: superficie, enlace, botón, deshabilitada y horizontal, con
+  // Tarjetas en los tres estilos: superficie, enlace, botón (también deshabilitado) y horizontal, con
   // controles adentro que no quedan anidados en la acción principal (axe: nested-interactive).
   Card: (
     <>
@@ -387,7 +387,7 @@ const GALLERIES: Record<string, ReactNode> = {
       </Card>
       <Card>
         <CardContent>
-          <CardHeadline><CardPrimaryAction disabled>Deshabilitada</CardPrimaryAction></CardHeadline>
+          <CardHeadline><CardPrimaryAction disabled>Acción no disponible</CardPrimaryAction></CardHeadline>
           <p>No disponible.</p>
         </CardContent>
       </Card>

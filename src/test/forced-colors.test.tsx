@@ -701,12 +701,15 @@ describe('Card', () => {
     }
   })
 
-  test('deshabilitada: contorno y texto en GrayText', async () => {
+  test('con la acción principal como botón deshabilitado, el puntero no cambia el contorno', async () => {
+    // La tarjeta no tiene estado deshabilitado propio (ADR-0015, enmienda): el contorno sigue en
+    // CanvasText de 1 px. El título del botón lo pinta el navegador (GrayText).
     const c = await render(cards((v) => <CardPrimaryAction disabled>{v}</CardPrimaryAction>))
     for (const v of ['elevated', 'filled', 'outlined']) {
-      expect(border(q(c, `.${v}`)).borderTopColor, v).toBe(systemColor('GrayText'))
-      expect(style(q(c, `.${v} .mk-card-headline`)).color, v).toBe(systemColor('GrayText'))
-      expect(style(q(c, `.${v} p`)).color, v).toBe(systemColor('GrayText'))
+      await userEvent.hover(q(c, `.${v} .mk-card-primary-action`))
+      const b = border(q(c, `.${v}`))
+      expect(b.borderTopWidth, v).toBe('1px')
+      expect(b.borderTopColor, v).toBe(systemColor('CanvasText'))
     }
   })
 })
