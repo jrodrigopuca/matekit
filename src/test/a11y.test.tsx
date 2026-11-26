@@ -115,6 +115,17 @@ import {
   TopAppBarSubtitle,
   TopAppBarTitle,
   ArrowBackIcon,
+  BottomSheet,
+  BottomSheetContent,
+  BottomSheetHandle,
+  BottomSheetTitle,
+  SideSheet,
+  SideSheetActions,
+  SideSheetBack,
+  SideSheetClose,
+  SideSheetContent,
+  SideSheetHeader,
+  SideSheetTitle,
 } from '../index.ts'
 import { a11yViolations } from './a11y.ts'
 import { render } from './render.tsx'
@@ -625,6 +636,57 @@ describe('Accesibilidad automática (axe-core)', () => {
                 <Button variant="text">Eliminar</Button>
               </DialogActions>
             </Dialog>
+          </Themed>,
+        )
+        expect(await a11yViolations(c)).toEqual([])
+      })
+    }
+  }
+
+  for (const theme of THEMES) {
+    const themeName = theme === 'light' ? 'claro' : 'oscuro'
+    for (const tall of [false, true]) {
+      test(`BottomSheet ${tall ? 'parcial' : 'expandido'}, tema ${themeName}`, async () => {
+        const c = await render(
+          <Themed theme={theme}>
+            <BottomSheet open>
+              <BottomSheetHandle />
+              <BottomSheetTitle>Compartir</BottomSheetTitle>
+              <BottomSheetContent>
+                <List>
+                  {Array.from({ length: tall ? 30 : 3 }, (_, i) => (
+                    <ListItem key={i}>
+                      <ListItemHeadline>
+                        <ListItemAction>Destino {i + 1}</ListItemAction>
+                      </ListItemHeadline>
+                    </ListItem>
+                  ))}
+                </List>
+              </BottomSheetContent>
+            </BottomSheet>
+          </Themed>,
+        )
+        expect(await a11yViolations(c)).toEqual([])
+      })
+    }
+    for (const modal of [true, false]) {
+      test(`SideSheet ${modal ? 'modal' : 'standard'}, tema ${themeName}`, async () => {
+        const c = await render(
+          <Themed theme={theme}>
+            <SideSheet {...(modal ? { open: true } : { modal: false })}>
+              <SideSheetHeader>
+                <SideSheetBack />
+                <SideSheetTitle>Filtros</SideSheetTitle>
+                <SideSheetClose />
+              </SideSheetHeader>
+              <SideSheetContent>
+                <p>Contenido del sheet.</p>
+              </SideSheetContent>
+              <SideSheetActions>
+                <Button size="sm">Aplicar</Button>
+                <Button size="sm" variant="outlined">Cancelar</Button>
+              </SideSheetActions>
+            </SideSheet>
           </Themed>,
         )
         expect(await a11yViolations(c)).toEqual([])

@@ -991,6 +991,58 @@ Revisado el 2026-11-26 para el ítem 19 (ADR-0024). Archivos en
   expande solo cuando el contenido vuelve al principio. Compose también deja arrastrar la barra; matekit
   no (en web el gesto es el desplazamiento del contenido).
 
+## Sheets
+
+Revisado el 2026-11-26 para el ítem 20 (ADR-0025). Archivos en
+`compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/`:
+`tokens/SheetBottomTokens.kt` y `tokens/ScrimTokens.kt` (commit `76990c62ac`, 2026-11-24),
+`SheetDefaults.kt` (`5fd64f71fb`, 2026-10-27), `BottomSheet.kt` (`02b1dbcaeb`, 2026-10-07),
+`ModalBottomSheet.kt` (`f22fad2ca7`, 2026-08-05), `BottomSheetScaffold.kt` y `Scrim.kt`
+(`080d2b3e53`, 2026-07-24), `ComposeMaterial3Flags.kt`, `WideNavigationRail.kt` (`de12189a63`,
+2026-11-11); `compose/foundation/.../gestures/AnchoredDraggable.kt` (`8f52852d7a`, 2026-11-20) y
+`compose/ui/.../pointer/util/VelocityTracker.kt` (`641155416f`, 2026-11-20). Compose no tiene side
+sheets: `material-components-android`, `lib/java/com/google/android/material/sidesheet/` (`d18d3119a7`,
+2026-09-10).
+
+### Lo que confirma
+
+- Bottom sheet: `DockedContainerShape` = `CornerExtraLargeTop` (28 arriba), `DockedContainerColor` =
+  Surface Container Low, asa de 32 × 4 con radio `extraLarge` (completo para 4 de alto).
+- Side sheet modal: Surface Container Low y radio Corner Large (16) del lado del contenido
+  (`m3_comp_sheet_side_docked_modal_container_shape` con `Corner.Left` para el de la derecha);
+  standard: Surface, sin radio.
+
+### Lo que el kit no trae (se toma de Compose o de MDC)
+
+- Scrim: `Scrim` al 32 % (`ScrimTokens.ContainerOpacity`), aparece y se va con `DefaultEffects`.
+- Ancho máximo del bottom sheet: 640 (`SheetMaxWidth`), arriba al centro, sin margen a los lados.
+- Expandido: todo el alto del sheet, como mucho el de la ventana (`Expanded at max(0, fullHeight -
+  sheetHeight)`); zonas seguras arriba y abajo en el relleno del contenido (`modalWindowInsets`).
+- Umbrales al soltar: 56 dp de distancia (`PositionalThreshold`, absoluto: no la mitad del tramo que
+  usa `AnchoredDraggable` por defecto) y 125 dp/s (`VelocityThreshold`); `computeTarget` va al ancla
+  más cercana si no hay velocidad, a la siguiente en el sentido del gesto si la velocidad pasa el
+  umbral, y si no, a la siguiente solo si se alejó 56 de la anterior. Velocidad de los últimos 100 ms,
+  0 si el puntero se quedó quieto 40 ms (`VelocityTracker`). Touch slop de 8 dp.
+- Movimiento: entrada y "expandir" con `defaultSpatialSpec` (resorte con rebote), salida y
+  "contraer" con `fastEffectsSpec`; el asentamiento tras soltar con `defaultSpatialSpec`.
+- Asa: al tocarla, parcial → expandido, expandido → cierra, oculto → muestra; acciones de
+  accesibilidad para cerrar, expandir (si está parcial) y contraer (si está expandido y hay parcial).
+- Side sheet (MDC): de alto completo contra el borde final (`layout_gravity end`), margen de 16 en el
+  "detached" (no se hace), entra y sale deslizándose por ese borde.
+
+### Diferencias y cómo se resolvieron
+
+| Tema | Kit | Compose / MDC | Decisión |
+|---|---|---|---|
+| Color del asa | `Outline` | `DockedDragHandleColor` On Surface Variant | Kit (fuente 1). Los dos pasan 3:1 sobre Surface Container Low (`contrast.test.tsx`) |
+| Alto de la cabecera del asa | 36 (16 arriba y abajo) | 48 (`DragHandleVerticalPadding` 22) | Kit para lo visible; el botón del asa mide 48 de ancho por el área táctil |
+| Elevación | Modal sin elevación; standard 3 | `DockedModalContainerElevation` y `DockedStandardContainerElevation` = Level 1 | Kit para el modal (sin sombra); el standard no se hace en este ítem |
+| Estado parcial | — | Por defecto (`isBottomSheetPartiallyExpandedDeterministicEnabled = true`) siempre existe y muestra la mitad del sheet (como mucho, de la ventana); antes, solo si el sheet pasaba la mitad de la ventana, y mostraba la mitad de la ventana | La regla anterior (ADR-0025): un sheet corto no abre a medias |
+| Atrás / Escape desde expandido | — | `settleToDismiss`: si hay parcial, va al parcial | Escape cierra desde cualquier estado (APG "Dialog (Modal)") |
+| Ancho del side sheet | 320 | 256 (`m3_comp_sheet_side_docked_container_width`) | Kit (fuente 1); el modal deja al menos 48 de scrim en ventanas angostas |
+| Desplazamiento anidado | — | `ConsumeSwipeWithinBottomSheetBoundsNestedScrollConnection`: hacia arriba, el sheet consume antes que el contenido; hacia abajo, después (lo que sobra cuando el contenido llegó arriba) | Se decide al empezar el gesto (ADR-0025): en web no se puede pasar a mitad del gesto un desplazamiento nativo ya empezado |
+| Rebote de la entrada | — | `verticalScaleUp` estira el sheet para no dejar hueco abajo | Un `::after` del color del sheet debajo |
+
 ## No revisado
 
 La tipografía (`TypeScaleTokens.kt`, descargado pero sin comparar).

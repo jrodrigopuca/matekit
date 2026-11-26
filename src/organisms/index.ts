@@ -8,6 +8,34 @@ export {
 } from './Dialog/Dialog.tsx'
 export { DialogActions, DialogIcon, type DialogActionsProps, type DialogIconProps } from './Dialog/DialogSlots.tsx'
 export {
+  BottomSheet,
+  BottomSheetHandle,
+  BottomSheetTitle,
+  type BottomSheetHandleProps,
+  type BottomSheetProps,
+  type BottomSheetState,
+  type BottomSheetTitleProps,
+} from './BottomSheet/BottomSheet.tsx'
+export { BottomSheetContent, type BottomSheetContentProps } from './BottomSheet/BottomSheetSlots.tsx'
+export {
+  SideSheet,
+  SideSheetClose,
+  SideSheetTitle,
+  type SideSheetCloseProps,
+  type SideSheetModalProps,
+  type SideSheetProps,
+  type SideSheetStandardProps,
+  type SideSheetTitleProps,
+} from './SideSheet/SideSheet.tsx'
+export {
+  SideSheetActions,
+  SideSheetBack,
+  SideSheetContent,
+  SideSheetHeader,
+  type SideSheetBackProps,
+  type SideSheetPartProps,
+} from './SideSheet/SideSheetSlots.tsx'
+export {
   Menu,
   MenuContent,
   MenuItem,

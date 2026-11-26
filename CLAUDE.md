@@ -58,8 +58,11 @@ src/internal/    ayudas compartidas entre componentes, no exportadas (interactiv
                  Tooltip, ADR-0007 y ADR-0021; roving-focus.ts: useRovingFocus, el foco
                  itinerante de una sola parada de Tab de ChipGroup y Tabs, para las Toolbars,
                  ADR-0023; settle-animations.ts: settleAnimations, la espera de la salida
-                 animada de Snackbar, Tooltip, Menu y Dialog, que no se traba si una transición
-                 se cancela)
+                 animada de Snackbar, Tooltip, Menu, Dialog y los sheets, que no se traba si una
+                 transición se cancela; modal-dialog.ts: useModalDialog, el ciclo de vida modal
+                 sobre `<dialog>` (showModal, foco inicial, Escape y scrim, vuelta de Tab, salida
+                 y foco devuelto) de Dialog, BottomSheet y SideSheet modal, base del futuro
+                 NavigationRail modal, ADR-0025)
 src/styles.css   hoja única: importa tokens, átomos y componentes
 playground/      páginas de prueba manual, una por componente
 docs/research/   datos extraídos del kit de Figma y de Jetpack Compose

@@ -1,0 +1,211 @@
+/* Side sheet de Material 3, modal y standard. ADR-0025.
+
+   Fuentes:
+   - Kit de Figma (docs/research/05-medidas.md § Sheets), 320 de ancho:
+     - Modal: radio 16, Surface Container Low. Standard: sin radio, Surface, divisor vertical de 1
+       en Outline Variant del lado del contenido.
+     - Cabecera de 76: relleno 12 arriba, 12 al final, 16 abajo y 4 al inicio; volver opcional
+       (icon button standard angosto en un área de 48), título Title Large On Surface Variant con
+       12 al inicio, y cerrar (icon button standard en un área de 48).
+     - Acciones al pie: divisor de 1 en Outline Variant y una fila con relleno 12 arriba, 24 a los
+       lados y 20 abajo, separación 8.
+   - Compose no tiene side sheets. material-components-android, lib/java/com/google/android/
+     material/sidesheet/ (commit d18d3119a7, 2026-09-10), lo que el kit no trae: el modal de alto
+     completo contra el borde final (layout_gravity end), con el radio Corner Large solo del lado
+     del contenido (tokens.xml, ShapeAppearanceOverlay.Material3.Corner.Left para el de la
+     derecha), entra y sale deslizándose por ese borde (m3_side_sheet_enter_from_right). Su ancho de
+     256 (m3_comp_sheet_side_docked_container_width) choca con el kit: gana el kit
+     (07-jetpack-compose.md § Sheets).
+   - Scrim al 32 % y resortes como el Dialog y el BottomSheet (ScrimTokens.kt).
+
+   Ancho en ventanas angostas (decisión propia, ADR-0025): el modal deja al menos 48 de scrim al
+   costado (el área táctil mínima), para que se vea que está encima y se pueda tocar afuera para
+   cerrar; a 320 de ventana mide 272. */
+
+@layer matekit.components {
+  .mk-side-sheet {
+    box-sizing: border-box;
+    flex-direction: column;
+    color: var(--md-sys-color-on-surface);
+  }
+
+  /* --- Standard: en el flujo, al lado del contenido --- */
+  .mk-side-sheet-standard {
+    display: flex;
+    flex-shrink: 0;
+    inline-size: var(--mk-side-sheet-width, 320px);
+    max-inline-size: 100%;
+    min-block-size: 0;
+    border-inline-start: 1px solid var(--md-sys-color-outline-variant);
+    background-color: var(--md-sys-color-surface);
+  }
+  .mk-side-sheet-standard[hidden] {
+    display: none;
+  }
+
+  /* --- Modal: <dialog> contra el borde final --- */
+  .mk-side-sheet-modal {
+    --_scrim: color-mix(in srgb, var(--md-sys-color-scrim) 32%, transparent);
+    /* Afuera, del lado del borde final: a la derecha, o a la izquierda en RTL. */
+    --_hidden: 100% 0;
+
+    position: fixed;
+    inset-block: 0;
+    inset-inline: auto 0;
+    inline-size: min(var(--mk-side-sheet-width, 320px), 100% - 48px);
+    max-inline-size: none;
+    block-size: 100%;
+    max-block-size: none;
+    margin: 0;
+    /* Zonas seguras: toca arriba, abajo y el costado final. env() es físico: el costado depende de
+       la dirección. */
+    padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) 0;
+    border: none;
+    border-start-start-radius: var(--md-sys-shape-corner-large);
+    border-end-start-radius: var(--md-sys-shape-corner-large);
+    border-start-end-radius: 0;
+    border-end-end-radius: 0;
+    background-color: var(--md-sys-color-surface-container-low);
+    box-shadow: none;
+    overflow: hidden;
+    translate: var(--_hidden);
+    transition: translate var(--md-sys-motion-spring-fast-effects-duration) var(--md-sys-motion-spring-fast-effects-easing);
+  }
+  .mk-side-sheet-modal:dir(rtl) {
+    --_hidden: -100% 0;
+
+    padding: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+  }
+
+  .mk-side-sheet-modal[open] {
+    display: flex;
+    translate: none;
+    transition: translate var(--md-sys-motion-spring-default-spatial-duration)
+      var(--md-sys-motion-spring-default-spatial-easing);
+  }
+
+  .mk-side-sheet-modal::backdrop {
+    background-color: var(--_scrim);
+    transition: background-color var(--md-sys-motion-spring-default-effects-duration)
+      var(--md-sys-motion-spring-default-effects-easing);
+  }
+
+  @starting-style {
+    .mk-side-sheet-modal[open] {
+      translate: var(--_hidden);
+    }
+    .mk-side-sheet-modal[open]::backdrop {
+      background-color: transparent;
+    }
+  }
+
+  .mk-side-sheet-modal[open][data-closing] {
+    translate: var(--_hidden);
+    transition: translate var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects-easing);
+  }
+  .mk-side-sheet-modal[data-closing]::backdrop {
+    background-color: transparent;
+    transition-duration: var(--md-sys-motion-spring-fast-effects-duration);
+    transition-timing-function: var(--md-sys-motion-spring-fast-effects-easing);
+  }
+
+  /* Movimiento reducido: fundido en el lugar, sin deslizarse. */
+  @media (prefers-reduced-motion: reduce) {
+    .mk-side-sheet-modal,
+    .mk-side-sheet-modal:dir(rtl) {
+      --_hidden: none;
+
+      opacity: 0;
+    }
+    .mk-side-sheet-modal[open] {
+      opacity: 1;
+      transition: opacity var(--md-sys-motion-spring-default-effects-duration)
+        var(--md-sys-motion-spring-default-effects-easing);
+    }
+    @starting-style {
+      .mk-side-sheet-modal[open] {
+        opacity: 0;
+      }
+    }
+    .mk-side-sheet-modal[open][data-closing] {
+      opacity: 0;
+      transition: opacity var(--md-sys-motion-spring-fast-effects-duration) var(--md-sys-motion-spring-fast-effects-easing);
+    }
+  }
+
+  :root:has(.mk-side-sheet-modal:modal) {
+    overflow: hidden;
+  }
+
+  /* --- Partes --- */
+  .mk-side-sheet-header {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    box-sizing: border-box;
+    min-block-size: 76px;
+    padding-block: var(--md-sys-space-150) var(--md-sys-space-200);
+    padding-inline: var(--md-sys-space-50) var(--md-sys-space-150);
+  }
+  /* Los icon buttons miden 32 (angosto) y 40; el kit los mide en un área de 48. */
+  .mk-side-sheet-back {
+    flex-shrink: 0;
+    margin-inline: var(--md-sys-space-100);
+  }
+  .mk-side-sheet-back:dir(rtl) > .mk-icon {
+    scale: -1 1;
+  }
+  .mk-side-sheet-close {
+    flex-shrink: 0;
+    margin-inline: var(--md-sys-space-50);
+  }
+
+  .mk-side-sheet-title {
+    flex: 1 1 auto;
+    min-inline-size: 0;
+    margin: 0;
+    margin-inline: var(--md-sys-space-150) 0;
+    color: var(--md-sys-color-on-surface-variant);
+    font-family: var(--md-sys-typescale-title-large-font);
+    font-size: var(--md-sys-typescale-title-large-size);
+    line-height: var(--md-sys-typescale-title-large-line-height);
+    font-weight: var(--md-sys-typescale-title-large-weight);
+    letter-spacing: var(--md-sys-typescale-title-large-tracking);
+    overflow-wrap: anywhere;
+  }
+
+  .mk-side-sheet-content {
+    flex: 1 1 auto;
+    min-block-size: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .mk-side-sheet-content:focus-visible {
+    outline: var(--md-sys-state-focus-indicator-thickness) solid var(--md-sys-color-secondary);
+    outline-offset: calc(-1 * var(--md-sys-state-focus-indicator-thickness));
+  }
+  .mk-side-sheet-content:focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  .mk-side-sheet-actions {
+    display: flex;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--md-sys-space-100);
+    padding-block: var(--md-sys-space-150) var(--md-sys-space-250);
+    padding-inline: var(--md-sys-space-300);
+    border-block-start: 1px solid var(--md-sys-color-outline-variant);
+  }
+
+  /* --- Alto contraste (forced-colors) ---
+     Sin fondo, el modal se marca con un contorno; el divisor del standard y el de las acciones ya
+     son bordes (el navegador los pinta con un color del sistema). */
+  @media (forced-colors: active) {
+    .mk-side-sheet-modal {
+      outline: 1px solid CanvasText;
+    }
+  }
+}

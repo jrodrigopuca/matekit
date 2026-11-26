@@ -1,0 +1,234 @@
+/* Bottom sheet modal de Material 3. ADR-0025.
+
+   Fuentes:
+   - Kit de Figma (docs/research/05-medidas.md § Sheets): radio 28 arriba y 0 abajo, fondo Surface
+     Container Low, a todo el ancho en la ventana compacta; cabecera de 36 con el asa de 32 × 4,
+     radio completo, en Outline, con 16 arriba y abajo; el modal sobre el scrim, sin elevación.
+   - Jetpack Compose (compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/),
+     lo que el kit no trae:
+     - SheetDefaults.kt (commit 5fd64f71fb, 2026-10-27): ancho máximo 640 (SheetMaxWidth), centrado
+       (ModalBottomSheet.kt lo alinea arriba al centro), sin margen a los lados; scrim Scrim al 32 %
+       (ScrimTokens.kt, commit 76990c62ac); umbrales de 56 y 125 por segundo (sheet-drag.ts); las
+       zonas seguras de arriba y de abajo van en el relleno del contenido (modalWindowInsets).
+     - BottomSheet.kt (commit 02b1dbcaeb, 2026-10-07): expandido con todo su alto (como mucho, la
+       ventana), parcial con la mitad de la ventana a la vista si el sheet es más alto que eso
+       (la regla anterior de Compose; ADR-0025), entrada con el resorte DefaultSpatial y salida
+       con FastEffects; el asa expande, contrae o cierra.
+     - ModalBottomSheet.kt (commit f22fad2ca7, 2026-08-05): el scrim aparece y se va con
+       DefaultEffects.
+   Conflictos con Compose (asa On Surface Variant con 22 arriba y abajo, elevación 1 en los dos
+   sheets): docs/research/07-jetpack-compose.md § Sheets. Gana el kit.
+
+   Posición: la propiedad translate lleva el sheet a su estado (--_y): 0 expandido, --_partial
+   (medido por BottomSheet.tsx) parcial, --_drag mientras se arrastra (sin transición, sigue al
+   puntero) y 100 % oculto (entrada con @starting-style, salida con data-closing, que pone
+   src/internal/modal-dialog.ts y quita al terminar, como en el Dialog). Al soltar, la transición
+   lleva el sheet desde donde quedó hasta el estado elegido. */
+
+@layer matekit.components {
+  .mk-bottom-sheet {
+    --_scrim: color-mix(in srgb, var(--md-sys-color-scrim) 32%, transparent);
+    --_rest: 0px;
+    --_y: var(--_rest);
+    --_hidden: 100%;
+
+    box-sizing: border-box;
+    position: fixed;
+    inset: auto 0 0;
+    inline-size: 100%;
+    max-inline-size: var(--mk-bottom-sheet-max-width, 640px);
+    /* Hasta arriba de la ventana, sin meterse bajo la muesca o la barra de estado. */
+    max-block-size: calc(100% - env(safe-area-inset-top, 0px));
+    margin: 0 auto;
+    /* Zonas seguras: el sheet toca el borde de abajo (y los costados en una ventana compacta
+       apaisada). env() da 0 donde no hay. */
+    padding: 0 env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+    border: none;
+    border-start-start-radius: var(--md-sys-shape-corner-extra-large);
+    border-start-end-radius: var(--md-sys-shape-corner-extra-large);
+    border-end-start-radius: 0;
+    border-end-end-radius: 0;
+    background-color: var(--md-sys-color-surface-container-low);
+    box-shadow: none;
+    color: var(--md-sys-color-on-surface);
+    /* Visible: el relleno de ::after tapa el hueco de abajo si el resorte de la entrada se pasa. */
+    overflow: visible;
+    translate: 0 var(--_hidden);
+    transition: translate var(--md-sys-motion-spring-fast-effects-duration) var(--md-sys-motion-spring-fast-effects-easing);
+  }
+
+  /* display solo con [open]: un display propio en la clase le ganaría al display: none del
+     navegador para el diálogo cerrado. */
+  .mk-bottom-sheet[open] {
+    display: flex;
+    flex-direction: column;
+    translate: 0 var(--_y);
+    transition: translate var(--md-sys-motion-spring-default-spatial-duration)
+      var(--md-sys-motion-spring-default-spatial-easing);
+  }
+
+  .mk-bottom-sheet[data-state='partial'] {
+    --_rest: var(--_partial, 0px);
+  }
+
+  /* Arrastre: sigue al puntero, sin transición ni selección de texto. */
+  .mk-bottom-sheet[open][data-dragging] {
+    --_y: var(--_drag, var(--_rest));
+    cursor: grabbing;
+    transition: none;
+    user-select: none;
+  }
+
+  /* Debajo del sheet, del mismo color: el resorte DefaultSpatial de la entrada (y al soltar) pasa
+     un poco el destino y dejaría ver el scrim entre el sheet y el borde (Compose lo resuelve
+     estirando el sheet, verticalScaleUp). */
+  .mk-bottom-sheet[open]::after {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    inset-block-start: 100%;
+    block-size: 25%;
+    background-color: inherit;
+    pointer-events: none;
+  }
+
+  .mk-bottom-sheet::backdrop {
+    background-color: var(--_scrim);
+    transition: background-color var(--md-sys-motion-spring-default-effects-duration)
+      var(--md-sys-motion-spring-default-effects-easing);
+  }
+
+  @starting-style {
+    .mk-bottom-sheet[open] {
+      translate: 0 var(--_hidden);
+    }
+    .mk-bottom-sheet[open]::backdrop {
+      background-color: transparent;
+    }
+  }
+
+  /* Salida con FastEffects (hideMotionSpec de Compose), también desde el punto donde se soltó un
+     arrastre para cerrar (gana a data-dragging). */
+  .mk-bottom-sheet[open][data-closing] {
+    --_y: var(--_hidden);
+    transition: translate var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects-easing);
+  }
+  .mk-bottom-sheet[data-closing]::backdrop {
+    background-color: transparent;
+    transition-duration: var(--md-sys-motion-spring-fast-effects-duration);
+    transition-timing-function: var(--md-sys-motion-spring-fast-effects-easing);
+  }
+
+  /* Movimiento reducido: los resortes spatial valen 0 (al soltar, el sheet salta a su estado) y la
+     entrada y la salida son un fundido en el lugar, también la salida tras un arrastre. El
+     arrastre sigue al puntero igual. */
+  @media (prefers-reduced-motion: reduce) {
+    .mk-bottom-sheet {
+      --_hidden: var(--_drag, var(--_rest));
+      opacity: 0;
+    }
+    .mk-bottom-sheet[open] {
+      opacity: 1;
+      transition:
+        translate var(--md-sys-motion-spring-default-spatial-duration) var(--md-sys-motion-spring-default-spatial-easing),
+        opacity var(--md-sys-motion-spring-default-effects-duration) var(--md-sys-motion-spring-default-effects-easing);
+    }
+    @starting-style {
+      .mk-bottom-sheet[open] {
+        opacity: 0;
+      }
+    }
+    .mk-bottom-sheet[open][data-closing] {
+      opacity: 0;
+      transition: opacity var(--md-sys-motion-spring-fast-effects-duration) var(--md-sys-motion-spring-fast-effects-easing);
+    }
+  }
+
+  /* La página de fondo no se desplaza mientras hay un sheet modal; cerrado, no la toca. */
+  :root:has(.mk-bottom-sheet:modal) {
+    overflow: hidden;
+  }
+
+  /* Fuera del contenido, un gesto táctil es del sheet: sin desplazar ni hacer zoom. */
+  .mk-bottom-sheet > :not(.mk-bottom-sheet-content) {
+    touch-action: none;
+  }
+
+  /* Asa: botón de 48 × 36 (la cabecera del kit; 48 de ancho para el área táctil) con la barra de
+     32 × 4 en el centro (16 arriba y abajo, 8 a los lados). */
+  .mk-bottom-sheet-handle {
+    position: relative;
+    flex-shrink: 0;
+    align-self: center;
+    box-sizing: border-box;
+    inline-size: 48px;
+    block-size: 36px;
+    margin: 0;
+    padding: 0;
+    border: none;
+    border-radius: var(--md-sys-shape-corner-small);
+    background: none;
+    color: inherit;
+    cursor: grab;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .mk-bottom-sheet-handle::after {
+    content: '';
+    position: absolute;
+    inset: 16px 8px;
+    border-radius: var(--md-sys-shape-corner-full);
+    background-color: var(--md-sys-color-outline);
+  }
+  .mk-bottom-sheet-handle:focus-visible {
+    outline: none;
+  }
+
+  /* Título: sin dato en el kit (que no trae título); Title Large On Surface alineado con el
+     relleno de 16 de una List (ADR-0025). */
+  .mk-bottom-sheet-title {
+    flex-shrink: 0;
+    margin: 0;
+    padding: 0 var(--md-sys-space-200) var(--md-sys-space-200);
+    color: var(--md-sys-color-on-surface);
+    font-family: var(--md-sys-typescale-title-large-font);
+    font-size: var(--md-sys-typescale-title-large-size);
+    line-height: var(--md-sys-typescale-title-large-line-height);
+    font-weight: var(--md-sys-typescale-title-large-weight);
+    letter-spacing: var(--md-sys-typescale-title-large-tracking);
+  }
+  /* Sin asa, el título no queda pegado al borde de arriba. */
+  .mk-bottom-sheet > .mk-bottom-sheet-title:first-child {
+    padding-block-start: var(--md-sys-space-300);
+  }
+
+  /* Única parte con desplazamiento: el asa y el título quedan fijos. */
+  .mk-bottom-sheet-content {
+    flex: 1 1 auto;
+    min-block-size: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  /* Con scroll y sin enfocables adentro, se enfoca con el teclado (src/internal/modal-dialog.ts):
+     anillo de Material por dentro, como en el Dialog. */
+  .mk-bottom-sheet-content:focus-visible {
+    outline: var(--md-sys-state-focus-indicator-thickness) solid var(--md-sys-color-secondary);
+    outline-offset: calc(-1 * var(--md-sys-state-focus-indicator-thickness));
+  }
+  .mk-bottom-sheet-content:focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  /* --- Alto contraste (forced-colors) ---
+     El navegador quita el fondo: un contorno marca el borde del sheet, y la barra del asa se pinta
+     con CanvasText (si no, queda del color de la página). */
+  @media (forced-colors: active) {
+    .mk-bottom-sheet {
+      outline: 1px solid CanvasText;
+    }
+    .mk-bottom-sheet-handle::after {
+      forced-color-adjust: none;
+      background-color: CanvasText;
+    }
+  }
+}

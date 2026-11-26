@@ -85,6 +85,16 @@ import {
   TopAppBarActions,
   TopAppBarLeading,
   TopAppBarTitle,
+  BottomSheet,
+  BottomSheetContent,
+  BottomSheetHandle,
+  BottomSheetTitle,
+  SideSheet,
+  SideSheetActions,
+  SideSheetClose,
+  SideSheetContent,
+  SideSheetHeader,
+  SideSheetTitle,
 } from '../index.ts'
 import { render, style } from './render.tsx'
 import { near, pixelsOf } from './pixels.ts'
@@ -372,6 +382,52 @@ describe('Dialog', () => {
     const d = style(q(c, 'dialog'))
     expect(d.outlineStyle).toBe('solid')
     expect(d.outlineColor).toBe(systemColor('CanvasText'))
+  })
+})
+
+describe('Sheets', () => {
+  test('bottom sheet: contorno CanvasText y la barra del asa en CanvasText', async () => {
+    const c = await render(
+      <BottomSheet open>
+        <BottomSheetHandle />
+        <BottomSheetTitle>Título</BottomSheetTitle>
+        <BottomSheetContent>Texto</BottomSheetContent>
+      </BottomSheet>,
+    )
+    const s = style(q(c, 'dialog'))
+    expect(s.outlineStyle).toBe('solid')
+    expect(s.outlineColor).toBe(systemColor('CanvasText'))
+    expect(getComputedStyle(q(c, '.mk-bottom-sheet-handle'), '::after').backgroundColor).toBe(systemColor('CanvasText'))
+  })
+
+  const side = (modal: boolean) => (
+    <SideSheet {...(modal ? { open: true } : { modal: false })}>
+      <SideSheetHeader>
+        <SideSheetTitle>Título</SideSheetTitle>
+        <SideSheetClose />
+      </SideSheetHeader>
+      <SideSheetContent>Texto</SideSheetContent>
+      <SideSheetActions>
+        <Button size="sm">Aceptar</Button>
+      </SideSheetActions>
+    </SideSheet>
+  )
+
+  test('side sheet modal: contorno CanvasText', async () => {
+    const c = await render(side(true))
+    const s = style(q(c, 'dialog'))
+    expect(s.outlineStyle).toBe('solid')
+    expect(s.outlineColor).toBe(systemColor('CanvasText'))
+  })
+
+  // El divisor del standard y el de las acciones son bordes outline-variant: el reemplazo por
+  // CanvasText lo hace el navegador (no WebKit).
+  test.skipIf(!autoForced)('side sheet standard: divisor y el de las acciones en CanvasText', async () => {
+    const c = await render(side(false))
+    const s = style(q(c, 'aside'))
+    expect(s.borderInlineStartStyle).toBe('solid')
+    expect(s.borderInlineStartColor).toBe(systemColor('CanvasText'))
+    expect(style(q(c, '.mk-side-sheet-actions')).borderTopColor).toBe(systemColor('CanvasText'))
   })
 })
 

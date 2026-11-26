@@ -34,6 +34,9 @@
 @import './molecules/Card/card.css';
 @import './molecules/Chip/chip.css';
 @import './organisms/Dialog/dialog.css';
+@import './organisms/BottomSheet/bottom-sheet.css';
+/* Después de icon-button.css: los márgenes de volver y cerrar le ganan por orden. */
+@import './organisms/SideSheet/side-sheet.css';
 @import './organisms/Menu/menu.css';
 @import './organisms/Tooltip/tooltip.css';
 @import './organisms/Snackbar/snackbar.css';

@@ -16,6 +16,7 @@ import { CardPage } from './pages/CardPage.tsx'
 import { CheckboxPage } from './pages/CheckboxPage.tsx'
 import { ChipsPage } from './pages/ChipsPage.tsx'
 import { DialogPage } from './pages/DialogPage.tsx'
+import { SheetsPage } from './pages/SheetsPage.tsx'
 import { DividerPage } from './pages/DividerPage.tsx'
 import { ExamplesPage } from './pages/ExamplesPage.tsx'
 import { FabPage } from './pages/FabPage.tsx'
@@ -91,6 +92,7 @@ const PAGES = {
   menu: { label: 'Menu', group: 'organisms', Page: MenuPage },
   'navigation-bar': { label: 'NavigationBar', group: 'organisms', Page: NavigationBarPage },
   'navigation-rail': { label: 'NavigationRail', group: 'organisms', Page: NavigationRailPage },
+  sheets: { label: 'Sheets', group: 'organisms', Page: SheetsPage },
   snackbar: { label: 'Snackbar', group: 'organisms', Page: SnackbarPage },
   tabs: { label: 'Tabs', group: 'organisms', Page: TabsPage },
   tooltip: { label: 'Tooltip', group: 'organisms', Page: TooltipPage },

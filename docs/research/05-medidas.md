@@ -615,6 +615,29 @@ variantes XR (fuera del plan).
 - Los títulos Medium y Large del kit son de una línea; los "flexible" de Expressive en Compose
   permiten más líneas y alto variable (ver Compose).
 
+## Sheets
+
+Leído del kit el 2026-11-26 (página Sheets; conjuntos `Bottom sheet` 51827:5859 con Modal True o
+False y `Side Sheet` 53198:27851 con Type Modal o Standard y Show back).
+
+- Bottom sheet:
+  - Radio 28 arriba y 0 abajo, fondo `Surface Container Low`; 412 de ancho en el kit (a todo el
+    ancho de la ventana compacta).
+  - Cabecera de 36 con el asa de arrastre (drag handle): 32 × 4, radio completo, `Outline`,
+    centrada, con 16 arriba y abajo.
+  - Modal: sobre un scrim (`Scrim`; la opacidad, de Compose), sin elevación propia. Standard (no
+    modal): elevación 3.
+- Side sheet (320 × 700 en el kit):
+  - Modal: radio 16, `Surface Container Low`. Standard: sin radio, `Surface`, con un divisor
+    vertical de 1 en `Outline Variant` del lado del contenido.
+  - Cabecera de 76: relleno 12 arriba, 12 al final, 16 abajo y 4 al inicio; botón de volver
+    opcional (icon button standard angosto, 48), título en Title Large `On Surface Variant` (12 al
+    inicio) y botón de cerrar (icon button standard, 48).
+  - Contenido libre.
+  - Acciones al pie: divisor horizontal de 1 en `Outline Variant` y una fila con relleno 12
+    arriba, 24 a los lados y 20 abajo (del contenedor), separación 8, con un botón filled Small y
+    uno outlined Small.
+
 ## Diferencias con la especificación a revisar
 
 - El indicador con foco del campo de texto mide 3 en el kit. Confirmar en m3.material.io.

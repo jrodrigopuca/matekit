@@ -22,8 +22,9 @@
    ocupa 40 (su área táctil de 48 es un ::before que no cuenta en la caja), así que el relleno
    vertical es 20 + (48 − 40) / 2 = 24 y la fila sigue midiendo 88.
 
-   Movimiento: entrada con @starting-style; salida con data-closing, que pone Dialog.tsx y
-   quita cuando terminan las transiciones, recién ahí llama a close(). La salida no puede ser
+   Movimiento: entrada con @starting-style; salida con data-closing, que pone la base modal
+   (src/internal/modal-dialog.ts, ADR-0025) y quita cuando terminan las transiciones, recién ahí
+   llama a close(). La salida no puede ser
    solo CSS (transition-behavior: allow-discrete con display y overlay): `overlay` no existe
    en Safari ni en Firefox, y sin él el diálogo sale de la capa superior (top layer) y pierde
    el ::backdrop en el primer cuadro de la salida. */

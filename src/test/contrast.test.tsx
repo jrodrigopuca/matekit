@@ -91,6 +91,16 @@ import {
   TopAppBarLeading,
   TopAppBarSubtitle,
   TopAppBarTitle,
+  BottomSheet,
+  BottomSheetContent,
+  BottomSheetHandle,
+  BottomSheetTitle,
+  SideSheet,
+  SideSheetActions,
+  SideSheetClose,
+  SideSheetContent,
+  SideSheetHeader,
+  SideSheetTitle,
 } from '../index.ts'
 import '../tokens/palettes/index.css'
 import { contrastRatio, effectiveBackground, parseColor, textContrast } from './contrast.ts'
@@ -446,6 +456,45 @@ for (const scheme of SCHEMES) {
       }
       expect(textContrast(q(c, '.acc-open p'))).toBeGreaterThanOrEqual(TEXT)
     })
+
+    // La barra del asa es lo que identifica el control (WCAG 1.4.11): 3:1 sobre el sheet.
+    test('BottomSheet: título y texto sobre el contenedor, y la barra del asa', async () => {
+      const c = await render(
+        <Themed scheme={scheme}>
+          <BottomSheet open>
+            <BottomSheetHandle />
+            <BottomSheetTitle>Título</BottomSheetTitle>
+            <BottomSheetContent><p>Texto del sheet</p></BottomSheetContent>
+          </BottomSheet>
+        </Themed>,
+      )
+      expect(textContrast(q(c, '.mk-bottom-sheet-title'))).toBeGreaterThanOrEqual(TEXT)
+      expect(textContrast(q(c, '.mk-bottom-sheet-content p'))).toBeGreaterThanOrEqual(TEXT)
+      const bar = getComputedStyle(q(c, '.mk-bottom-sheet-handle'), '::after').backgroundColor
+      expect(contrastRatio(bar, effectiveBackground(q(c, '.mk-bottom-sheet')))).toBeGreaterThanOrEqual(NON_TEXT)
+    })
+
+    for (const modal of [true, false]) {
+      test(`SideSheet ${modal ? 'modal' : 'standard'}: título, texto y el icono de cerrar sobre el contenedor`, async () => {
+        const c = await render(
+          <Themed scheme={scheme}>
+            <SideSheet {...(modal ? { open: true } : { modal: false })}>
+              <SideSheetHeader>
+                <SideSheetTitle>Título</SideSheetTitle>
+                <SideSheetClose />
+              </SideSheetHeader>
+              <SideSheetContent><p>Texto del sheet</p></SideSheetContent>
+              <SideSheetActions><Button size="sm" variant="outlined">Cancelar</Button></SideSheetActions>
+            </SideSheet>
+          </Themed>,
+        )
+        expect(textContrast(q(c, '.mk-side-sheet-title'))).toBeGreaterThanOrEqual(TEXT)
+        expect(textContrast(q(c, '.mk-side-sheet-content p'))).toBeGreaterThanOrEqual(TEXT)
+        const close = q(c, '.mk-side-sheet-close')
+        expect(contrastRatio(cs(close).color, effectiveBackground(close))).toBeGreaterThanOrEqual(NON_TEXT)
+        expect(textContrast(q(c, '.mk-side-sheet-actions .mk-button'))).toBeGreaterThanOrEqual(TEXT)
+      })
+    }
 
     test('Dialog: título y texto sobre el contenedor', async () => {
       const c = await render(
