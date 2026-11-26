@@ -1,6 +1,7 @@
 // Genera las variables CSS de matekit a partir de tokens/*.json.
 // Uso: pnpm tokens  (o: node scripts/build-tokens.ts)
-// Salida: src/tokens/*.css y src/tokens/palettes/*.css (se versionan; no editar a mano).
+// Salida: src/tokens/*.css, src/tokens/palettes/*.css y, para TypeScript, src/tokens/space.ts y
+// src/tokens/breakpoints.ts (se versionan; no editar a mano).
 // Sin React: los tokens deben poder separarse en otro paquete (ADR-0001). La única dependencia
 // es material-color-utilities (de desarrollo), que calcula las paletas y los niveles de
 // contraste (scripts/lib/color-schemes.ts, ADR-0008).
@@ -9,11 +10,13 @@ import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import type {
+  BreakpointTokens,
   ColorTokens,
   PaletteTokens,
   ElevationTokens,
   MotionTokens,
   ShapeTokens,
+  SpaceTokens,
   SpringName,
   StateTokens,
   TypescaleTokens,
@@ -107,6 +110,77 @@ function buildShape(): string {
   return header(s.$source) + '\n' + block(':root', vars(corners, 'md-sys-shape-corner-'))
 }
 
+// Espaciado (ADR-0016): --md-sys-space-<paso>, en px como las esquinas (1 dp = 1 px CSS).
+const spaceTokens = read<SpaceTokens>('space.json')
+function buildSpace(): string {
+  const values = Object.fromEntries(Object.entries(spaceTokens.space).map(([k, v]) => [k, px(v)]))
+  return header(spaceTokens.$source) + '\n' + block(':root', vars(values, 'md-sys-space-'))
+}
+
+// Los mismos datos para TypeScript: los pasos tipan la prop gap de Stack, y los cortes de ventana
+// sirven para matchMedia (no hay variables CSS de cortes: @media y @container no aceptan var()).
+const tsHeader = (source: string): string =>
+  `// Generado por scripts/build-tokens.ts desde tokens/. No editar a mano.\n// Fuente: ${source}\n\n`
+
+function buildSpaceTs(): string {
+  const entries = Object.entries(spaceTokens.space)
+    .map(([k, v]) => `  ${k}: ${v},`)
+    .join('\n')
+  return (
+    tsHeader('tokens/space.json (ADR-0016).') +
+    '/**\n' +
+    ' * Escala de espaciado de Material 3: paso → px. El paso es el número del token\n' +
+    ' * (`--md-sys-space-200` = 16 px), centésimas de 8: no son px.\n' +
+    ' */\n' +
+    `export const SPACE = {\n${entries}\n} as const\n\n` +
+    '/** Un paso de la escala de espaciado (`0`, `25`, `50`… `900`). */\n' +
+    'export type SpaceStep = keyof typeof SPACE\n'
+  )
+}
+
+function buildBreakpointsTs(): string {
+  const b = read<BreakpointTokens>('breakpoints.json')
+  const obj = (o: Record<string, number>) =>
+    Object.entries(o)
+      .map(([k, v]) => `  ${k}: ${v},`)
+      .join('\n')
+  return (
+    tsHeader('tokens/breakpoints.json (ADR-0016).') +
+    `/**
+ * Cortes de ancho de las clases de tamaño de ventana de Material 3 (Compose
+ * \`WindowSizeClass\`, BREAKPOINTS_V2): el límite inferior de cada clase, en px. Compact es lo que
+ * queda debajo de \`medium\`. Es un "al menos": la clase expanded es \`ancho >= expanded\`.
+ *
+ * Solo para la disposición de la página (cuántos paneles, barra o rail): los componentes se
+ * adaptan al espacio de su contenedor con container queries, no a la ventana.
+ *
+ * Las condiciones de \`@media\` y \`@container\` no aceptan \`var()\`, así que en CSS se escriben
+ * literales, en rem (base 16, como el resto de matekit): 37.5rem, 52.5rem, 75rem y 100rem.
+ *
+ * \`\`\`ts
+ * const twoPanes = matchMedia(\`(min-width: \${WINDOW_WIDTH.expanded / 16}rem)\`) // 52.5rem
+ * \`\`\`
+ */
+export const WINDOW_WIDTH = {
+${obj(b.width)}
+} as const
+
+/**
+ * Cortes de alto de las clases de tamaño de ventana (límite inferior, en px): compact bajo 480
+ * (teléfono en horizontal: dos paneles no entran) y expanded desde 900. En CSS: 30rem y 56.25rem.
+ */
+export const WINDOW_HEIGHT = {
+${obj(b.height)}
+} as const
+
+/** Clase de ancho de ventana con límite inferior propio (compact es la de abajo). */
+export type WindowWidthClass = keyof typeof WINDOW_WIDTH
+/** Clase de alto de ventana con límite inferior propio. */
+export type WindowHeightClass = keyof typeof WINDOW_HEIGHT
+`
+  )
+}
+
 function buildElevation(): string {
   const { $source, ...levels } = read<ElevationTokens>('elevation.json')
   const values: Record<string, string> = {}
@@ -171,11 +245,18 @@ const files: Record<string, string> = {
   'color.css': buildColor(),
   'typescale.css': buildTypescale(),
   'shape.css': buildShape(),
+  'space.css': buildSpace(),
   'elevation.css': buildElevation(),
   'state.css': buildState(),
   'motion.css': buildMotion(),
 }
 for (const [name, css] of Object.entries(files)) writeFileSync(join(outDir, name), css)
+
+const tsFiles: Record<string, string> = {
+  'space.ts': buildSpaceTs(),
+  'breakpoints.ts': buildBreakpointsTs(),
+}
+for (const [name, ts] of Object.entries(tsFiles)) writeFileSync(join(outDir, name), ts)
 
 const palettes = buildPalettes()
 const paletteDir = join(outDir, 'palettes')
@@ -199,5 +280,5 @@ writeFileSync(
     '\n',
 )
 
-console.log(`Tokens generados en src/tokens/: ${[...Object.keys(files), 'index.css'].join(', ')}`)
+console.log(`Tokens generados en src/tokens/: ${[...Object.keys(files), 'index.css', ...Object.keys(tsFiles)].join(', ')}`)
 console.log(`Paletas generadas en src/tokens/palettes/: ${[...Object.keys(palettes), 'index.css'].join(', ')}`)

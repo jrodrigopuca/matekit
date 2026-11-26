@@ -481,3 +481,91 @@ body {
 .pg-example-done p {
   margin: 0;
 }
+
+/* --- Disposición (LayoutPage) --- */
+.pg-space-scale {
+  display: grid;
+  gap: 4px;
+}
+.pg-space-row {
+  display: grid;
+  grid-template-columns: 3em 80px auto;
+  align-items: center;
+  gap: 12px;
+}
+.pg-space-bar {
+  height: 12px;
+  background: var(--md-sys-color-primary);
+}
+.pg-layout-frame {
+  box-sizing: border-box;
+  padding: 12px;
+  border: 1px dashed var(--md-sys-color-outline-variant);
+  border-radius: 16px;
+  background: var(--md-sys-color-surface-container-lowest);
+  margin-bottom: 12px;
+}
+.pg-plain-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* List segmentada: elementos simples con el relleno de ListTokens (16 a los lados, 10 arriba y
+   abajo). Con el puntero, las cuatro esquinas a 12 (Compose ItemHoveredContainerExpressiveShape). */
+.pg-segmented > li {
+  padding: 10px 16px;
+  background: var(--md-sys-color-surface-container);
+  color: var(--md-sys-color-on-surface);
+  transition: border-radius var(--md-sys-motion-spring-fast-spatial-duration)
+    var(--md-sys-motion-spring-fast-spatial-easing);
+}
+.pg-segmented > li:hover {
+  --mk-group-outer-radius: var(--md-sys-shape-corner-medium);
+  --mk-group-inner-radius: var(--md-sys-shape-corner-medium);
+}
+
+/* Botones conectados con <button> simples: redondo afuera (la mitad del alto, para que anime),
+   8 adentro, 4 al presionar y redondo al seleccionar (ConnectedButtonGroupSmallTokens). */
+.pg-connected > button {
+  --mk-group-outer-radius: 20px;
+  --mk-group-inner-radius: var(--md-sys-shape-corner-small);
+  overflow: hidden;
+  height: 40px;
+  padding: 0 16px;
+  border: none;
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+  font: inherit;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-radius var(--md-sys-motion-spring-fast-spatial-duration)
+    var(--md-sys-motion-spring-fast-spatial-easing);
+}
+.pg-connected > button:active {
+  --mk-group-inner-radius: var(--md-sys-shape-corner-extra-small);
+}
+.pg-connected > button[aria-pressed='true'] {
+  --mk-group-inner-radius: 20px;
+  background: var(--md-sys-color-secondary);
+  color: var(--md-sys-color-on-secondary);
+}
+
+/* Propuesta de ADR-0017 para Button (no está en button.css todavía): leer las esquinas de Group
+   con su propio radio como respaldo. --_height es la variable interna del Button; el futuro
+   ButtonGroup (ítem 25) hará esto dentro de la librería. */
+.pg-button-group > .mk-button {
+  --mk-group-outer-radius: calc(var(--_height) / 2);
+  --mk-group-inner-radius: var(--md-sys-shape-corner-small);
+  border-start-start-radius: var(--mk-group-corner-start-start, var(--_radius));
+  border-start-end-radius: var(--mk-group-corner-start-end, var(--_radius));
+  border-end-start-radius: var(--mk-group-corner-end-start, var(--_radius));
+  border-end-end-radius: var(--mk-group-corner-end-end, var(--_radius));
+}
+.pg-button-group > .mk-button:active {
+  --mk-group-inner-radius: var(--md-sys-shape-corner-extra-small);
+}
+.pg-button-group > .mk-button[aria-pressed='true'] {
+  --mk-group-inner-radius: calc(var(--_height) / 2);
+}

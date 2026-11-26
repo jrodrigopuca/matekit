@@ -380,3 +380,17 @@ Qué no trasladar:
   View Transitions más adelante.
 - Anclas con lanzamiento por velocidad en el divisor, y `BREAKPOINTS_V1` y las APIs obsoletas
   (`WindowWidthSizeClass`, `NavigationSuiteType.NavigationDrawer`).
+
+## Actualización (2026-11-25, ítem 13)
+
+- **Sí hay un nombre oficial para el espaciado**: `@material/web` publica
+  `labs/gb/styles/space/md-space-tokens.scss` (commit `026f39dbd2`, 2026-04-28) con
+  `--md-sys-space-0` … `--md-sys-space-900`, los mismos 18 pasos y la misma numeración que
+  `MeasurementTokens.kt` (como `calc(var(--md-sys-space-unit) * n)`, unidad 8px).
+  `labs/gb/styles/tailwind.scss` los mapea a `--spacing-s0` … `--spacing-s900` y fija
+  `--breakpoint-sm/md/lg/xl` en 600, 840, 1200 y 1600 (los cortes de ancho de Compose). matekit
+  usa ese nombre (ADR-0016) en lugar del `--mk-space-*` propuesto arriba.
+- **Sonda de disposición** (Chrome, Firefox y WebKit): el switcher con variable da el mismo
+  resultado en los tres; `@container (width < var(--t))` no es fiable (Chrome y WebKit lo
+  ignoran, Firefox lo aplica); `@property` con `syntax: '*'` e `inherits: false` corta la herencia
+  a los nietos y deja el respaldo de `var()`. Decisión en ADR-0017.

@@ -84,3 +84,37 @@ test('informa la línea correcta', () => {
   const css = '.a {\n  color: var(--x);\n  fill: #123456;\n}'
   assert.equal(lintCss(css)[0]?.line, 3)
 })
+
+test('espaciado (opción spacing): detecta longitudes literales en gap, padding y margin', () => {
+  const css = `
+    .a { gap: 8px; }
+    .b { padding: 0 16px; }
+    .c { margin-inline-start: 1.5rem; }
+    .d { padding-block: calc(var(--md-sys-space-200) - 1px); }
+    .e { row-gap: 4px; column-gap: 2px; }
+  `
+  assert.deepEqual(lintCss(css, { spacing: true }).map((p) => p.property), [
+    'gap',
+    'padding',
+    'margin-inline-start',
+    'padding-block',
+    'row-gap',
+    'column-gap',
+  ])
+  assert.match(lintCss(css, { spacing: true })[0]?.message ?? '', /--md-sys-space/)
+  // Sin la opción (archivos pendientes de migrar), el espaciado no se revisa.
+  assert.deepEqual(lintCss(css), [])
+})
+
+test('espaciado: deja pasar tokens, 0, auto, %, variables propias y la excepción justificada', () => {
+  const css = `
+    .a { gap: var(--md-sys-space-25); padding: var(--_padding); }
+    .b { margin: 0 auto; padding-inline: 0; }
+    .c { margin-block-start: calc(-1 * var(--md-sys-space-100)); }
+    .d { padding-inline-start: 10%; }
+    .e { --_gap: 8px; }
+    .f { padding: 3px; /* lint-css-allow: relleno del kit fuera de la escala */ }
+    .g { width: 200px; inset: 4px; }
+  `
+  assert.deepEqual(lintCss(css, { spacing: true }), [])
+})

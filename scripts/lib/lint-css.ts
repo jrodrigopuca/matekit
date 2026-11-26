@@ -1,5 +1,6 @@
 // Lint del CSS de los componentes: color, movimiento y tipografía tienen que salir de los
-// tokens (ADR-0005), no de valores escritos a mano. Sin dependencias: recorre las declaraciones
+// tokens (ADR-0005), no de valores escritos a mano. Con la opción `spacing` (ADR-0016), también
+// la separación y los rellenos: gap, padding y margin con --md-sys-space-* (o 0, auto, %). Sin dependencias: recorre las declaraciones
 // con expresiones regulares, que alcanza para el CSS plano de matekit.
 //
 // Para permitir una excepción justificada, terminar la declaración con un comentario
@@ -74,6 +75,11 @@ const COLOR_PROPERTY =
 const MOTION_PROPERTY = /^(transition|animation)(-(duration|delay|timing-function))?$/
 const TYPOGRAPHY_PROPERTY = /^(font|font-size|font-family|font-weight|line-height|letter-spacing)$/
 
+const SPACING_PROPERTY =
+  /^(gap|row-gap|column-gap|padding|margin)(-(top|right|bottom|left|block|inline)(-(start|end))?)?$/
+/** Una longitud escrita a mano distinta de 0 (2px, 1.5rem, 1em…); los % no son espaciado fijo. */
+const LITERAL_LENGTH = /(^|[^\w.-])(\d*\.?\d+)([a-z]+)\b/gi
+
 const LITERAL_COLOR = /#[0-9a-f]{3,8}\b|\b(rgba?|hsla?|hwb|lab|lch|oklab|oklch|color)\(/i
 const LITERAL_DURATION = /(^|[\s,(])(\d*\.?\d+)m?s\b/
 const LITERAL_EASING = /\b(cubic-bezier|steps|linear)\(|\b(ease|ease-in|ease-out|ease-in-out|step-start|step-end)\b/
@@ -111,7 +117,15 @@ function blankComments(css: string): { text: string; allowed: Set<number> } {
 
 const lineAt = (text: string, index: number) => text.slice(0, index).split('\n').length
 
-export function lintCss(css: string): LintProblem[] {
+export interface LintOptions {
+  /**
+   * Revisar el espaciado (gap, padding y margin con tokens --md-sys-space-*). El script lo
+   * activa en todos los archivos menos los de la lista de pendientes de migración (ADR-0016).
+   */
+  spacing?: boolean | undefined
+}
+
+export function lintCss(css: string, options: LintOptions = {}): LintProblem[] {
   const { text, allowed } = blankComments(css)
   const problems: LintProblem[] = []
   // Declaraciones: "propiedad: valor" terminadas en ; o } (los selectores terminan en {).
@@ -143,6 +157,11 @@ export function lintCss(css: string): LintProblem[] {
       const d = value.match(LITERAL_DURATION)
       if (d && Number(d[2]) !== 0) report('duración literal: usar un token --md-sys-motion-*')
       if (LITERAL_EASING.test(value)) report('curva literal: usar un token --md-sys-motion-*-easing')
+    }
+
+    if (options.spacing && SPACING_PROPERTY.test(property)) {
+      const lengths = [...value.matchAll(LITERAL_LENGTH)].filter((l) => Number(l[2]) !== 0)
+      if (lengths.length) report('espaciado literal: usar un token --md-sys-space-* (o 0, auto)')
     }
 
     if (TYPOGRAPHY_PROPERTY.test(property)) {

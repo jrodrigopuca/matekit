@@ -6,7 +6,9 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import type { ColorTokens, ShapeTokens, TypescaleTokens } from '../tokens/types.ts'
+import type { BreakpointTokens, ColorTokens, ShapeTokens, SpaceTokens, TypescaleTokens } from '../tokens/types.ts'
+import { SPACE } from '../src/tokens/space.ts'
+import { WINDOW_HEIGHT, WINDOW_WIDTH } from '../src/tokens/breakpoints.ts'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const json = <T>(name: string): T =>
@@ -16,6 +18,7 @@ const FILES = [
   'color.css',
   'typescale.css',
   'shape.css',
+  'space.css',
   'elevation.css',
   'state.css',
   'motion.css',
@@ -106,6 +109,38 @@ test('esquinas, elevación y estados coinciden con la fuente', () => {
   assert.equal(state['--md-sys-state-hover-state-layer-opacity'], '0.08')
   assert.equal(state['--md-sys-state-disabled-content-opacity'], '0.38')
   assert.equal(state['--md-sys-state-focus-indicator-thickness'], '3px')
+})
+
+// Los 18 valores de MeasurementTokens.kt (Compose, tokens v41.1.19, commit 76990c62ac), escritos
+// acá a mano a propósito: si alguien cambia tokens/space.json, esta prueba lo nota.
+const COMPOSE_SPACE: Record<string, number> = {
+  0: 0, 25: 2, 50: 4, 75: 6, 100: 8, 125: 10, 150: 12, 175: 14, 200: 16,
+  250: 20, 300: 24, 400: 32, 450: 36, 500: 40, 600: 48, 700: 56, 800: 64, 900: 72,
+}
+
+test('espaciado: los 18 pasos de Compose como --md-sys-space-<paso> en px, y SPACE igual', () => {
+  const src = json<SpaceTokens>('space.json').space
+  assert.deepEqual(src, COMPOSE_SPACE)
+  const d = find(blocks(css('space.css')), ':root')
+  assert.equal(Object.keys(d).length, 18)
+  for (const [step, v] of Object.entries(COMPOSE_SPACE)) {
+    assert.equal(d[`--md-sys-space-${step}`], v === 0 ? '0' : `${v}px`, `paso ${step}`)
+    // El paso es centésimas de 8.
+    assert.equal(v, (Number(step) / 100) * 8, `paso ${step} = ${step}/100 × 8`)
+  }
+  assert.deepEqual({ ...SPACE }, Object.fromEntries(Object.entries(COMPOSE_SPACE).map(([k, v]) => [k, v])))
+})
+
+test('cortes de ventana: los de WindowSizeClass.kt en el JSON y en las constantes de TypeScript', () => {
+  const b = json<BreakpointTokens>('breakpoints.json')
+  const width = { medium: 600, expanded: 840, large: 1200, extraLarge: 1600 }
+  const height = { medium: 480, expanded: 900 }
+  assert.deepEqual(b.width, width)
+  assert.deepEqual(b.height, height)
+  assert.deepEqual({ ...WINDOW_WIDTH }, width)
+  assert.deepEqual({ ...WINDOW_HEIGHT }, height)
+  // Ningún corte es una variable CSS (no servirían en @media ni en @container).
+  for (const f of FILES) assert.doesNotMatch(css(f), /--md-sys-(breakpoint|window)/, f)
 })
 
 test('index.css importa todos los archivos de tokens', () => {

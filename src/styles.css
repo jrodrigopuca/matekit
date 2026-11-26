@@ -13,6 +13,8 @@
 @import './atoms/Ripple/ripple.css';
 @import './atoms/Shape/shape.css';
 @import './atoms/Divider/divider.css';
+@import './atoms/Stack/stack.css';
+@import './atoms/Group/group.css';
 /* Latido de actividad de los indicadores indeterminados con movimiento reducido. */
 @import './internal/activity-pulse.css';
 @import './molecules/Button/button.css';

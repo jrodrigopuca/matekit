@@ -1,0 +1,111 @@
+/* Group: bloques conectados con separación mínima y forma según la posición (ADR-0017).
+
+   Fuentes (Jetpack Compose, compose/material3/material3/src/commonMain/kotlin/androidx/compose/
+   material3/, commit 76990c62ac del 2026-11-24 para los tokens):
+   - List segmentada: ListItemDefaults.segmentedShapes(index, count) da al primero las esquinas
+     de arriba de ListTokens.ContainerShape (CornerLarge, 16), al último las de abajo, a uno solo
+     las cuatro y al resto ItemContainerExpressiveShape (CornerExtraSmall, 4); separación
+     ListTokens.SegmentedGap = MeasurementTokens.Space25 (2). Coincide con el kit
+     (docs/research/05-medidas.md § List): son los valores por defecto de este grupo.
+   - Button groups conectados: ButtonGroup.kt (ButtonGroupDefaults.connected*ButtonShapes) y
+     tokens/ConnectedButtonGroupSmallTokens.kt: exteriores CornerFull, interiores
+     InnerCornerCornerSize = CornerValueSmall (8), presionado ExtraSmall (4), seleccionado 50 %;
+     separación BetweenSpace = Space25 (2). Esos valores los pone el uso con las variables.
+
+   Contrato (ADR-0017):
+   - Entradas, que el uso define en el grupo o en un hijo (también por estado):
+     --mk-group-gap, --mk-group-outer-radius y --mk-group-inner-radius.
+   - Salidas, que el grupo deja en cada hijo directo: --mk-group-corner-start-start,
+     -start-end, -end-start y -end-end, una por esquina lógica (como border-start-start-radius),
+     así que RTL sale solo. Se declaran en el hijo con var() de las entradas: se resuelven con los
+     valores del hijo, y un hijo que redefine --mk-group-inner-radius en su :active cambia sus
+     esquinas interiores.
+   - Las salidas están registradas sin herencia (@property, inherits: false, sin valor inicial):
+     un componente anidado más adentro (un botón dentro de una tarjeta del grupo) no las ve y usa
+     su propio radio, por el respaldo de var(). Sonda del 2026-11-25: igual en los tres motores.
+   - Un hijo sin radio propio recibe las esquinas de la regla de abajo (capa matekit.atoms,
+     especificidad 0). Un componente de matekit.components con su propio border-radius le gana:
+     para participar, lee las salidas (border-start-start-radius:
+     var(--mk-group-corner-start-start, <su radio>)).
+
+   Sin envoltura: con flex-wrap, el último de una línea quedaría con esquinas interiores en el
+   borde. A anchos chicos, los hijos se achican (min-inline-size: 0) en vez de desbordar el
+   grupo; si no entran, el uso elige la orientación vertical. */
+
+@property --mk-group-corner-start-start {
+  syntax: '*';
+  inherits: false;
+}
+@property --mk-group-corner-start-end {
+  syntax: '*';
+  inherits: false;
+}
+@property --mk-group-corner-end-start {
+  syntax: '*';
+  inherits: false;
+}
+@property --mk-group-corner-end-end {
+  syntax: '*';
+  inherits: false;
+}
+
+@layer matekit.atoms {
+  .mk-group {
+    display: flex;
+    flex-direction: row;
+    gap: var(--mk-group-gap, var(--md-sys-space-25));
+  }
+  .mk-group[data-orientation='vertical'] {
+    flex-direction: column;
+  }
+
+  /* Todos los hijos empiezan con las cuatro esquinas interiores (los del medio quedan así). */
+  .mk-group > * {
+    --mk-group-corner-start-start: var(--mk-group-inner-radius, var(--md-sys-shape-corner-extra-small));
+    --mk-group-corner-start-end: var(--mk-group-inner-radius, var(--md-sys-shape-corner-extra-small));
+    --mk-group-corner-end-start: var(--mk-group-inner-radius, var(--md-sys-shape-corner-extra-small));
+    --mk-group-corner-end-end: var(--mk-group-inner-radius, var(--md-sys-shape-corner-extra-small));
+  }
+
+  /* En fila: exteriores las del inicio del primero y las del final del último. */
+  .mk-group[data-orientation='horizontal'] > :first-child {
+    --mk-group-corner-start-start: var(--mk-group-outer-radius, var(--md-sys-shape-corner-large));
+    --mk-group-corner-end-start: var(--mk-group-outer-radius, var(--md-sys-shape-corner-large));
+  }
+  .mk-group[data-orientation='horizontal'] > :last-child {
+    --mk-group-corner-start-end: var(--mk-group-outer-radius, var(--md-sys-shape-corner-large));
+    --mk-group-corner-end-end: var(--mk-group-outer-radius, var(--md-sys-shape-corner-large));
+  }
+
+  /* En columna: exteriores las de arriba del primero y las de abajo del último. */
+  .mk-group[data-orientation='vertical'] > :first-child {
+    --mk-group-corner-start-start: var(--mk-group-outer-radius, var(--md-sys-shape-corner-large));
+    --mk-group-corner-start-end: var(--mk-group-outer-radius, var(--md-sys-shape-corner-large));
+  }
+  .mk-group[data-orientation='vertical'] > :last-child {
+    --mk-group-corner-end-start: var(--mk-group-outer-radius, var(--md-sys-shape-corner-large));
+    --mk-group-corner-end-end: var(--mk-group-outer-radius, var(--md-sys-shape-corner-large));
+  }
+
+  /* Un hijo sin radio propio toma las esquinas del grupo. Se achica en vez de desbordar. */
+  :where(.mk-group) > * {
+    min-inline-size: 0;
+    border-start-start-radius: var(--mk-group-corner-start-start);
+    border-start-end-radius: var(--mk-group-corner-start-end);
+    border-end-start-radius: var(--mk-group-corner-end-start);
+    border-end-end-radius: var(--mk-group-corner-end-end);
+  }
+
+  /* --- Alto contraste (forced-colors) ---
+     El navegador quita los fondos, y los bloques que se distinguían solo por el fondo quedarían
+     como un único texto continuo. Cada hijo lleva un contorno CanvasText de 1 px por dentro (no
+     cambia el tamaño y sigue el radio). Especificidad 0: un componente con su propio contorno de
+     alto contraste le gana. El hijo con foco visible queda sin él, para no tapar el anillo del
+     navegador. */
+  @media (forced-colors: active) {
+    :where(.mk-group) > :where(:not(:focus-visible)) {
+      outline: 1px solid CanvasText;
+      outline-offset: -1px;
+    }
+  }
+}

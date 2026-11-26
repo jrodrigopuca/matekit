@@ -78,3 +78,17 @@ export interface PaletteTokens {
   /** Paletas opcionales, generadas desde un color semilla. La clave es el valor de data-palette. */
   palettes: Record<string, PaletteOptions & { label: string }>
 }
+
+export interface SpaceTokens {
+  $source: string
+  /** Paso de la escala (centésimas de 8: "25" = 2, "100" = 8) → dp. */
+  space: Record<string, number>
+}
+
+export interface BreakpointTokens {
+  $source: string
+  /** Límite inferior de cada clase de ancho de ventana, en dp. */
+  width: Record<'medium' | 'expanded' | 'large' | 'extraLarge', number>
+  /** Límite inferior de cada clase de alto de ventana, en dp. */
+  height: Record<'medium' | 'expanded', number>
+}

@@ -1,0 +1,137 @@
+/* Stack: flex en columna o en fila con la separación de la escala de espaciado (ADR-0017).
+
+   Fuentes: Compose Row, Column y FlowRow (foundation-layout, Arrangement.kt, Row.kt,
+   FlowLayout.kt) y la escala de MeasurementTokens.kt (ADR-0016); investigación en
+   docs/research/11-disposicion-adaptable-compose.md § 5.
+
+   Los valores por defecto son los de CSS (columna aparte): sin separación, align-items: stretch
+   y sin envoltura. Así quien conoce flex lee un Stack sin sorpresas, y cualquier propiedad se
+   cambia con la className del uso (fuera de @layer gana siempre).
+
+   switchAt (data-switch): patrón "switcher" de Heydon Pickering (Every Layout). Fila con
+   envoltura y, en cada hijo, flex-basis: calc((umbral - 100%) * 999). Con el Stack más ancho que
+   el umbral, la base da negativa (se toma 0) y los hijos se reparten la fila; más angosto, da
+   enorme y cada hijo ocupa su propia línea. Acepta una variable (las condiciones de @container
+   no: la sonda del 2026-11-25 dio que Chrome y WebKit ignoran @container (width < var(--t)) y
+   Firefox lo aplica) y mide el propio Stack, sin el contenedor extra que necesitaría una
+   container query. */
+
+@layer matekit.atoms {
+  .mk-stack {
+    display: flex;
+    flex-direction: column;
+    gap: var(--_gap, 0);
+  }
+
+  .mk-stack[data-direction='row'] {
+    flex-direction: row;
+  }
+
+  .mk-stack[data-wrap] {
+    flex-wrap: wrap;
+  }
+
+  /* --- Separación: un paso de la escala por valor de gap --- */
+  .mk-stack[data-gap='0'] {
+    --_gap: var(--md-sys-space-0);
+  }
+  .mk-stack[data-gap='25'] {
+    --_gap: var(--md-sys-space-25);
+  }
+  .mk-stack[data-gap='50'] {
+    --_gap: var(--md-sys-space-50);
+  }
+  .mk-stack[data-gap='75'] {
+    --_gap: var(--md-sys-space-75);
+  }
+  .mk-stack[data-gap='100'] {
+    --_gap: var(--md-sys-space-100);
+  }
+  .mk-stack[data-gap='125'] {
+    --_gap: var(--md-sys-space-125);
+  }
+  .mk-stack[data-gap='150'] {
+    --_gap: var(--md-sys-space-150);
+  }
+  .mk-stack[data-gap='175'] {
+    --_gap: var(--md-sys-space-175);
+  }
+  .mk-stack[data-gap='200'] {
+    --_gap: var(--md-sys-space-200);
+  }
+  .mk-stack[data-gap='250'] {
+    --_gap: var(--md-sys-space-250);
+  }
+  .mk-stack[data-gap='300'] {
+    --_gap: var(--md-sys-space-300);
+  }
+  .mk-stack[data-gap='400'] {
+    --_gap: var(--md-sys-space-400);
+  }
+  .mk-stack[data-gap='450'] {
+    --_gap: var(--md-sys-space-450);
+  }
+  .mk-stack[data-gap='500'] {
+    --_gap: var(--md-sys-space-500);
+  }
+  .mk-stack[data-gap='600'] {
+    --_gap: var(--md-sys-space-600);
+  }
+  .mk-stack[data-gap='700'] {
+    --_gap: var(--md-sys-space-700);
+  }
+  .mk-stack[data-gap='800'] {
+    --_gap: var(--md-sys-space-800);
+  }
+  .mk-stack[data-gap='900'] {
+    --_gap: var(--md-sys-space-900);
+  }
+
+  /* --- Alineación y reparto --- */
+  .mk-stack[data-align='start'] {
+    align-items: start;
+  }
+  .mk-stack[data-align='center'] {
+    align-items: center;
+  }
+  .mk-stack[data-align='end'] {
+    align-items: end;
+  }
+  .mk-stack[data-align='stretch'] {
+    align-items: stretch;
+  }
+  .mk-stack[data-align='baseline'] {
+    align-items: baseline;
+  }
+
+  .mk-stack[data-justify='start'] {
+    justify-content: start;
+  }
+  .mk-stack[data-justify='center'] {
+    justify-content: center;
+  }
+  .mk-stack[data-justify='end'] {
+    justify-content: end;
+  }
+  .mk-stack[data-justify='between'] {
+    justify-content: space-between;
+  }
+  .mk-stack[data-justify='around'] {
+    justify-content: space-around;
+  }
+  .mk-stack[data-justify='evenly'] {
+    justify-content: space-evenly;
+  }
+
+  /* --- Dirección según el espacio disponible (switcher) --- */
+  .mk-stack[data-switch] {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  /* :where() deja la especificidad en 0: el CSS propio de un hijo (o de un componente, en
+     matekit.components) puede cambiar su flex. */
+  :where(.mk-stack[data-switch]) > * {
+    flex-grow: 1;
+    flex-basis: calc((var(--mk-stack-switch-at) - 100%) * 999);
+  }
+}

@@ -18,10 +18,10 @@ Antes de decidir algo que cueste revertir, leer `docs/adr/README.md` y aplicar l
 |---|---|
 | `pnpm dev` | Playground en `http://localhost:5175` (usa `src/` directamente) |
 | `pnpm typecheck` | Verificación de tipos |
-| `pnpm lint:css` | Revisa que el CSS de componentes use tokens para color, movimiento y tipografía |
+| `pnpm lint:css` | Revisa que el CSS de componentes use tokens para color, movimiento, tipografía y espaciado (este último salvo en los archivos de `SPACING_PENDING`, ADR-0016) |
 | `pnpm test` | Pruebas de tokens (Node) y de componentes (Vitest en Chrome) |
 | `pnpm test:browser` | Solo las pruebas de componentes, en el Chrome del sistema; `MK_BROWSERS=firefox` o `webkit` (separados por coma) los corre en esos motores, que el CI prueba en cada push |
-| `pnpm tokens` | Regenera `src/tokens/*.css` y `src/tokens/palettes/*.css` desde `tokens/*.json` (paletas: ADR-0008) |
+| `pnpm tokens` | Regenera `src/tokens/*.css`, `src/tokens/palettes/*.css` y `src/tokens/space.ts` y `breakpoints.ts` desde `tokens/*.json` (paletas: ADR-0008; espaciado y cortes de ventana: ADR-0016) |
 | `pnpm icons` / `pnpm icons:fetch` | Regenera los iconos (ver ADR-0006) |
 | `pnpm shapes` | Regenera las 35 formas decorativas (`shapes/material-shapes.json`, `src/atoms/Shape/shapes.ts` y la hoja opcional `src/shapes.css`), los datos del indicador de carga (`src/molecules/LoadingIndicator/loading-indicator-data.ts`) y los contornos del progreso circular ondulado (`src/molecules/ProgressIndicator/circular-wavy-data.ts`) con la portación de `scripts/lib/shapes/` (ADR-0011) |
 
@@ -36,8 +36,9 @@ scripts/lib/shapes/  portación a TypeScript de androidx.graphics.shapes (con Mo
                  CircularWavyProgressModifiers.kt (Apache 2.0, con el aviso y el commit de
                  origen en cada archivo; ADR-0011); mismas reglas que scripts/lib/
 shapes/          contornos SVG generados de las 35 formas decorativas (pnpm shapes)
-src/tokens/      CSS generado: no editar a mano
-src/atoms/       primitivas: StateLayer, FocusRing, Ripple, Icon, Shape
+src/tokens/      CSS generado (y space.ts y breakpoints.ts para TypeScript): no editar a mano
+src/atoms/       primitivas: StateLayer, FocusRing, Ripple, Icon, Shape, Divider, y las de
+                 disposición Stack y Group (ADR-0017)
 src/molecules/   controles y piezas con significado propio: Button, Checkbox, Badge,
                  LoadingIndicator, …
 src/organisms/   combinan controles: Dialog, Menu, NavigationBar, …
@@ -49,7 +50,8 @@ src/internal/    ayudas compartidas entre componentes, no exportadas (interactiv
                  React 19, sin hooks: memorizarla al llamarla, como Dialog y Menu;
                  accessible-name.ts: AccessibleNameProps, el nombre obligatorio por label,
                  aria-labelledby o aria-label de los indicadores; activity-pulse.css: el latido
-                 de los indicadores indeterminados con movimiento reducido)
+                 de los indicadores indeterminados con movimiento reducido; layout-element.tsx:
+                 el `<div>` o el elemento de `render` de Stack y Group)
 src/styles.css   hoja única: importa tokens, átomos y componentes
 playground/      páginas de prueba manual, una por componente
 docs/research/   datos extraídos del kit de Figma y de Jetpack Compose
@@ -90,10 +92,13 @@ exporta desde el `index.ts` de su capa y su CSS se importa en `src/styles.css`.
   Otro par (por ejemplo `tertiary` sobre `tertiary-container`) puede cumplir en el nivel
   estándar y fallar en el medio o el alto. `src/test/contrast.test.tsx` mide cada componente
   en todas las paletas, niveles y temas.
-- Solo tokens `--md-sys-*` para color, tipografía, forma, elevación, estados y movimiento;
-  nada de colores ni duraciones sueltos. `pnpm lint:css` lo verifica (también en CI); una
+- Solo tokens `--md-sys-*` para color, tipografía, forma, elevación, estados, movimiento y
+  espaciado (`gap`, `padding` y `margin` con `--md-sys-space-*`, ADR-0016); nada de colores,
+  duraciones ni separaciones sueltos. `pnpm lint:css` lo verifica (también en CI); una
   excepción justificada lleva `/* lint-css-allow: motivo */` al final de la declaración. Movimiento: resortes
   `--md-sys-motion-spring-{fast,default,slow}-{spatial,effects}-{duration,easing}`.
+- **Dentro de `Group`** (bloques conectados, ADR-0017): un componente con radio propio lee
+  `--mk-group-corner-{start-start,start-end,end-start,end-end}` con su radio como respaldo.
 - **Forma:** radios con `--md-sys-shape-corner-*`; las variantes parciales de Compose
   (`CornerExtraLargeTop`, `CornerLargeEnd`) se arman combinando radios por esquina, sin tokens
   nuevos. Un radio que anima (cambio de forma al presionar o seleccionar) **no usa

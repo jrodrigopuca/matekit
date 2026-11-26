@@ -1,0 +1,23 @@
+/* Generado por scripts/build-tokens.ts desde tokens/. No editar a mano.
+   Fuente: Jetpack Compose, compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/MeasurementTokens.kt (tokens de Material 3 v41.1.19, commit 76990c62ac del 2026-11-24). Nombre de las variables: @material/web, labs/gb/styles/space/md-space-tokens.scss (commit 026f39dbd2 del 2026-04-28), --md-sys-space-<paso>. Valores en dp (1 dp = 1 px CSS); el paso es centésimas de 8 (25 = 2, 100 = 8). ADR-0016. */
+
+:root {
+  --md-sys-space-0: 0;
+  --md-sys-space-25: 2px;
+  --md-sys-space-50: 4px;
+  --md-sys-space-75: 6px;
+  --md-sys-space-100: 8px;
+  --md-sys-space-125: 10px;
+  --md-sys-space-150: 12px;
+  --md-sys-space-175: 14px;
+  --md-sys-space-200: 16px;
+  --md-sys-space-250: 20px;
+  --md-sys-space-300: 24px;
+  --md-sys-space-400: 32px;
+  --md-sys-space-450: 36px;
+  --md-sys-space-500: 40px;
+  --md-sys-space-600: 48px;
+  --md-sys-space-700: 56px;
+  --md-sys-space-800: 64px;
+  --md-sys-space-900: 72px;
+}

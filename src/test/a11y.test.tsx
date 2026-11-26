@@ -71,6 +71,8 @@ import {
   CardMedia,
   CardPrimaryAction,
   CardSubhead,
+  Stack,
+  Group,
 } from '../index.ts'
 import { a11yViolations } from './a11y.ts'
 import { render } from './render.tsx'
@@ -389,6 +391,32 @@ const GALLERIES: Record<string, ReactNode> = {
           <p>No disponible.</p>
         </CardContent>
       </Card>
+    </>
+  ),
+  // Stack y Group no agregan roles: la semántica la da el elemento de render (lista) o el rol y el
+  // nombre que pasa el uso (grupo de botones). Bloques con fondo y texto on-surface.
+  Layout: (
+    <>
+      <Stack gap={200}>
+        <Stack render={<ul aria-label="Pasos" />} direction="row" gap={100} wrap>
+          <li>Uno</li>
+          <li>Dos</li>
+        </Stack>
+        <Stack switchAt="20rem" gap={100} render={<nav aria-label="Secciones" />}>
+          <a href="#a">Inicio</a>
+          <a href="#b">Ayuda</a>
+        </Stack>
+        <Group orientation="vertical" render={<ul aria-label="Ajustes" />}>
+          {['Wi-Fi', 'Bluetooth', 'Pantalla'].map((t) => (
+            <li key={t} style={{ padding: 16, background: 'var(--md-sys-color-surface-container)', color: 'var(--md-sys-color-on-surface)' }}>{t}</li>
+          ))}
+        </Group>
+        <Group role="group" aria-label="Vista del calendario">
+          <Button variant="tonal" selected>Día</Button>
+          <Button variant="tonal" selected={false}>Semana</Button>
+          <Button variant="tonal" selected={false}>Mes</Button>
+        </Group>
+      </Stack>
     </>
   ),
 }

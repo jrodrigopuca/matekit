@@ -51,6 +51,7 @@ import {
   CardContent,
   CardHeadline,
   CardPrimaryAction,
+  Group,
 } from '../index.ts'
 import { render, style } from './render.tsx'
 import { near, pixelsOf } from './pixels.ts'
@@ -707,5 +708,60 @@ describe('Card', () => {
       expect(style(q(c, `.${v} .mk-card-headline`)).color, v).toBe(systemColor('GrayText'))
       expect(style(q(c, `.${v} p`)).color, v).toBe(systemColor('GrayText'))
     }
+  })
+})
+
+describe('Group', () => {
+  // El navegador quita los fondos; los bloques que se distinguían solo por el fondo llevan un
+  // contorno CanvasText de 1 px por dentro (definido en group.css: vale también en WebKit).
+  test('cada bloque lleva un contorno CanvasText de 1 px por dentro, que sigue el radio y no cambia el tamaño', async () => {
+    const c = await render(
+      <div style={{ width: 200 }}>
+        <Group orientation="vertical">
+          {['a', 'b', 'c'].map((t) => (
+            <div key={t} className={t} style={{ padding: 8, background: 'var(--md-sys-color-surface-container)' }}>{t}</div>
+          ))}
+        </Group>
+      </div>,
+    )
+    const before = q(c, '.a').getBoundingClientRect().height
+    for (const sel of ['.a', '.b', '.c']) {
+      const s = style(q(c, sel))
+      expect(s.outlineStyle, sel).toBe('solid')
+      expect(s.outlineWidth, sel).toBe('1px')
+      expect(s.outlineOffset, sel).toBe('-1px')
+      expect(s.outlineColor, sel).toBe(systemColor('CanvasText'))
+    }
+    expect(style(q(c, '.a')).borderTopLeftRadius).toBe('16px')
+    expect(q(c, '.a').getBoundingClientRect().height).toBe(before)
+  })
+
+  test('un componente con su propio contorno de alto contraste lo conserva (Button: ButtonText)', async () => {
+    const c = await render(
+      <Group role="group" aria-label="g">
+        <Button className="b">Uno</Button>
+        <Button className="b2">Dos</Button>
+      </Group>,
+    )
+    expect(style(q(c, '.b')).outlineColor).toBe(systemColor('ButtonText'))
+  })
+
+  // El anillo del navegador es outline: auto en Chrome y Firefox (comprobado el 2026-11-25), y en
+  // alto contraste su color también puede ser negro: se compara el estilo y el desplazamiento, no
+  // el color. En WebKit de macOS, Tab no llega al botón (ajuste del sistema, ver CLAUDE.md).
+  test('el bloque con foco visible queda sin el contorno del grupo (no tapa el anillo del navegador)', async () => {
+    const c = await render(
+      <Group>
+        <button type="button" className="x">Uno</button>
+        <button type="button" className="y">Dos</button>
+      </Group>,
+    )
+    await userEvent.tab()
+    expect(document.activeElement).toBe(q(c, '.x'))
+    const x = style(q(c, '.x'))
+    expect(x.outlineStyle).toBe('auto')
+    expect(x.outlineOffset).toBe('0px')
+    expect(style(q(c, '.y')).outlineStyle).toBe('solid')
+    expect(style(q(c, '.y')).outlineColor).toBe(systemColor('CanvasText'))
   })
 })

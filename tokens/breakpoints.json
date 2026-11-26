@@ -1,0 +1,13 @@
+{
+  "$source": "Jetpack Compose, window/window-core/src/commonMain/kotlin/androidx/window/core/layout/WindowSizeClass.kt (commit 5c7b947a5b del 2025-07-08): WIDTH_DP_MEDIUM_LOWER_BOUND, WIDTH_DP_EXPANDED_LOWER_BOUND, WIDTH_DP_LARGE_LOWER_BOUND, WIDTH_DP_EXTRA_LARGE_LOWER_BOUND, HEIGHT_DP_MEDIUM_LOWER_BOUND y HEIGHT_DP_EXPANDED_LOWER_BOUND (BREAKPOINTS_V2). Coinciden con los --breakpoint-* de @material/web, labs/gb/styles/tailwind.scss. Límite inferior de cada clase en dp (1 dp = 1 px CSS); compact es lo que queda debajo de medium. Solo datos: las condiciones de @media y @container no aceptan var(). ADR-0016.",
+  "width": {
+    "medium": 600,
+    "expanded": 840,
+    "large": 1200,
+    "extraLarge": 1600
+  },
+  "height": {
+    "medium": 480,
+    "expanded": 900
+  }
+}
