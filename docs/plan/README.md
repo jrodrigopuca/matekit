@@ -396,6 +396,15 @@ directamente, y `NavigationSuite` es una opción más, no un reemplazo (decidido
   rail tienen distinto DOM, así que evaluar si alcanza con renderizar una estructura cuyo CSS
   cambia de presentación, o si hace falta elegir en el cliente (y cómo evitar el salto al
   hidratar).
+- **Variante modal del NavigationRail** (agregado el 2026-11-25, encontrado al rehacer el
+  playground): el rail expandido sobre el contenido, desde el borde de inicio, de alto completo,
+  con scrim y foco atrapado, que en Expressive reemplaza al navigation drawer (Compose
+  `ModalWideNavigationRail` o el nombre vigente; verificar). Es lo que corresponde en pantallas
+  chicas cuando hay más destinos de los que entran en una barra. Relacionado con el side sheet de
+  Sheets (20): evaluar si comparten base (`<dialog>` como el Dialog).
+- **Al terminar, reemplazar en el playground** el Dialog centrado que hoy hace de menú de
+  páginas en pantallas chicas (`playground/PageNav.tsx`) por esta variante modal (decidido con el
+  autor el 2026-11-25: el Dialog queda hasta entonces).
 Riesgo medio.
 
 **24. Scaffold de paneles** (organismo, universal; agregado el 2026-11-25). Paneles de lista y

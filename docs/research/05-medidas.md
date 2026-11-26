@@ -502,6 +502,35 @@ State Enabled, Hovered, Focused, Pressed, Dragged, Disabled; Selected), `List it
   `On Surface Variant`); expandido, el elemento con fondo `Surface` y el botón en
   `Surface Container`; Draggable; y Swipe (acciones que aparecen al deslizar).
 
+## Chips
+
+Leído del kit el 2026-11-25 (página Chips; conjuntos `Assistive chip` 53923:28089,
+`Filter chip` 53923:28270, `Input chip` 53923:27888, `Suggestion chip` 53923:28679 y
+`Chip groups` 57376:5501). Variantes: Style Outlined o Elevated (assist, filter, suggestion),
+State Enabled, Hovered, Focused, Pressed, Dragged, Disabled, Selected (filter, input y
+suggestion) y la configuración de iconos.
+
+- Alto 32, radio 8; el input chip con avatar es redondo (radio completo).
+- Rellenos (arriba, final, abajo, inicio): con icono al inicio 6, 16, 6, 8; solo texto 6, 16,
+  6, 16; con icono al final (filter) 6, 8, 6, 16; input solo texto con cerrar 6, 8, 6, 12; input
+  con icono y cerrar 6, 8, 6, 8; input con avatar 4, 8, 4, 4. Separación 8 entre partes.
+- Iconos de 18 (avatar de 24). Texto en Label Large.
+- Outlined: borde 1 interior `Outline Variant`, sin fondo (con hover o foco, fondo `Surface`).
+  Elevated: `Surface Container Low` y elevación 1.
+- Colores del texto: assist `On Surface`; filter, input y suggestion `On Surface Variant`.
+  Icono al inicio `Primary`; icono al final y cerrar `On Surface Variant`.
+- Seleccionado (filter, input, suggestion): fondo `Secondary Container`, sin borde; texto, icono
+  de check (filter) y cerrar en `On Secondary Container`. En el filter el icono de inicio pasa a
+  un check de 18; en el input con avatar, el avatar pasa a un check sobre
+  `On Secondary Container`. En el suggestion seleccionado el icono de inicio sigue en `Primary`.
+- Estados (capa `On Surface Variant`; seleccionado, `On Secondary Container`): hover 8 % (el
+  filter seleccionado además sube a elevación 1), foco 10 %, presionado 10 %; arrastrado capa
+  `On Surface` 16 % y elevación 4.
+- Deshabilitado: borde `On Surface` al 10 % (outlined) o fondo `On Surface Variant` al 10 %
+  (elevated y seleccionado); icono y texto `On Surface` al 38 %.
+- Grupos: una fila con desplazamiento horizontal (relleno 8 arriba y abajo, separación 8) o
+  varias filas con envoltura (separación 8 entre chips y 16 entre filas, en el kit).
+
 ## Diferencias con la especificación a revisar
 
 - El indicador con foco del campo de texto mide 3 en el kit. Confirmar en m3.material.io.

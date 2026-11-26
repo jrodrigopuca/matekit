@@ -23,7 +23,7 @@ Los identificadores sirven para volver a consultar cada página con el conector 
 | Cards | 55141:14171 | sí |
 | Carousel | 55141:14172 | no |
 | Checkboxes | 55141:14173 | sí |
-| Chips | 55141:14174 | no |
+| Chips | 55141:14174 | sí |
 | Date & time pickers | 55141:14175 | no |
 | Dialogs | 55141:14176 | sí |
 | Dividers | 55141:14177 | sí |
