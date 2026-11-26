@@ -232,10 +232,33 @@ describe('Group: variables del uso y contrato con los hijos', () => {
   })
 })
 
+// Bloque que maneja su propio texto largo, como los componentes reales (Button recorta con puntos
+// suspensivos): según el contrato de Group (ADR-0017), achicar a los hijos es del grupo y qué hacer
+// con el contenido que ya no entra es del hijo. Con el Block de arriba (texto que corta línea sin
+// recortarse), una palabra que no entra en el bloque achicado desborda y suma ancho desplazable al
+// grupo según la fuente: pasaba en macOS y fallaba en el CI de Linux (fuentes más anchas; 202 y
+// 206 px contra 200), y en macOS falla igual a 150 px (comprobado el 2026-11-26).
+const TruncatedBlock = ({ label }: { label: string }) => (
+  <div
+    className="block"
+    style={{
+      padding: 8,
+      background: 'var(--md-sys-color-surface-container)',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+    }}
+  >
+    {label}
+  </div>
+)
+
 describe('Group: anchos chicos', () => {
-  test('horizontal a 200 px con textos largos: los bloques se achican y el grupo no desborda', async () => {
+  // Con el Block de texto que corta línea, su ancho mínimo automático es la palabra más larga: sin
+  // el min-inline-size: 0 del grupo, los tres no entrarían. Esto no depende de la fuente.
+  test.each([200, 120])('horizontal a %i px: el grupo achica a los hijos y ninguno se sale', async (width) => {
     const c = await render(
-      <div className="box" style={{ width: 200 }}>
+      <div className="box" style={{ width }}>
         <Group>
           <Block label="Primera opción larga" />
           <Block label="Segunda opción larga" />
@@ -247,7 +270,20 @@ describe('Group: anchos chicos', () => {
     const g = q(c, '.mk-group')
     expect(rect(g).width).toBeLessThanOrEqual(box.width + 0.01)
     for (const b of c.querySelectorAll('.block')) expect(rect(b).right).toBeLessThanOrEqual(box.right + 0.01)
-    expect(g.scrollWidth).toBeLessThanOrEqual(g.clientWidth)
     expect(style(g).flexWrap).toBe('nowrap')
+  })
+
+  test.each([200, 120])('horizontal a %i px con hijos que recortan su texto: sin ancho desplazable', async (width) => {
+    const c = await render(
+      <div className="box" style={{ width }}>
+        <Group>
+          <TruncatedBlock label="Primera opción larga" />
+          <TruncatedBlock label="Segunda opción larga" />
+          <TruncatedBlock label="Tercera opción larga" />
+        </Group>
+      </div>,
+    )
+    const g = q(c, '.mk-group')
+    expect(g.scrollWidth).toBeLessThanOrEqual(g.clientWidth)
   })
 })
