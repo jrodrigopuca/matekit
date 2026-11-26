@@ -1,6 +1,6 @@
 // Módulo interno universal (ADR-0003): sin estado, efectos, contexto ni eventos. No se exporta
-// desde src/index.ts. Elige el elemento de las piezas de disposición, Stack y Group (ADR-0017):
-// un <div> o el elemento de `render` (la misma forma que ADR-0010 para los destinos, pero sin
+// desde src/index.ts. Elige el elemento de las piezas de disposición, Stack y Group (ADR-0017),
+// y de TopAppBar (ADR-0024, con <header> en lugar de <div>): un <div> o el elemento de `render` (la misma forma que ADR-0010 para los destinos, pero sin
 // enlaces ni botones: acá `render` sirve para dar semántica, como <ul>, <nav> o <fieldset>).
 
 import {
@@ -44,6 +44,7 @@ export interface LayoutElementProps extends HTMLAttributes<HTMLElement> {
  * @param style estilo del componente (ya combinado con el `style` del uso), o undefined.
  * @param props el resto de las props (incluidas `render` y `ref`) y los atributos `data-*` que
  *   agregue el componente.
+ * @param tag el elemento sin `render`: `div` (Stack y Group) o `header` (TopAppBar).
  */
 export function layoutElement(
   name: string,
@@ -51,10 +52,11 @@ export function layoutElement(
   style: CSSProperties | undefined,
   props: Omit<LayoutElementProps, 'className' | 'style'> & Record<`data-${string}`, string | undefined>,
   children: ReactNode,
+  tag: 'div' | 'header' = 'div',
 ): ReactElement {
   const { render, ...rest } = props
   if (render === undefined) {
-    return createElement('div', { ...rest, className, style }, children)
+    return createElement(tag, { ...rest, className, style }, children)
   }
   if (!isValidElement(render)) {
     throw new Error(`${name} espera en \`render\` un elemento, por ejemplo render={<ul />}.`)

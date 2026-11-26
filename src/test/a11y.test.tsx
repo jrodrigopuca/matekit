@@ -109,6 +109,12 @@ import {
   TabNav,
   TabPanel,
   Tabs,
+  TopAppBar,
+  TopAppBarActions,
+  TopAppBarLeading,
+  TopAppBarSubtitle,
+  TopAppBarTitle,
+  ArrowBackIcon,
 } from '../index.ts'
 import { a11yViolations } from './a11y.ts'
 import { render } from './render.tsx'
@@ -542,6 +548,29 @@ const GALLERIES: Record<string, ReactNode> = {
         <TabLink href="#perfil" active>Perfil</TabLink>
         <TabLink href="#pagos">Pagos</TabLink>
       </TabNav>
+    </>
+  ),
+  // TopAppBar: small con inicio, subtítulo y acciones; centrado; medium y large con subtítulo
+  // (sus copias para la barra colapsada están ocultas para la accesibilidad); small con imagen.
+  // Dentro de <main> no son regiones banner (la galería renderiza varias).
+  TopAppBar: (
+    <>
+      {(['sm', 'md', 'lg'] as const).map((size) => (
+        <TopAppBar key={size} size={size} centered={size === 'sm'} scrollBehavior="none">
+          <TopAppBarLeading><IconButton label="Volver"><ArrowBackIcon /></IconButton></TopAppBarLeading>
+          <TopAppBarTitle level={2}>{`Bandeja ${size}`}</TopAppBarTitle>
+          <TopAppBarSubtitle>3 sin leer</TopAppBarSubtitle>
+          <TopAppBarActions>
+            <IconButton label="Buscar"><SearchIcon /></IconButton>
+            <IconButton label="Más opciones"><MoreVertIcon /></IconButton>
+          </TopAppBarActions>
+        </TopAppBar>
+      ))}
+      <TopAppBar>
+        <TopAppBarTitle level={2}>
+          <svg viewBox="0 0 120 40" role="img" aria-label="Logo"><rect width="120" height="40" rx="20" /></svg>
+        </TopAppBarTitle>
+      </TopAppBar>
     </>
   ),
   // Stack y Group no agregan roles: la semántica la da el elemento de render (lista) o el rol y el

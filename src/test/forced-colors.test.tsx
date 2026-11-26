@@ -81,6 +81,10 @@ import {
   TabList,
   TabNav,
   Tabs,
+  TopAppBar,
+  TopAppBarActions,
+  TopAppBarLeading,
+  TopAppBarTitle,
 } from '../index.ts'
 import { render, style } from './render.tsx'
 import { near, pixelsOf } from './pixels.ts'
@@ -1030,5 +1034,35 @@ describe('Tabs', () => {
     expect(style(q(c, '.on .mk-tab-indicator')).backgroundColor).toBe(systemColor('Highlight'))
     expect(style(q(c, '.on .mk-tab-label')).color).toBe(systemColor('Highlight'))
     if (autoForced) expect(style(q(c, '.off .mk-tab-label')).color).toBe(systemColor('LinkText'))
+  })
+})
+
+describe('TopAppBar', () => {
+  test('borde inferior CanvasText (el fondo forzado borra el cambio de color al desplazar) y fondo Canvas opaco, también en la banda', async () => {
+    const c = await render(
+      <div className="scroller" style={{ width: 360, height: 300, overflow: 'auto' }}>
+        <TopAppBar size="md">
+          <TopAppBarLeading><IconButton label="Volver"><HomeIcon /></IconButton></TopAppBarLeading>
+          <TopAppBarTitle>Bandeja</TopAppBarTitle>
+          <TopAppBarActions><IconButton label="Favorito"><StarIcon /></IconButton></TopAppBarActions>
+        </TopAppBar>
+        <div style={{ height: 2000 }} />
+      </div>,
+    )
+    const header = q(c, '.mk-top-app-bar')
+    for (const top of [0, 500]) {
+      q(c, '.scroller').scrollTop = top
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))
+      const line = getComputedStyle(header, '::after')
+      expect(line.borderBottomStyle, `desplazado ${top}`).toBe('solid')
+      expect(line.borderBottomWidth).toBe('1px')
+      expect(line.borderBottomColor).toBe(systemColor('CanvasText'))
+      // Sin la animación del color: el fondo es Canvas opaco y la banda (::before) lo hereda, así
+      // el título que se colapsa no se ve a través de la fila de iconos.
+      expect(style(header).animationName).toBe('none')
+      expect(style(header).backgroundColor).toBe(systemColor('Canvas'))
+      expect(getComputedStyle(header, '::before').backgroundColor).toBe(systemColor('Canvas'))
+    }
+    if (autoForced) expect(style(q(c, '.mk-top-app-bar-title')).color).toBe(systemColor('CanvasText'))
   })
 })

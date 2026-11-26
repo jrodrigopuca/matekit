@@ -37,6 +37,7 @@ import { TabsPage } from './pages/TabsPage.tsx'
 import { TextFieldPage } from './pages/TextFieldPage.tsx'
 import { SnackbarPage } from './pages/SnackbarPage.tsx'
 import { TooltipPage } from './pages/TooltipPage.tsx'
+import { TopAppBarPage } from './pages/TopAppBarPage.tsx'
 import { TokensPage } from './pages/TokensPage.tsx'
 
 type Theme = 'system' | 'light' | 'dark'
@@ -93,6 +94,7 @@ const PAGES = {
   snackbar: { label: 'Snackbar', group: 'organisms', Page: SnackbarPage },
   tabs: { label: 'Tabs', group: 'organisms', Page: TabsPage },
   tooltip: { label: 'Tooltip', group: 'organisms', Page: TooltipPage },
+  'top-app-bar': { label: 'TopAppBar', group: 'organisms', Page: TopAppBarPage },
   layout: { label: 'Disposición', group: 'foundations', Page: LayoutPage },
   tokens: { label: 'Tokens', group: 'foundations', Page: TokensPage },
   examples: { label: 'Ejemplos', group: 'examples', Page: ExamplesPage },

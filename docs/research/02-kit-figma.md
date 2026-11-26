@@ -17,7 +17,7 @@ Los identificadores sirven para volver a consultar cada página con el conector 
 | Shape | 58548:7093 | sí |
 | Styles | 49823:12141 | sí |
 | Utilities | 55594:2484 | no |
-| App bars | 55141:14169 | no |
+| App bars | 55141:14169 | sí |
 | Badges | 55141:14167 | no |
 | Buttons | 55141:14168 | sí |
 | Cards | 55141:14171 | sí |

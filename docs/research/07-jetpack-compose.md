@@ -937,6 +937,60 @@ Revisado el 2026-11-26 para el ítem 18 (ADR-0023). Archivos en
   activación automática por defecto (APG, con paneles que se muestran al instante) y centra como
   Compose.
 
+## Top app bar
+
+Revisado el 2026-11-26 para el ítem 19 (ADR-0024). Archivos en
+`compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/`:
+`tokens/AppBarTokens.kt`, `tokens/AppBarSmallTokens.kt`, `tokens/AppBarMediumFlexibleTokens.kt`,
+`tokens/AppBarLargeFlexibleTokens.kt`, `tokens/AppBarMediumTokens.kt` y `tokens/AppBarLargeTokens.kt`
+(commit `76990c62ac`, 2026-11-24), `AppBar.kt` (commit `ed93193ac9`, 2026-11-11). Uso web:
+`@material/web` no tiene top app bar estable; `labs/gb/components/appbar/` (commit `9200eb8a0e`,
+2026-09-21) trae tokens y una directiva que pone `app-bar-scrolled` con un evento `scroll`.
+
+### Lo que confirma
+
+- Small de 64 (`AppBarSmallTokens.ContainerHeight`), título Title Large, subtítulo Label Medium,
+  relleno de 4 a los lados (`LeadingSpace`/`TrailingSpace` = `Space50`), sin separación entre
+  acciones (`IconButtonSpace` = `Space0`), avatar de 32 e iconos de 24.
+- Medium flexible de 112 con título Headline Medium y subtítulo Label Large; large flexible de 120
+  con título Display Small y subtítulo Title Medium (los tokens y `labs` coinciden).
+- Título On Surface, subtítulo On Surface Variant, Surface Container al desplazar
+  (`OnScrollContainerColor`). Search de 56, radio completo, Surface Container, texto Body Large On
+  Surface Variant (para el ítem 21).
+
+### Conflictos y datos nuevos (el kit no los trae)
+
+| Dato | Kit | Compose | Decisión |
+|---|---|---|---|
+| Fondo en reposo | Flat "sin relleno" | `ContainerColor` = Surface | Surface opaca: la banda tiene que tapar al título que se colapsa por debajo |
+| Sombra al desplazar | Sin sombra | `OnScrollContainerElevation` = Level2 en los tokens, pero `AppBar.kt` solo pinta el color; `labs` sí suma `shadow-2` | Sin sombra (kit y la implementación de Compose) |
+| Color del icono de inicio y de las acciones | No se distingue | `LeadingIconColor` On Surface, `TrailingIconColor` On Surface Variant | Compose |
+| Alto con subtítulo | Medium 112 y large 120 (sin subtítulo) | 136 y 152 (`LargeContainerHeight`) | Compose; coincide con sumar el subtítulo a las medidas del kit (4 + 20 en el medium, 8 + 24 en el large) |
+| Medium y large "no flexible" | — | `MediumTopAppBar` 112 con Headline Small y `LargeTopAppBar` 152 con Headline Medium | No se hacen: el medium y el large del kit son los flexible |
+| Medium/large pinned | El kit muestra On-scroll para todos los tamaños | `TwoRowsTopAppBar` toma el color de `collapsedFraction`: sin colapsar no cambia nunca | matekit cambia el color del medium y el large fijos cuando hay contenido debajo, como el small (definición del kit) |
+
+- Alto variable: la fila del título mide `max(alto, alto del título)` (`TopAppBarMeasurePolicy`):
+  el título de las flexible ocupa las líneas que necesite y la barra crece.
+- Título expandido apoyado abajo (`titleBottomPadding` de 24 en el medium y 28 en el large, medido
+  desde la línea base). matekit sigue al kit (12 desde la caja de la línea del texto), que con los
+  altos de línea de los tokens suma los 112 y 120 de Compose; la distancia a la línea base depende de
+  la fuente y no se comparó.
+  Sin icono de inicio, el título empieza a 16 (`TopAppBarTitleInset` 12 + relleno 4).
+- Centrado: centrado sobre todo el ancho y corrido lejos de las acciones o el inicio si no entra
+  (`placeTopAppBar`).
+- Colapso: dos títulos cruzados; el chico con `TopTitleAlphaEasing` = `CubicBezierEasing(.8, 0, .8,
+  .15)` y el grande con `1 - collapsedFraction`; la semántica pasa de uno a otro a la mitad. matekit
+  deja siempre el grande como encabezado y oculta la copia chica (ADR-0024).
+- Color: `lerp(containerColor, scrolledContainerColor, FastOutLinearInEasing(fraction))`; el medium y
+  el large usan la fracción colapsada; el small, `overlappedFraction > 0.01` y anima el color con
+  `DefaultEffects` en el tiempo. matekit ata el del small a los primeros 16 px de desplazamiento.
+- Comportamientos: `pinned` solo cambia el color; `enterAlways` mueve `heightOffset` con cada
+  desplazamiento (el small llega a esconderse entero; en el medium y el large el límite es la segunda
+  fila, así que colapsan al small y no se esconden) y se acomoda al soltar (`settleAppBar`, a la
+  mitad, con `snapAnimationSpec` = `DefaultEffects`); `exitUntilCollapsed` colapsa al bajar y se
+  expande solo cuando el contenido vuelve al principio. Compose también deja arrastrar la barra; matekit
+  no (en web el gesto es el desplazamiento del contenido).
+
 ## No revisado
 
 La tipografía (`TypeScaleTokens.kt`, descargado pero sin comparar).

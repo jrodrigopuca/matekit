@@ -131,3 +131,16 @@ export {
 export { TabLabel, type TabLabelProps } from './Tabs/tab-content.tsx'
 export { TabNav, type TabNavProps } from './Tabs/TabNav.tsx'
 export { TabLink, type TabLinkAnchorProps, type TabLinkProps, type TabLinkRenderProps } from './Tabs/TabLink.tsx'
+export {
+  TopAppBar,
+  TopAppBarActions,
+  TopAppBarLeading,
+  TopAppBarSubtitle,
+  TopAppBarTitle,
+  type TopAppBarPartProps,
+  type TopAppBarProps,
+  type TopAppBarScrollBehavior,
+  type TopAppBarSize,
+  type TopAppBarSubtitleProps,
+  type TopAppBarTitleProps,
+} from './TopAppBar/TopAppBar.tsx'

@@ -589,6 +589,32 @@ label}` con Selected y State Enabled, Hovered, Focused, Pressed).
   - Indicador: 2 de alto, a todo el ancho de la pestaña, `Primary`, pegado abajo.
   - Seleccionada: etiqueta `On Surface`; sin seleccionar `On Surface Variant`.
 
+## Top app bar
+
+Leído del kit el 2026-11-26 (página App bars; conjunto `App bar` 58114:20565 con Configuration
+Small, Small-centered, Small-image, Search, Medium y Large, y Elevation Flat u On-scroll; textos
+en `.Building Blocks/App bar/Content/Text {Small,Medium,Large}` con Alignment Left o Centered).
+También están `Bottom app bar` (reemplazado por la Docked toolbar en Expressive, ítem 22) y las
+variantes XR (fuera del plan).
+
+- Fondo: Flat sin relleno (la superficie de atrás); On-scroll (con contenido desplazado debajo)
+  `Surface Container`.
+- Small (y Small-centered, Small-image, Search): 64 de alto, relleno 8 arriba y abajo y 4 a los
+  lados, separación 4. Icon button de inicio de 48 (Small standard), título y acciones al final
+  (icon buttons de 48 o un avatar de 32 en un área de 48).
+  - Título: Title Large `On Surface`; subtítulo opcional Label Medium `On Surface Variant`
+    (bloque de 44 con los dos). Centered: el título centrado en la barra.
+  - Small-image: una imagen (logo) de 40 de alto en lugar del título.
+  - Search: una search bar de 56 de alto, radio 28, `Surface Container`, con el texto de ayuda en
+    Body Large `On Surface Variant` (se arma con el Search, ítem 21).
+- Medium: 112 de alto. Fila de iconos de 56 arriba (relleno 8 arriba, 4 a los lados) y debajo el
+  título en Headline Medium con 16 a los lados, separación 8 y 12 abajo. Subtítulo opcional Label
+  Large (separación 4).
+- Large: 120 de alto. Igual que Medium con el título en Display Small; subtítulo opcional Title
+  Medium (separación 8).
+- Los títulos Medium y Large del kit son de una línea; los "flexible" de Expressive en Compose
+  permiten más líneas y alto variable (ver Compose).
+
 ## Diferencias con la especificación a revisar
 
 - El indicador con foco del campo de texto mide 3 en el kit. Confirmar en m3.material.io.

@@ -1,0 +1,533 @@
+/* Top app bar de Material 3 Expressive: small, medium y large ("flexible"), con el cambio al
+   desplazar. ADR-0024.
+
+   Fuentes:
+   - Kit de Figma (docs/research/05-medidas.md § Top app bar): Flat sin relleno y On-scroll en
+     Surface Container. Small (y centrado, con imagen y con search) de 64: relleno 8 arriba y abajo
+     y 4 a los lados, separación 4, icon buttons de 48, título Title Large On Surface y subtítulo
+     Label Medium On Surface Variant (bloque de 44). Medium de 112: fila de iconos de 56 (relleno 8
+     arriba), título Headline Medium con 16 a los lados, separación 8 y 12 abajo; subtítulo Label
+     Large con separación 4. Large de 120: título Display Small, subtítulo Title Medium con
+     separación 8. Imagen de 40 de alto en lugar del título (small con imagen).
+   - Jetpack Compose (compose/material3/material3/src/commonMain/kotlin/androidx/compose/
+     material3/), lo que el kit no trae:
+     - tokens/AppBarTokens.kt, AppBarSmallTokens.kt, AppBarMediumFlexibleTokens.kt y
+       AppBarLargeFlexibleTokens.kt (commit 76990c62ac, 2026-11-24): Surface en reposo (opaco, así
+       el título que se colapsa no se ve a través de la fila de iconos), icono de navegación On
+       Surface y acciones On Surface Variant, alturas con subtítulo de 136 (medium) y 152 (large),
+       que coinciden con sumar el subtítulo a las medidas del kit.
+     - AppBar.kt (commit ed93193ac9, 2026-11-11): el título del medium y el large ocupa las líneas
+       que necesita y la barra crece (max(height, title)); al colapsar se cruzan dos títulos, el
+       grande con opacidad 1 - fracción y el chico con TopTitleAlphaEasing (cubic-bezier(.8, 0,
+       .8, .15)); el color del medium y el large sigue la fracción colapsada con
+       FastOutLinearInEasing (cubic-bezier(.4, 0, 1, 1)); el small cambia de color cuando hay
+       contenido debajo; enter-always se acomoda al soltar con DefaultEffects (snapAnimationSpec).
+     - Sin sombra al desplazar: OnScrollContainerElevation es Level2 en los tokens, pero AppBar.kt
+       solo pinta el color (y el kit no la muestra). Conflictos en 07-jetpack-compose.md.
+
+   Estructura (grilla, ADR-0024): las partes son hijos directos. En el small, una fila con inicio,
+   título y subtítulo apilados, y acciones. En el medium y el large, la banda de 64 de arriba (::before,
+   el inicio, las copias del título y las acciones, que se pegan arriba con `position: sticky` al
+   colapsar) y debajo el título y el subtítulo expandidos, que se van bajo la banda.
+
+   Desplazamiento: la barra es `position: sticky` en el contenedor más cercano que se desplaza, y
+   el color y el cruce de títulos son animaciones atadas a `scroll(nearest block)` (sonda del
+   2026-11-26: Chrome 158, Firefox 159 de Playwright y WebKit 27.2 las animan igual). Donde no
+   existen, o con enter-always, TopAppBarScroll escribe el avance en --_progress y --_tint y la
+   misma animación queda detenida en ese punto (animation-delay negativo). */
+
+/* Los dos colores del fondo, registrados como <color> (fuera de las capas: @property no pertenece
+   a ninguna): su valor calculado es el color ya resuelto (light-dark() según el tema), así la
+   animación del color se recalcula al cambiar el tema. Con un var() del token sin registrar,
+   Chrome conservaba el color del tema con el que se creó la animación. */
+@property --_top-app-bar-flat {
+  syntax: '<color>';
+  inherits: false;
+  initial-value: transparent;
+}
+
+@property --_top-app-bar-scrolled {
+  syntax: '<color>';
+  inherits: false;
+  initial-value: transparent;
+}
+
+@layer matekit.components {
+  .mk-top-app-bar {
+    /* Lo que queda visible al colapsar: nada en el small (se va), la banda de 64 en los otros. */
+    --_keep: 0px;
+    --_container-height: 64px;
+    /* Alto expandido. El CSS lo calcula con los tokens para una línea de título; TopAppBarScroll
+       lo reemplaza por el medido (títulos de varias líneas, letra más grande). */
+    --_height: var(--_container-height);
+    --_top-app-bar-flat: var(--md-sys-color-surface);
+    --_top-app-bar-scrolled: var(--md-sys-color-surface-container);
+    /* Cuánto hay que desplazar para el cambio de color cuando no se colapsa (Compose cambia
+       apenas hay contenido debajo y anima con DefaultEffects; acá va atado al desplazamiento). */
+    --_tint-distance: 16px;
+    --_tint-range: 0 var(--_tint-distance);
+    --_tint-easing: linear;
+    --_collapse-range: 0 calc(var(--_height) - var(--_keep));
+
+    position: sticky;
+    inset-block-start: 0;
+    z-index: var(--mk-top-app-bar-z-index, 1);
+    display: grid;
+    box-sizing: border-box;
+    min-inline-size: 0;
+    margin: 0;
+    padding-inline: var(--md-sys-space-50);
+    column-gap: var(--md-sys-space-50);
+    background-color: var(--_top-app-bar-flat);
+    color: var(--md-sys-color-on-surface);
+  }
+
+  .mk-top-app-bar[data-scroll-behavior='none'] {
+    position: relative;
+  }
+
+  /* exit-until-collapsed: se desplaza con el contenido hasta que solo queda --_keep visible. */
+  .mk-top-app-bar[data-scroll-behavior='exit-until-collapsed'] {
+    inset-block-start: calc(var(--_keep) - var(--_height));
+  }
+
+  /* enter-always: queda arriba y se corre lo que diga TopAppBarScroll. */
+  .mk-top-app-bar[data-scroll-behavior='enter-always'] {
+    translate: 0 calc(-1 * var(--_offset, 0px));
+  }
+
+  /* Cualquier hijo que no es una parte (una search bar, ítem 21) va en el lugar del título. */
+  .mk-top-app-bar > * {
+    grid-column: title;
+    grid-row: 1 / -1;
+    align-self: center;
+    min-inline-size: 0;
+  }
+
+  .mk-top-app-bar-leading,
+  .mk-top-app-bar-actions {
+    display: flex;
+    align-items: center;
+    min-block-size: var(--md-sys-space-600);
+  }
+
+  .mk-top-app-bar > .mk-top-app-bar-leading {
+    grid-column: leading;
+    justify-self: start;
+    --mk-icon-button-color: var(--md-sys-color-on-surface);
+    color: var(--md-sys-color-on-surface);
+  }
+
+  .mk-top-app-bar > .mk-top-app-bar-actions {
+    grid-column: actions;
+    justify-self: end;
+    --mk-icon-button-color: var(--md-sys-color-on-surface-variant);
+    color: var(--md-sys-color-on-surface-variant);
+  }
+
+  /* Icon button de 40 en un lugar de 48 (kit; Compose: área mínima de 48), sin separación entre
+     acciones (AppBarTokens.IconButtonSpace = 0). */
+  .mk-top-app-bar-leading > .mk-icon-button,
+  .mk-top-app-bar-actions > .mk-icon-button {
+    margin-inline: var(--md-sys-space-50);
+  }
+
+  .mk-top-app-bar-title,
+  .mk-top-app-bar-subtitle,
+  .mk-top-app-bar-collapsed-title,
+  .mk-top-app-bar-collapsed-subtitle {
+    margin: 0;
+    min-inline-size: 0;
+  }
+
+  .mk-top-app-bar-title,
+  .mk-top-app-bar-collapsed-title {
+    color: var(--md-sys-color-on-surface);
+  }
+
+  .mk-top-app-bar-subtitle,
+  .mk-top-app-bar-collapsed-subtitle {
+    color: var(--md-sys-color-on-surface-variant);
+  }
+
+  /* Una línea con puntos suspensivos: el small y las copias de la barra colapsada. */
+  .mk-top-app-bar[data-size='sm'] > .mk-top-app-bar-title,
+  .mk-top-app-bar[data-size='sm'] > .mk-top-app-bar-subtitle,
+  .mk-top-app-bar-collapsed-title,
+  .mk-top-app-bar-collapsed-subtitle {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  /* Título y subtítulo del small, y las copias del medium y el large (Compose: smallTitle con
+     AppBarSmallTokens). */
+  .mk-top-app-bar[data-size='sm'] > .mk-top-app-bar-title,
+  .mk-top-app-bar-collapsed-title {
+    font-family: var(--md-sys-typescale-title-large-font);
+    font-size: var(--md-sys-typescale-title-large-size);
+    line-height: var(--md-sys-typescale-title-large-line-height);
+    font-weight: var(--md-sys-typescale-title-large-weight);
+    letter-spacing: var(--md-sys-typescale-title-large-tracking);
+  }
+
+  .mk-top-app-bar[data-size='sm'] > .mk-top-app-bar-subtitle,
+  .mk-top-app-bar-collapsed-subtitle {
+    font-family: var(--md-sys-typescale-label-medium-font);
+    font-size: var(--md-sys-typescale-label-medium-size);
+    line-height: var(--md-sys-typescale-label-medium-line-height);
+    font-weight: var(--md-sys-typescale-label-medium-weight);
+    letter-spacing: var(--md-sys-typescale-label-medium-tracking);
+  }
+
+  /* Small con imagen: el logo dentro del título mide 40 de alto (kit). */
+  .mk-top-app-bar-title > :is(img, svg) {
+    display: block;
+    block-size: var(--md-sys-space-500);
+    inline-size: auto;
+    max-inline-size: 100%;
+  }
+
+  /* --- Small (64): una fila --- */
+  .mk-top-app-bar[data-size='sm'] {
+    grid-template-columns: [leading] auto [title] minmax(0, 1fr) [actions] auto;
+    /* Título y subtítulo entre dos filas flexibles que los centran en el alto (con min-block-size,
+       las fr llenan lo que sobra). Con filas auto, el reparto del alto de los ítems que las abarcan
+       (inicio y acciones, de 48) agrandaba la barra a 68 en Chrome. */
+    grid-template-rows: minmax(0, 1fr) auto auto minmax(0, 1fr);
+    min-block-size: var(--_container-height);
+    padding-block: var(--md-sys-space-100);
+  }
+
+  .mk-top-app-bar[data-size='sm'] > .mk-top-app-bar-title {
+    grid-row: 2;
+    align-self: stretch;
+  }
+
+  .mk-top-app-bar[data-size='sm'] > .mk-top-app-bar-subtitle {
+    grid-row: 3;
+    align-self: stretch;
+  }
+
+  /* Sin icono de inicio, el título empieza a 16 del borde (Compose: TopAppBarTitleInset); con él,
+     a 4 + 48 + 4. Centrado no lo necesita (el título se centra en la barra). */
+  .mk-top-app-bar:not([data-centered], :has(> .mk-top-app-bar-leading)) > :is(.mk-top-app-bar-title, .mk-top-app-bar-subtitle, .mk-top-app-bar-collapsed-title, .mk-top-app-bar-collapsed-subtitle) {
+    margin-inline-start: var(--md-sys-space-100);
+  }
+
+  /* Centrado: centrado sobre todo el ancho; si no entra, se corre lejos del lado más ancho
+     (Compose: placeTopAppBar). */
+  .mk-top-app-bar[data-centered] {
+    grid-template-columns: [leading] minmax(max-content, 1fr) [title] auto [actions] minmax(max-content, 1fr);
+    text-align: center;
+  }
+
+  /* --- Medium y large: la banda de 64 y debajo el título expandido --- */
+  .mk-top-app-bar:is([data-size='md'], [data-size='lg']) {
+    --_keep: var(--_container-height);
+    grid-template-columns: [leading] auto [title] minmax(0, 1fr) [actions] auto;
+    grid-template-rows: [band] var(--_keep) auto auto var(--md-sys-space-150);
+  }
+
+  .mk-top-app-bar:is([data-size='md'], [data-size='lg'])[data-centered] {
+    grid-template-columns: [leading] minmax(max-content, 1fr) [title] auto [actions] minmax(max-content, 1fr);
+  }
+
+  .mk-top-app-bar[data-size='md'] {
+    --_title-line: var(--md-sys-typescale-headline-medium-line-height);
+    --_height: calc(var(--_keep) + var(--_title-line) + var(--md-sys-space-150));
+  }
+
+  .mk-top-app-bar[data-size='md']:has(> .mk-top-app-bar-subtitle) {
+    --_height: calc(var(--_keep) + var(--_title-line) + var(--md-sys-space-50) + var(--md-sys-typescale-label-large-line-height) + var(--md-sys-space-150));
+  }
+
+  .mk-top-app-bar[data-size='lg'] {
+    --_title-line: var(--md-sys-typescale-display-small-line-height);
+    --_height: calc(var(--_keep) + var(--_title-line) + var(--md-sys-space-150));
+  }
+
+  .mk-top-app-bar[data-size='lg']:has(> .mk-top-app-bar-subtitle) {
+    --_height: calc(var(--_keep) + var(--_title-line) + var(--md-sys-space-100) + var(--md-sys-typescale-title-medium-line-height) + var(--md-sys-space-150));
+  }
+
+  /* La banda: el fondo de la fila de iconos, que tapa al título expandido cuando pasa por debajo.
+     Hereda el color animado de la barra. */
+  .mk-top-app-bar:is([data-size='md'], [data-size='lg'])::before {
+    content: '';
+    grid-column: 1 / -1;
+    grid-row: 1 / -1;
+    align-self: start;
+    block-size: var(--_keep);
+    /* Hasta los bordes: la barra tiene 4 de relleno a los lados. */
+    margin-inline: calc(-1 * var(--md-sys-space-50));
+    background-color: inherit;
+    /* Sobre el título expandido: su animación de opacidad lo vuelve un contexto de apilado que, por
+       orden en el árbol, quedaría encima. Los ítems de grilla aceptan z-index sin posicionarse. */
+    z-index: 1;
+  }
+
+  .mk-top-app-bar:is([data-size='md'], [data-size='lg']) > :is(.mk-top-app-bar-leading, .mk-top-app-bar-actions, .mk-top-app-bar-collapsed-title, .mk-top-app-bar-collapsed-subtitle) {
+    z-index: 2;
+  }
+
+  /* La banda abarca todas las filas y se alinea arriba: así `position: sticky` tiene lugar para
+     quedarse arriba mientras la barra se corre (su caja de contención es la barra entera). */
+  .mk-top-app-bar:is([data-size='md'], [data-size='lg']) > :is(.mk-top-app-bar-leading, .mk-top-app-bar-actions) {
+    grid-row: 1 / -1;
+    align-self: start;
+    margin-block-start: var(--md-sys-space-100);
+  }
+
+  .mk-top-app-bar:is([data-size='md'], [data-size='lg']) > :is(.mk-top-app-bar-collapsed-title, .mk-top-app-bar-collapsed-subtitle) {
+    display: block;
+    grid-column: title;
+    grid-row: 1 / -1;
+    align-self: start;
+    box-sizing: border-box;
+    block-size: var(--_keep);
+    pointer-events: none;
+    /* Invisibles salvo que el colapso las muestre (sus animaciones ganan a esta declaración). */
+    opacity: 0;
+    /* Título (28) y subtítulo (16) apilados y centrados en la banda: 44 con los dos (kit). */
+    --_collapsed-block: var(--md-sys-typescale-title-large-line-height);
+  }
+
+  .mk-top-app-bar:is([data-size='md'], [data-size='lg']):has(> .mk-top-app-bar-subtitle) > :is(.mk-top-app-bar-collapsed-title, .mk-top-app-bar-collapsed-subtitle) {
+    --_collapsed-block: calc(var(--md-sys-typescale-title-large-line-height) + var(--md-sys-typescale-label-medium-line-height));
+  }
+
+  .mk-top-app-bar:is([data-size='md'], [data-size='lg']) > .mk-top-app-bar-collapsed-title {
+    padding-block-start: calc((var(--_keep) - var(--_collapsed-block)) / 2);
+  }
+
+  .mk-top-app-bar:is([data-size='md'], [data-size='lg']) > .mk-top-app-bar-collapsed-subtitle {
+    padding-block-start: calc((var(--_keep) - var(--_collapsed-block)) / 2 + var(--md-sys-typescale-title-large-line-height));
+  }
+
+  .mk-top-app-bar:is([data-size='md'], [data-size='lg']) > :is(.mk-top-app-bar-title, .mk-top-app-bar-subtitle) {
+    grid-column: 1 / -1;
+    align-self: end;
+    margin-inline: var(--md-sys-space-150);
+    /* Las "flexible": tantas líneas como haga falta, cortando palabras largas. */
+    overflow-wrap: break-word;
+    /* Sin aportar su ancho a las columnas de la banda: abarcan las tres y, con su ancho máximo, el
+       centrado le dejaba a la copia del título 72 de 204 libres (comprobado en Chrome). Toman el ancho
+       de la barra y cortan línea. */
+    contain: inline-size;
+  }
+
+  .mk-top-app-bar:is([data-size='md'], [data-size='lg']) > .mk-top-app-bar-title {
+    grid-row: 2;
+  }
+
+  .mk-top-app-bar:is([data-size='md'], [data-size='lg']) > .mk-top-app-bar-subtitle {
+    grid-row: 3;
+  }
+
+  /* Otros hijos (search, imagen): en la banda. */
+  .mk-top-app-bar:is([data-size='md'], [data-size='lg']) > :not(.mk-top-app-bar-title, .mk-top-app-bar-subtitle, .mk-top-app-bar-leading, .mk-top-app-bar-actions, .mk-top-app-bar-collapsed-title, .mk-top-app-bar-collapsed-subtitle) {
+    grid-row: 1;
+  }
+
+  .mk-top-app-bar[data-size='md'] > .mk-top-app-bar-title {
+    font-family: var(--md-sys-typescale-headline-medium-font);
+    font-size: var(--md-sys-typescale-headline-medium-size);
+    line-height: var(--md-sys-typescale-headline-medium-line-height);
+    font-weight: var(--md-sys-typescale-headline-medium-weight);
+    letter-spacing: var(--md-sys-typescale-headline-medium-tracking);
+  }
+
+  .mk-top-app-bar[data-size='md'] > .mk-top-app-bar-subtitle {
+    margin-block-start: var(--md-sys-space-50);
+    font-family: var(--md-sys-typescale-label-large-font);
+    font-size: var(--md-sys-typescale-label-large-size);
+    line-height: var(--md-sys-typescale-label-large-line-height);
+    font-weight: var(--md-sys-typescale-label-large-weight);
+    letter-spacing: var(--md-sys-typescale-label-large-tracking);
+  }
+
+  .mk-top-app-bar[data-size='lg'] > .mk-top-app-bar-title {
+    font-family: var(--md-sys-typescale-display-small-font);
+    font-size: var(--md-sys-typescale-display-small-size);
+    line-height: var(--md-sys-typescale-display-small-line-height);
+    font-weight: var(--md-sys-typescale-display-small-weight);
+    letter-spacing: var(--md-sys-typescale-display-small-tracking);
+  }
+
+  .mk-top-app-bar[data-size='lg'] > .mk-top-app-bar-subtitle {
+    margin-block-start: var(--md-sys-space-100);
+    font-family: var(--md-sys-typescale-title-medium-font);
+    font-size: var(--md-sys-typescale-title-medium-size);
+    line-height: var(--md-sys-typescale-title-medium-line-height);
+    font-weight: var(--md-sys-typescale-title-medium-weight);
+    letter-spacing: var(--md-sys-typescale-title-medium-tracking);
+  }
+
+  /* Las copias solo existen a la vista en el medium y el large. */
+  .mk-top-app-bar[data-size='sm'] > :is(.mk-top-app-bar-collapsed-title, .mk-top-app-bar-collapsed-subtitle) {
+    display: none;
+  }
+
+  /* --- Colapso (medium y large con exit-until-collapsed o enter-always) --- */
+  .mk-top-app-bar:is([data-size='md'], [data-size='lg']):is([data-scroll-behavior='exit-until-collapsed'], [data-scroll-behavior='enter-always']) {
+    --_tint-range: var(--_collapse-range);
+    /* FastOutLinearInEasing de Compose (TopAppBarColors.containerColor). */
+    --_tint-easing: cubic-bezier(0.4, 0, 1, 1); /* lint-css-allow: curva de color de Compose atada al desplazamiento, no un movimiento en el tiempo */
+  }
+
+  /* Con exit-until-collapsed, la banda se queda arriba mientras la barra se corre. */
+  .mk-top-app-bar:is([data-size='md'], [data-size='lg'])[data-scroll-behavior='exit-until-collapsed']::before,
+  .mk-top-app-bar:is([data-size='md'], [data-size='lg'])[data-scroll-behavior='exit-until-collapsed'] > :is(.mk-top-app-bar-collapsed-title, .mk-top-app-bar-collapsed-subtitle) {
+    position: sticky;
+    inset-block-start: 0;
+  }
+
+  .mk-top-app-bar:is([data-size='md'], [data-size='lg'])[data-scroll-behavior='exit-until-collapsed'] > :is(.mk-top-app-bar-leading, .mk-top-app-bar-actions) {
+    position: sticky;
+    inset-block-start: var(--md-sys-space-100);
+  }
+
+  /* Con enter-always, la barra se corre hacia arriba (translate) y la banda lo compensa. */
+  .mk-top-app-bar:is([data-size='md'], [data-size='lg'])[data-scroll-behavior='enter-always']::before,
+  .mk-top-app-bar:is([data-size='md'], [data-size='lg'])[data-scroll-behavior='enter-always'] > :is(.mk-top-app-bar-leading, .mk-top-app-bar-actions, .mk-top-app-bar-collapsed-title, .mk-top-app-bar-collapsed-subtitle) {
+    position: relative;
+    translate: 0 var(--_offset, 0px);
+  }
+
+  /* --- Animaciones del desplazamiento --- */
+  /* Cada animación tiene dos nombres, uno atado al desplazamiento y otro detenido para el respaldo:
+     con el mismo nombre, al pasar de uno a otro el motor conserva la animación y su tiempo actual
+     queda en un valor cualquiera (comprobado en Chrome: el título no se movía del final). */
+  @keyframes mk-top-app-bar-tint {
+    from {
+      background-color: var(--_top-app-bar-flat);
+    }
+    to {
+      background-color: var(--_top-app-bar-scrolled);
+    }
+  }
+
+  @keyframes mk-top-app-bar-tint-paused {
+    from {
+      background-color: var(--_top-app-bar-flat);
+    }
+    to {
+      background-color: var(--_top-app-bar-scrolled);
+    }
+  }
+
+  @keyframes mk-top-app-bar-fade-out {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 0;
+    }
+  }
+
+  @keyframes mk-top-app-bar-fade-out-paused {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 0;
+    }
+  }
+
+  @keyframes mk-top-app-bar-fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes mk-top-app-bar-fade-in-paused {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  /* Con animaciones por desplazamiento: atadas a scroll(nearest block), el mismo contenedor que
+     usa `position: sticky`. La propiedad `animation` va dentro de @supports: un motor que no las
+     tiene la correría como una animación de 0 s y dejaría la barra colapsada. */
+  @supports (animation-timeline: scroll()) {
+    .mk-top-app-bar:is([data-scroll-behavior='pinned'], [data-scroll-behavior='exit-until-collapsed']):not([data-scroll-driver='script']) {
+      animation: mk-top-app-bar-tint both;
+      animation-timing-function: var(--_tint-easing);
+      animation-timeline: scroll(nearest block);
+      animation-range: var(--_tint-range);
+    }
+
+    .mk-top-app-bar:is([data-size='md'], [data-size='lg'])[data-scroll-behavior='exit-until-collapsed']:not([data-scroll-driver='script']) > :is(.mk-top-app-bar-title, .mk-top-app-bar-subtitle) {
+      animation: mk-top-app-bar-fade-out linear both;
+      animation-timeline: scroll(nearest block);
+      animation-range: var(--_collapse-range);
+    }
+
+    .mk-top-app-bar:is([data-size='md'], [data-size='lg'])[data-scroll-behavior='exit-until-collapsed']:not([data-scroll-driver='script']) > :is(.mk-top-app-bar-collapsed-title, .mk-top-app-bar-collapsed-subtitle) {
+      animation: mk-top-app-bar-fade-in both;
+      /* TopTitleAlphaEasing de Compose: el título chico aparece recién al final. */
+      animation-timing-function: cubic-bezier(0.8, 0, 0.8, 0.15); /* lint-css-allow: curva de Compose atada al desplazamiento, no un movimiento en el tiempo */
+      animation-timeline: scroll(nearest block);
+      animation-range: var(--_collapse-range);
+    }
+  }
+
+  /* Respaldo y enter-always: la misma animación, detenida en el avance que escribe
+     TopAppBarScroll (--_tint y --_progress, de 0 a 1). La duración de 1 s es solo la escala del
+     avance: nunca corre. */
+  .mk-top-app-bar:is([data-scroll-driver='script'], [data-scroll-behavior='enter-always']) {
+    animation: mk-top-app-bar-tint-paused 1s paused both; /* lint-css-allow: escala del avance de una animación detenida, no un tiempo */
+    animation-timing-function: var(--_tint-easing);
+    animation-delay: calc(var(--_tint, 0) * -1s); /* lint-css-allow: el avance como tiempo de una animación detenida */
+  }
+
+  .mk-top-app-bar:is([data-size='md'], [data-size='lg']):is([data-scroll-driver='script'][data-scroll-behavior='exit-until-collapsed'], [data-scroll-behavior='enter-always']) > :is(.mk-top-app-bar-title, .mk-top-app-bar-subtitle) {
+    animation: mk-top-app-bar-fade-out-paused 1s linear paused both; /* lint-css-allow: escala del avance de una animación detenida, no un tiempo */
+    animation-delay: calc(var(--_progress, 0) * -1s); /* lint-css-allow: el avance como tiempo de una animación detenida */
+  }
+
+  .mk-top-app-bar:is([data-size='md'], [data-size='lg']):is([data-scroll-driver='script'][data-scroll-behavior='exit-until-collapsed'], [data-scroll-behavior='enter-always']) > :is(.mk-top-app-bar-collapsed-title, .mk-top-app-bar-collapsed-subtitle) {
+    animation: mk-top-app-bar-fade-in-paused 1s paused both; /* lint-css-allow: escala del avance de una animación detenida, no un tiempo */
+    animation-timing-function: cubic-bezier(0.8, 0, 0.8, 0.15); /* lint-css-allow: TopTitleAlphaEasing de Compose atada al desplazamiento */
+    animation-delay: calc(var(--_progress, 0) * -1s); /* lint-css-allow: el avance como tiempo de una animación detenida */
+  }
+
+  /* enter-always al soltar: se acomoda con el resorte DefaultEffects (snapAnimationSpec de
+     Compose). Con movimiento reducido, sin desplazamiento animado: salta. */
+  @media (prefers-reduced-motion: no-preference) {
+    .mk-top-app-bar[data-settling],
+    .mk-top-app-bar[data-settling]::before,
+    .mk-top-app-bar[data-settling] > * {
+      transition: translate var(--md-sys-motion-spring-default-effects-duration) var(--md-sys-motion-spring-default-effects-easing);
+    }
+  }
+
+  /* --- Alto contraste (forced-colors) ---
+     El navegador fuerza el fondo a Canvas, así que el cambio de color al desplazar desaparece: un
+     borde inferior en CanvasText separa la barra del contenido (siempre, también plana). La barra
+     queda en Canvas opaco sin la animación de color (en un motor que no fuerza los colores, la
+     animación ganaría a la declaración); la banda lo hereda y sigue tapando al título que pasa por
+     debajo. */
+  @media (forced-colors: active) {
+    /* Misma especificidad que las reglas de las animaciones (va después: gana). */
+    .mk-top-app-bar[data-size][data-scroll-behavior] {
+      animation: none;
+      background-color: Canvas;
+    }
+    .mk-top-app-bar::after {
+      content: '';
+      position: absolute;
+      inset-inline: 0;
+      inset-block-end: 0;
+      border-block-end: 1px solid CanvasText;
+      pointer-events: none;
+    }
+  }
+}

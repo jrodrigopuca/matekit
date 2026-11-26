@@ -53,8 +53,8 @@ src/internal/    ayudas compartidas entre componentes, no exportadas (interactiv
                  accessible-name.ts: AccessibleNameProps, el nombre obligatorio por label,
                  aria-labelledby o aria-label de los indicadores; activity-pulse.css: el latido
                  de los indicadores indeterminados con movimiento reducido; layout-element.tsx:
-                 el `<div>` o el elemento de `render` de Stack y Group; anchor-position.ts: la
-                 posición de una capa junto a su ancla, respaldo sin anchor positioning, de Menu y
+                 el `<div>` (o `<header>`) o el elemento de `render` de Stack, Group y
+                 TopAppBar; anchor-position.ts: la posición de una capa junto a su ancla, respaldo sin anchor positioning, de Menu y
                  Tooltip, ADR-0007 y ADR-0021; roving-focus.ts: useRovingFocus, el foco
                  itinerante de una sola parada de Tab de ChipGroup y Tabs, para las Toolbars,
                  ADR-0023; settle-animations.ts: settleAnimations, la espera de la salida
@@ -232,6 +232,22 @@ No llamar al conector de Figma salvo que falte un dato imprescindible: tiene lí
     `pause()` y `currentTime`. El global `transition: none` de `render.tsx` no la afecta.
     `hidden="until-found"` (`onbeforematch`) existe en los tres. La ventana de las pruebas mide unos
     414 px: un componente más ancho hace que el clic desplace la página y corre las medidas.
+  - Animaciones por desplazamiento (TopAppBar, comprobado el 2026-11-26): `animation-timeline:
+    scroll()` y `view()`, `scroll-timeline` con nombre, `timeline-scope` y `animation-range` en px
+    existen en los tres de Playwright y dan los mismos valores (el Firefox es un Nightly: Firefox
+    estable sin verificar); `container-type: scroll-state` solo en Chrome. Para probarlas, fijar
+    `scrollTop` y esperar dos o tres cuadros (`requestAnimationFrame`), sin pausarlas. Pasar una
+    animación con el mismo nombre de una línea de tiempo de desplazamiento a una detenida
+    (`paused` y `animation-delay` negativo) deja un tiempo actual cualquiera: usar otro nombre de
+    `@keyframes`. En Chrome, una animación de `background-color` con `var()` de un token
+    `light-dark()` no se recalcula al cambiar el tema: registrar el color con `@property` y sintaxis
+    `<color>`. Una animación de `opacity` vuelve al elemento un contexto de apilado que, por orden en
+    el árbol, tapa a un hermano posicionado anterior (`z-index` en los ítems de grilla lo ordena).
+  - Grilla con filas `auto` e ítems que las abarcan (TopAppBar, comprobado en Chrome el 2026-11-26):
+    un ítem de 48 sobre dos filas `auto` (28 y 0) las dejó en 28 y 24; con filas `minmax(0, 1fr)`
+    arriba y abajo y `min-block-size`, el centrado da lo esperado. Un ítem que abarca columnas
+    `minmax(max-content, 1fr) auto minmax(max-content, 1fr)` aporta su ancho máximo y le quita lugar
+    a la columna `auto` (de 204 libres le dejó 72, o 0): `contain: inline-size` en ese ítem lo evita.
 - Snackbar (comprobado el 2026-11-26): un `popover` dentro de un `<dialog>` modal abierto se puede
   usar en los tres motores (fuera del diálogo queda inerte). Un F6 real que la página no atrapa
   saca el foco del documento en Firefox: para probar que un componente no atrapa una tecla, despachar

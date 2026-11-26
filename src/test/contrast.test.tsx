@@ -86,6 +86,11 @@ import {
   Tab,
   TabList,
   Tabs,
+  TopAppBar,
+  TopAppBarActions,
+  TopAppBarLeading,
+  TopAppBarSubtitle,
+  TopAppBarTitle,
 } from '../index.ts'
 import '../tokens/palettes/index.css'
 import { contrastRatio, effectiveBackground, parseColor, textContrast } from './contrast.ts'
@@ -519,6 +524,43 @@ for (const scheme of SCHEMES) {
         expect(contrastRatio(cs(q(c, '.on .mk-tab-indicator')).backgroundColor, bar), 'indicador').toBeGreaterThanOrEqual(NON_TEXT)
       })
     }
+
+    // TopAppBar: título y subtítulo a 4,5:1 e iconos de inicio y acciones a 3:1, plana (Surface) y con
+    // contenido debajo (Surface Container, la barra fija desplazada). Las copias de la barra
+    // colapsada usan los mismos colores sobre la misma barra.
+    test('TopAppBar: título, subtítulo e iconos, plana y desplazada', async () => {
+      const bar = (cls: string, behavior: 'none' | 'pinned') => (
+        <TopAppBar className={cls} scrollBehavior={behavior}>
+          <TopAppBarLeading><IconButton label="Volver"><HomeIcon /></IconButton></TopAppBarLeading>
+          <TopAppBarTitle>Bandeja</TopAppBarTitle>
+          <TopAppBarSubtitle>3 sin leer</TopAppBarSubtitle>
+          <TopAppBarActions><IconButton label="Favorito"><StarIcon /></IconButton></TopAppBarActions>
+        </TopAppBar>
+      )
+      const c = await render(
+        <Themed scheme={scheme}>
+          {bar('flat', 'none')}
+          <div className="scroller" style={{ height: 200, overflow: 'auto' }}>
+            {bar('scrolled', 'pinned')}
+            <div style={{ height: 1000 }} />
+          </div>
+        </Themed>,
+      )
+      const probe = document.createElement('span')
+      probe.style.color = 'var(--md-sys-color-surface-container)'
+      q(c, 'main').append(probe)
+      const container = cs(probe).color
+      q(c, '.scroller').scrollTop = 500
+      await expect.poll(() => cs(q(c, '.scrolled')).backgroundColor).toBe(container)
+      for (const sel of ['.flat', '.scrolled']) {
+        const bg = effectiveBackground(q(c, sel))
+        expect(contrastRatio(cs(q(c, `${sel} .mk-top-app-bar-title`)).color, bg), `${sel} título`).toBeGreaterThanOrEqual(TEXT)
+        expect(contrastRatio(cs(q(c, `${sel} .mk-top-app-bar-subtitle`)).color, bg), `${sel} subtítulo`).toBeGreaterThanOrEqual(TEXT)
+        for (const part of ['leading', 'actions']) {
+          expect(contrastRatio(cs(q(c, `${sel} .mk-top-app-bar-${part} svg`)).fill, bg), `${sel} ${part}`).toBeGreaterThanOrEqual(NON_TEXT)
+        }
+      }
+    })
 
     for (const [expanded, variant] of [[false, 'docked'], [true, 'docked'], [true, 'floating']] as const) {
       test(`NavigationRail ${expanded ? 'expandido' : 'contraído'} ${variant}: iconos y etiquetas, activo e inactivo, e insignias`, async () => {
