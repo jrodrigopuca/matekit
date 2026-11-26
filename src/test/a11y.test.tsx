@@ -89,6 +89,14 @@ import {
   ListItemSummary,
   ListItemSupporting,
   ListItemTrailing,
+  InfoIcon,
+  Tooltip,
+  RichTooltip,
+  RichTooltipActions,
+  RichTooltipContent,
+  RichTooltipSubhead,
+  RichTooltipSupporting,
+  RichTooltipTrigger,
 } from '../index.ts'
 import { a11yViolations } from './a11y.ts'
 import { render } from './render.tsx'
@@ -577,5 +585,47 @@ describe('Accesibilidad automática (axe-core)', () => {
         expect(await a11yViolations(c)).toEqual([])
       })
     }
+  }
+
+  for (const theme of THEMES) {
+    test(`Tooltip plain y rich abiertos, tema ${theme === 'light' ? 'claro' : 'oscuro'}`, async () => {
+      const c = await render(
+        <Themed theme={theme}>
+          <div style={{ padding: 120, display: 'flex', gap: 160 }}>
+            <Tooltip defaultOpen><IconButton label="Editar"><EditIcon /></IconButton></Tooltip>
+            <Tooltip text="Se guarda también en la nube"><Button>Guardar</Button></Tooltip>
+            <RichTooltip defaultOpen>
+              <RichTooltipTrigger><IconButton label="Qué son las copias"><InfoIcon /></IconButton></RichTooltipTrigger>
+              <RichTooltipContent>
+                <RichTooltipSubhead>Copias automáticas</RichTooltipSubhead>
+                <RichTooltipSupporting>Cada noche se guarda una copia.</RichTooltipSupporting>
+              </RichTooltipContent>
+            </RichTooltip>
+          </div>
+        </Themed>,
+      )
+      expect(await a11yViolations(c)).toEqual([])
+    })
+
+    test(`RichTooltip con acciones abierto, tema ${theme === 'light' ? 'claro' : 'oscuro'}`, async () => {
+      const c = await render(
+        <Themed theme={theme}>
+          <div style={{ padding: 200 }}>
+            <RichTooltip defaultOpen>
+              <RichTooltipTrigger><IconButton label="Ajustes de copias"><InfoIcon /></IconButton></RichTooltipTrigger>
+              <RichTooltipContent>
+                <RichTooltipSubhead>Copias automáticas</RichTooltipSubhead>
+                <RichTooltipSupporting>Podés cambiar la hora o desactivarlas.</RichTooltipSupporting>
+                <RichTooltipActions>
+                  <Button variant="text">Configurar</Button>
+                  <Button variant="text">Más información</Button>
+                </RichTooltipActions>
+              </RichTooltipContent>
+            </RichTooltip>
+          </div>
+        </Themed>,
+      )
+      expect(await a11yViolations(c)).toEqual([])
+    })
   }
 })

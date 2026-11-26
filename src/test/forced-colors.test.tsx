@@ -64,6 +64,12 @@ import {
   ListItemHeadline,
   ListItemLeading,
   ListItemSupporting,
+  Tooltip,
+  RichTooltip,
+  RichTooltipContent,
+  RichTooltipSubhead,
+  RichTooltipSupporting,
+  RichTooltipTrigger,
 } from '../index.ts'
 import { render, style } from './render.tsx'
 import { near, pixelsOf } from './pixels.ts'
@@ -906,5 +912,33 @@ describe('Chips', () => {
     }
     expect(style(q(c, '.fi .mk-chip-check')).color).toBe(systemColor('GrayText'))
     expect(style(q(c, '.in .mk-input-chip-remove')).color).toBe(systemColor('GrayText'))
+  })
+})
+
+describe('Tooltip', () => {
+  test('plain y rich tienen contorno CanvasText de 1 px (el navegador quita fondo y sombra)', async () => {
+    const c = await render(
+      <div style={{ padding: 200 }}>
+        <Tooltip defaultOpen><IconButton label="Editar"><StarIcon /></IconButton></Tooltip>
+        <RichTooltip defaultOpen>
+          <RichTooltipTrigger><IconButton label="Info"><StarIcon /></IconButton></RichTooltipTrigger>
+          <RichTooltipContent>
+            <RichTooltipSubhead>Título</RichTooltipSubhead>
+            <RichTooltipSupporting>Texto</RichTooltipSupporting>
+          </RichTooltipContent>
+        </RichTooltip>
+      </div>,
+    )
+    for (const sel of ['.mk-plain-tooltip', '.mk-rich-tooltip']) {
+      const s = style(q(c, sel))
+      expect(s.outlineStyle, sel).toBe('solid')
+      expect(s.outlineWidth, sel).toBe('1px')
+      expect(s.outlineColor, sel).toBe(systemColor('CanvasText'))
+    }
+    // WebKit no reemplaza los colores (ver arriba): el texto del sistema solo donde existe el modo.
+    if (autoForced) {
+      expect(style(q(c, '.mk-plain-tooltip')).color).toBe(systemColor('CanvasText'))
+      expect(style(q(c, '.mk-plain-tooltip')).backgroundColor).toBe(systemColor('Canvas'))
+    }
   })
 })

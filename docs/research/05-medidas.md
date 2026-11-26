@@ -531,6 +531,21 @@ suggestion) y la configuración de iconos.
 - Grupos: una fila con desplazamiento horizontal (relleno 8 arriba y abajo, separación 8) o
   varias filas con envoltura (separación 8 entre chips y 16 entre filas, en el kit).
 
+## Tooltip
+
+Leído del kit el 2026-11-26 (página Tooltips; conjunto `Plain Tooltip` 54061:33881 con Type
+Single line y Multi line, y componente `Rich Tooltip` 54061:33872). El kit no trae estados ni
+flecha.
+
+- Plain: relleno 4 arriba y abajo y 8 a los lados, radio 4, fondo `Inverse Surface`, texto en
+  Body Small (`Inverse On Surface`); 24 de alto con una línea. El multilínea del kit mide 200 de
+  ancho (ancho máximo a confirmar en Compose).
+- Rich: 312 de ancho, radio 12, fondo `Surface Container`, elevación 2.
+  - Contenido: relleno 12 arriba, 16 a los lados y 4 abajo, separación 4; subtítulo en Title Small
+    y texto en Body Medium, los dos en `On Surface Variant`.
+  - Acciones: fila con relleno 4 a los lados y 8 abajo (del contenedor), separación 8, con botones
+    de texto Small (40 de alto). El conjunto separa contenido y acciones por 8.
+
 ## Diferencias con la especificación a revisar
 
 - El indicador con foco del campo de texto mide 3 en el kit. Confirmar en m3.material.io.

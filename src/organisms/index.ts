@@ -80,3 +80,16 @@ export {
   type ListProps,
   type ListVariant,
 } from './List/List.tsx'
+export { Tooltip, type TooltipProps } from './Tooltip/Tooltip.tsx'
+export {
+  RichTooltip,
+  RichTooltipActions,
+  RichTooltipContent,
+  RichTooltipSubhead,
+  RichTooltipSupporting,
+  RichTooltipTrigger,
+  type RichTooltipContentProps,
+  type RichTooltipPartProps,
+  type RichTooltipProps,
+  type RichTooltipTriggerProps,
+} from './Tooltip/RichTooltip.tsx'

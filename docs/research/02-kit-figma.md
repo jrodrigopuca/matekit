@@ -40,7 +40,7 @@ Los identificadores sirven para volver a consultar cada página con el conector 
 | Tabs | 55141:14258 | no |
 | Text fields | 55141:14259 | sí |
 | Toolbars | 58295:22726 | no |
-| Tooltips | 55141:14261 | no |
+| Tooltips | 55141:14261 | sí |
 
 No existe una página de movimiento.
 

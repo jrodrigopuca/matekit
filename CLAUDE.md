@@ -53,7 +53,9 @@ src/internal/    ayudas compartidas entre componentes, no exportadas (interactiv
                  accessible-name.ts: AccessibleNameProps, el nombre obligatorio por label,
                  aria-labelledby o aria-label de los indicadores; activity-pulse.css: el latido
                  de los indicadores indeterminados con movimiento reducido; layout-element.tsx:
-                 el `<div>` o el elemento de `render` de Stack y Group)
+                 el `<div>` o el elemento de `render` de Stack y Group; anchor-position.ts: la
+                 posición de una capa junto a su ancla, respaldo sin anchor positioning, de Menu y
+                 Tooltip, ADR-0007 y ADR-0021)
 src/styles.css   hoja única: importa tokens, átomos y componentes
 playground/      páginas de prueba manual, una por componente
 docs/research/   datos extraídos del kit de Figma y de Jetpack Compose
@@ -214,6 +216,17 @@ No llamar al conector de Figma salvo que falte un dato imprescindible: tiene lí
     `el.getAnimations()`, `pause()` y `currentTime`. En WebKit, mover `currentTime` de una
     *transición* de una propiedad registrada no cambia el estilo calculado, y una captura de
     Playwright da la transición por terminada: probar las transiciones por su declaración.
+  - CSS anchor positioning (Tooltip, comprobado el 2026-11-26): `position-area: top` con
+    `flip-block` centra la capa sobre el ancla y la corre para quedar dentro de la ventana igual en
+    los tres, salvo Firefox con el ancla en un contexto RTL, que la corre casi 300 px
+    (`anchor-center` mal resuelto). `placeNextTo` lo detecta y corrige (ADR-0021).
+    `popover="hint"` existe en los tres.
+- Relojes falsos (`vi.useFakeTimers`) con demoras propias (Tooltip, comprobado el 2026-11-26):
+  `expect.poll` avanza el reloj falso en cada intento (el código de Vitest 5.1 llama a
+  `vi.advanceTimersByTime(interval)`), y las acciones de `userEvent` también lo avanzan (tras un
+  `hover`, una demora de 500 ms se cumplía con 499 ms de avance; el mecanismo no se buscó). Una
+  demora medida a través de ellos sale más corta y varía. Para medir demoras: eventos despachados a
+  mano y esperas cuadro a cuadro (`requestAnimationFrame`), como en `Tooltip.test.tsx`.
 - `src/test/render.tsx` aísla cada prueba: desmonta lo renderizado al terminar y deja el
   puntero en una esquina antes de empezar. No repetir eso en cada archivo. Para detectar
   dependencias de orden: `pnpm exec vitest run --sequence.shuffle --sequence.seed=<n>`.

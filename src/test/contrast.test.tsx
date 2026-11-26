@@ -72,6 +72,13 @@ import {
   ListItemSupporting,
   ListItemTrailing,
   ChevronRightIcon,
+  Tooltip,
+  RichTooltip,
+  RichTooltipActions,
+  RichTooltipContent,
+  RichTooltipSubhead,
+  RichTooltipSupporting,
+  RichTooltipTrigger,
 } from '../index.ts'
 import '../tokens/palettes/index.css'
 import { contrastRatio, effectiveBackground, parseColor, textContrast } from './contrast.ts'
@@ -563,6 +570,27 @@ for (const scheme of SCHEMES) {
       for (const sel of ['.cir', '.cir-ind']) {
         const el = q(c, sel)
         expect(contrastRatio(cs(q(el, '.mk-circular-progress-indicator-active')).stroke, effectiveBackground(el)), sel).toBeGreaterThanOrEqual(NON_TEXT)
+      }
+    })
+
+    test('Tooltip: texto del plain sobre Inverse Surface; subtítulo, texto y acciones del rich sobre Surface Container', async () => {
+      const c = await render(
+        <Themed scheme={scheme}>
+          <div style={{ padding: 200, display: 'flex', gap: 200 }}>
+            <Tooltip defaultOpen><Button>Editar</Button></Tooltip>
+            <RichTooltip defaultOpen>
+              <RichTooltipTrigger><Button>Info</Button></RichTooltipTrigger>
+              <RichTooltipContent>
+                <RichTooltipSubhead>Copias automáticas</RichTooltipSubhead>
+                <RichTooltipSupporting>Cada noche se guarda una copia.</RichTooltipSupporting>
+                <RichTooltipActions><Button variant="text" className="act">Configurar</Button></RichTooltipActions>
+              </RichTooltipContent>
+            </RichTooltip>
+          </div>
+        </Themed>,
+      )
+      for (const sel of ['.mk-plain-tooltip', '.mk-rich-tooltip-subhead', '.mk-rich-tooltip-supporting', '.act']) {
+        expect(textContrast(q(c, sel)), sel).toBeGreaterThanOrEqual(TEXT)
       }
     })
 

@@ -8,7 +8,7 @@
 // están en MenuSlots.tsx.
 //
 // Posicionamiento: CSS anchor positioning, con un respaldo en JavaScript para navegadores que
-// no lo tienen (ADR-0007, position.ts).
+// no lo tienen (ADR-0007), compartido con Tooltip en src/internal/anchor-position.ts.
 
 import {
   Children,
@@ -37,7 +37,7 @@ import { FocusRing } from '../../atoms/FocusRing/FocusRing.tsx'
 import { Ripple } from '../../atoms/Ripple/Ripple.tsx'
 import { StateLayer } from '../../atoms/StateLayer/StateLayer.tsx'
 import { mergeRefs } from '../../internal/merge-refs.ts'
-import { fallbackPosition, observedPlacement, supportsAnchorPositioning } from './position.ts'
+import { followAnchor, placeNextTo } from '../../internal/anchor-position.ts'
 
 /** Elemento que recibe el foco al abrir. */
 type FocusTarget = 'first' | 'last'
@@ -298,22 +298,7 @@ export function MenuContent({
     const menu = contentRef.current
     const trigger = triggerRef.current
     if (!menu || !trigger) return
-    const anchor = trigger.getBoundingClientRect()
-    if (supportsAnchorPositioning()) {
-      const { side, align } = observedPlacement(anchor, menu.getBoundingClientRect())
-      menu.dataset['side'] = side
-      menu.dataset['align'] = align
-      return
-    }
-    const p = fallbackPosition(
-      anchor,
-      { width: menu.offsetWidth, height: menu.offsetHeight },
-      { width: document.documentElement.clientWidth, height: document.documentElement.clientHeight },
-    )
-    menu.style.top = `${p.top}px`
-    menu.style.left = `${p.left}px`
-    menu.dataset['side'] = p.side
-    menu.dataset['align'] = p.align
+    placeNextTo(menu, trigger)
   }, [contentRef, triggerRef])
 
   useLayoutEffect(() => {
@@ -376,17 +361,10 @@ export function MenuContent({
       requestClose('outside')
     }
     document.addEventListener('pointerdown', onPointerDown, true)
-    const follow = !supportsAnchorPositioning()
-    if (follow) {
-      window.addEventListener('scroll', place, true)
-      window.addEventListener('resize', place)
-    }
+    const unfollow = followAnchor(place)
     return () => {
       document.removeEventListener('pointerdown', onPointerDown, true)
-      if (follow) {
-        window.removeEventListener('scroll', place, true)
-        window.removeEventListener('resize', place)
-      }
+      unfollow()
     }
   }, [open, contentRef, triggerRef, requestClose, place])
 

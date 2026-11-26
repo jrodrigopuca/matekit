@@ -30,7 +30,7 @@
    inicial; si no entra, se da vuelta hacia arriba, hacia el otro lado o las dos cosas. El
    ancho es max-content (no fit-content) para que, cerca del borde derecho, el menú desborde y
    el navegador pruebe la alternativa en vez de achicarlo. Sin anchor positioning, Menu.tsx
-   calcula top y left (position.ts).
+   calcula top y left (src/internal/anchor-position.ts, compartido con Tooltip).
 
    Movimiento: entrada con @starting-style; salida con data-closing, que pone Menu.tsx y quita
    al terminar las transiciones, recién ahí oculta el popover (mismo patrón que Dialog). */

@@ -808,6 +808,47 @@ al 38 %, separación de 8 entre partes (`HorizontalElementsPadding`).
 - La animación de entrada de la marca del filter (`AnimatingChipContent`, expandir con FastSpatial):
   la marca aparece sin animar.
 
+## Tooltip
+
+Fuentes (2026-11-26): `tokens/PlainTooltipTokens.kt` y `tokens/RichTooltipTokens.kt` (versión
+41.1.19), `Tooltip.kt` (los tres con último commit `76990c62ac`, 2026-11-24) e
+`internal/BasicTooltip.kt` (commit `5a2d24b9bd`, 2026-11-13), en
+`compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/`. Tercera fuente para
+los conflictos y para el comportamiento con mouse en web: material-components-web,
+`packages/mdc-tooltip/constants.ts` y `foundation.ts` (commit `817002c296`, 2022-12-13), la
+implementación web de Google del tooltip de Material 2; `@material/web` no tiene componente de
+tooltip (ni en `labs`), solo los tokens `_md-comp-plain-tooltip.scss` y `_md-comp-rich-tooltip.scss`.
+
+### Lo que confirma
+
+- Plain: `Inverse Surface`, `Inverse On Surface`, Body Small, radio `CornerExtraSmall` (4), relleno
+  4/8 (`PaddingVertical` Space50, `PaddingHorizontal` Space100), alto mínimo 24.
+- Rich: `Surface Container`, radio `CornerMedium` (12), elevación `Level2`, subtítulo Title Small y
+  texto Body Medium en `On Surface Variant`, acciones Label Large en `Primary` (los botones de texto).
+
+### Conflictos
+
+| Dato | Kit | Compose | Decisión |
+|---|---|---|---|
+| Ancho máximo del plain | Multilínea de 200 | `PlainTooltipTokens.MaxWidth` 320, pero `TooltipDefaults.plainTooltipMaxWidth` 200 (el que usa `PlainTooltip`) | 200: kit, `TooltipDefaults` y MDC (`MAX_WIDTH: 200`) |
+| Ancho del rich | 312 | `richTooltipMaxWidth` 320 (máximo; se achica con el contenido) | Hasta 312 (kit), achicándose con el contenido como Compose |
+| Relleno del rich | 12 arriba, 4 abajo del contenido, separación 4; acciones a 8 del contenido y 8 abajo | Líneas de base: 28 al subtítulo, 24 al texto; 16 debajo del texto; acciones de 36 de alto mínimo con 8 abajo | Kit con acciones; sin acciones (el kit no lo dibuja), 16 debajo del texto como Compose |
+| Alto máximo del plain | Sin dato | `MaxHeight` 56, que `PlainTooltip` no aplica | No se aplica: recortaría el único contenido |
+
+### Comportamiento (Compose y web)
+
+| Aspecto | Compose | matekit | Motivo |
+|---|---|---|---|
+| Mouse | Aparece al entrar y se va al salir, sin demora (`PointerEventType.Enter`/`Exit`) | 500 ms para aparecer y 600 ms para irse (MDC `SHOW_DELAY_MS`, `HIDE_DELAY_MS`); el siguiente aparece al instante si hay uno visible | Sin demora, cruzar una barra de iconos abre un tooltip por botón; la demora de salida deja pasar el puntero al tooltip (WCAG 1.4.13) |
+| Foco de teclado | Aparece enseguida y se va a los 1500 ms (`TooltipDuration`, no persistente) | Aparece enseguida y queda mientras dure el foco | WCAG 1.4.13 (persistente); APG |
+| Táctil | Pulsación larga (la del sistema), 1500 ms; consume el "up" | Pulsación larga de 500 ms (MDC), 1500 ms después de soltar, sin menú contextual ni clic | Igual que Compose; el umbral, de MDC |
+| Escape | Cierra (`isEscape`) | Cierra sin mover el foco; no vuelve hasta salir y entrar o reenfocar | APG, WCAG 1.4.13 |
+| Uno a la vez | `GlobalMutatorMutex` | Coordinador de módulo; un rich con acciones abierto no lo cierra un tooltip pasajero | Igual |
+| Persistente con acción | `isPersistent`, `focusable` forzado con acción para accesibilidad; se abre también con el mouse | Diálogo no modal que se abre con un clic (ADR-0021) | APG: un tooltip no puede tener interactivos |
+| Posición | `TooltipAnchorPosition.Above`: centrado arriba, abajo si no entra, dentro de la ventana; 4 de separación (`SpacingBetweenTooltipAndAnchor`, `GapTrigger`) | Igual, con CSS anchor positioning | — |
+| Animación | Escala 0,8 → 1 (FastSpatial) y opacidad (FastEffects), desde el centro | Igual; con movimiento reducido, solo opacidad | — |
+| Flecha | Opcional (`caretShape`) | Sin flecha | El kit no la trae |
+
 ## No revisado
 
 La tipografía (`TypeScaleTokens.kt`, descargado pero sin comparar).
