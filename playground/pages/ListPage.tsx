@@ -349,7 +349,8 @@ export function ListPage() {
 
       <section className="pg-section">
         <h2>Anchos: 200, 360 y 800</h2>
-        <div style={{ display: 'grid', gap: 24 }}>
+        {/* Anchos fijos a propósito: en una pantalla angosta se desplazan acá adentro. */}
+        <div style={{ display: 'grid', gap: 24, overflowX: 'auto' }}>
           {[200, 360, 800].map((w) => (
             <Panel key={w} width={w} title={`${w} px`}>
               <List variant="segmented" aria-label={`Lista de ${w}`}>

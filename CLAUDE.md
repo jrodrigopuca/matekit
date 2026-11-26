@@ -217,8 +217,13 @@ No llamar al conector de Figma salvo que falte un dato imprescindible: tiene lí
 ## Playground
 
 Cada componente suma `playground/pages/NombrePage.tsx` (controles interactivos, matriz de
-estados) y una entrada en `playground/App.tsx`. Revisarlo en tema claro y oscuro (la cabecera
-también elige paleta y nivel de contraste).
+estados) y una entrada en `PAGES` de `playground/App.tsx` con su id de URL (`#id`, no cambiarlo
+después: lo usan capturas y notas), `label` y `group`, la capa del componente en `src/` (`atoms`,
+`molecules`, `organisms`; `foundations` para disposición y tokens, `examples`). La navegación
+(`playground/PageNav.tsx`) se arma sola desde ahí, en el orden de `PAGES` dentro de cada grupo
+(alfabético). Revisarlo en tema claro y oscuro (la cabecera también elige paleta y nivel de
+contraste) y a 320 px sin desborde horizontal: una matriz ancha a propósito va en `.pg-grid` (o
+con `overflow-x: auto` propio), que se desplaza dentro de su contenedor y no la página.
 
 Para revisar visualmente, usar el playground que el autor suele tener abierto en
 `http://localhost:5175` (recarga en caliente): comprobar con

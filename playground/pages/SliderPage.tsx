@@ -129,7 +129,7 @@ export function SliderPage() {
 
       <section className="pg-section">
         <h2>Vertical</h2>
-        <div className="pg-stage" style={{ display: 'flex', gap: 48, padding: 32, alignItems: 'center' }}>
+        <div className="pg-stage" style={{ display: 'flex', flexWrap: 'wrap', gap: 48, padding: 32, alignItems: 'center' }}>
           {SIZES.map((s) => (
             <Slider key={s} size={s} orientation="vertical" defaultValue={60} aria-label={`Vertical ${s}`} />
           ))}
