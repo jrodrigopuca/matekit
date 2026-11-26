@@ -92,3 +92,22 @@ export {
   type CardSubheadProps,
   type CardVariant,
 } from './Card/Card.tsx'
+export { AssistChip, type AssistChipProps } from './Chip/AssistChip.tsx'
+export { SuggestionChip, type SuggestionChipProps } from './Chip/SuggestionChip.tsx'
+export { FilterChip, type FilterChipProps } from './Chip/FilterChip.tsx'
+export { InputChip, type InputChipProps, type InputChipRemoveEvent } from './Chip/InputChip.tsx'
+export {
+  ChipAvatar,
+  ChipLabel,
+  type ChipAvatarProps,
+  type ChipLabelProps,
+  type ChipVariant,
+} from './Chip/chip-content.tsx'
+export {
+  ChipGroup,
+  useChipGroup,
+  type ChipGroupLayout,
+  type ChipGroupProps,
+  type ChipGroupSelectionMode,
+  type ChipGroupState,
+} from './Chip/ChipGroup.tsx'

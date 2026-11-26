@@ -6,6 +6,12 @@
 import type { ReactNode } from 'react'
 import { describe, expect, test } from 'vitest'
 import {
+  AssistChip,
+  ChipAvatar,
+  FilterChip,
+  InputChip,
+  SuggestionChip,
+  ArrowDropDownIcon,
   Badge,
   Button,
   HomeIcon,
@@ -126,6 +132,40 @@ for (const scheme of SCHEMES) {
       expect(c.querySelectorAll('a.mk-button')).toHaveLength(5)
       for (const b of c.querySelectorAll<HTMLElement>('.mk-button')) {
         expect(textContrast(b), `${b.textContent} (${b.dataset['variant']})`).toBeGreaterThanOrEqual(TEXT)
+      }
+    })
+
+    // Chips: texto a 4,5:1 e iconos (inicio, marca, final y quitar) a 3:1 sobre el contenedor de
+    // cada tipo y estilo, en reposo y seleccionado; el anillo de foco a 3:1 sobre la página. El
+    // borde del outlined (outline-variant) no se mide: no identifica el control, lo identifica su
+    // texto, que es el nombre (WCAG 1.4.11 pide 3:1 a lo necesario para identificarlo), y Material
+    // lo quiere tenue, como el del Button outlined y la Card. El seleccionado del filter se
+    // distingue por la marca, que sí se mide.
+    test('Chips: texto e iconos de cada tipo y estilo, en reposo y seleccionado, y anillo de foco', async () => {
+      const c = await render(
+        <Themed scheme={scheme}>
+          {(['outlined', 'elevated'] as const).flatMap((v) => [
+            <AssistChip key={`as-${v}`} className={`as-${v}`} variant={v}><StarIcon />Asistir</AssistChip>,
+            <SuggestionChip key={`su-${v}`} className={`su-${v}`} variant={v}><StarIcon />Sugerir</SuggestionChip>,
+            <SuggestionChip key={`sus-${v}`} className={`sus-${v}`} variant={v} selected><StarIcon />Elegida</SuggestionChip>,
+            <FilterChip key={`fi-${v}`} className={`fi-${v}`} variant={v}><StarIcon />Filtro<ArrowDropDownIcon /></FilterChip>,
+            <FilterChip key={`fis-${v}`} className={`fis-${v}`} variant={v} selected>Filtro<ArrowDropDownIcon /></FilterChip>,
+          ])}
+          <InputChip className="in" onRemove={() => {}}><StarIcon />Entrada</InputChip>
+          <InputChip className="ins" selected onRemove={() => {}}><StarIcon />Elegida</InputChip>
+          <InputChip className="ina" selected onRemove={() => {}}><ChipAvatar>A</ChipAvatar>Ana</InputChip>
+        </Themed>,
+      )
+      const chips = [...c.querySelectorAll<HTMLElement>('.mk-chip, .mk-input-chip')]
+      expect(chips).toHaveLength(13)
+      for (const chip of chips) {
+        const name = chip.className
+        const bg = effectiveBackground(chip)
+        expect(textContrast(q(chip, '.mk-chip-label')), `${name} texto`).toBeGreaterThanOrEqual(TEXT)
+        for (const icon of chip.querySelectorAll('.mk-chip-leading, .mk-chip-trailing, .mk-input-chip-remove, .mk-chip-avatar[data-checked]')) {
+          expect(contrastRatio(cs(icon).color, bg), `${name} ${icon.className}`).toBeGreaterThanOrEqual(NON_TEXT)
+        }
+        expect(contrastRatio(cs(q(chip, '.mk-focus-ring')).outlineColor, effectiveBackground(q(c, 'main'))), `${name} anillo`).toBeGreaterThanOrEqual(NON_TEXT)
       }
     })
 

@@ -14,6 +14,7 @@ import paletteTokens from '../tokens/palettes.json' with { type: 'json' }
 import { ButtonPage } from './pages/ButtonPage.tsx'
 import { CardPage } from './pages/CardPage.tsx'
 import { CheckboxPage } from './pages/CheckboxPage.tsx'
+import { ChipsPage } from './pages/ChipsPage.tsx'
 import { DialogPage } from './pages/DialogPage.tsx'
 import { DividerPage } from './pages/DividerPage.tsx'
 import { ExamplesPage } from './pages/ExamplesPage.tsx'
@@ -70,6 +71,7 @@ const PAGES = {
   button: { label: 'Button', group: 'molecules', Page: ButtonPage },
   card: { label: 'Card', group: 'molecules', Page: CardPage },
   checkbox: { label: 'Checkbox', group: 'molecules', Page: CheckboxPage },
+  chips: { label: 'Chips', group: 'molecules', Page: ChipsPage },
   fab: { label: 'FAB', group: 'molecules', Page: FabPage },
   'icon-button': { label: 'IconButton', group: 'molecules', Page: IconButtonPage },
   'loading-indicator': { label: 'LoadingIndicator', group: 'molecules', Page: LoadingIndicatorPage },

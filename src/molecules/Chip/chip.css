@@ -1,0 +1,390 @@
+/* Chips de Material 3: assist, filter, input y suggestion, y el grupo (ADR-0019).
+   Medidas y colores: kit de Figma (docs/research/05-medidas.md § Chips). Lo que el kit no trae,
+   de Jetpack Compose (tokens/AssistChipTokens.kt, FilterChipTokens.kt, InputChipTokens.kt,
+   SuggestionChipTokens.kt y Chip.kt, androidx-main en el commit 0d8bdbdb7f, leídos el
+   2026-11-25): elevación del elevated con el puntero (2), con foco y presionado (1); color del
+   icono de inicio del input seleccionado (Primary); área táctil de 48 (Surface con onClick aplica
+   minimumInteractiveComponentSize). Conflictos en docs/research/07-jetpack-compose.md § Chips.
+
+   Estructura:
+   - .mk-chip: el <button>, <a> o el de render de assist, filter y suggestion.
+   - .mk-input-chip: un <span> que dibuja el chip, con dos acciones adentro
+     (.mk-input-chip-primary y .mk-input-chip-remove). Los átomos de la acción principal se
+     ubican contra el contenedor (la acción es position: static), así la capa y el anillo cubren
+     el chip entero; los del botón de quitar son un círculo alrededor de la X, como @material/web.
+   - .mk-chip-group: el toolbar, sobre Stack (fila con gap 8, con o sin envoltura).
+
+   Rellenos por configuración (kit), según los data-* que arma chip-content.tsx:
+   solo texto 16/16; con icono al inicio 8/16; con icono al final 16/8; input: solo texto 12,
+   con icono 8, con avatar 4 al inicio, y el botón de quitar 8 + 18 + 8 al final. Separación de 8
+   entre partes. Alto 32 (6 + 20 + 6 con Label Large). */
+
+@layer matekit.components {
+  :is(.mk-chip, .mk-input-chip) {
+    --_height: 32px;
+    --_radius: var(--md-sys-shape-corner-small);
+    --_container: transparent;
+    --_outline: var(--md-sys-color-outline-variant);
+    --_outline-width: 1px;
+    --_elevation: var(--md-sys-elevation-level0);
+    --_elevation-hover: var(--md-sys-elevation-level0);
+    --_label: var(--md-sys-color-on-surface-variant);
+    --_leading: var(--md-sys-color-primary);
+    --_trailing: var(--md-sys-color-on-surface-variant);
+    --_layer: var(--md-sys-color-on-surface-variant);
+    --_pad-start: var(--md-sys-space-200);
+    --_pad-end: var(--md-sys-space-200);
+    --_disabled-content: color-mix(
+      in srgb,
+      var(--md-sys-color-on-surface) calc(var(--md-sys-state-disabled-content-opacity) * 100%),
+      transparent
+    );
+
+    --mk-icon-size: 18px;
+    --mk-state-layer-color: var(--_layer);
+    --mk-ripple-color: var(--_layer);
+
+    display: inline-flex;
+    align-items: center;
+    box-sizing: border-box;
+    block-size: var(--_height);
+    /* Nunca más ancho que su contenedor: la etiqueta se recorta con puntos suspensivos. Se puede
+       acotar más con --mk-chip-max-width. */
+    max-inline-size: min(100%, var(--mk-chip-max-width, 100%));
+    min-inline-size: 0;
+    margin: 0;
+    border: none;
+    border-radius: var(--_radius);
+    background-color: var(--_container);
+    box-shadow: var(--_elevation);
+    /* Borde interior que sigue el radio sin cambiar el tamaño, como el Button. */
+    outline: var(--_outline-width) solid var(--_outline);
+    outline-offset: calc(-1 * var(--_outline-width));
+    color: var(--_label);
+    font-family: var(--md-sys-typescale-label-large-font);
+    font-size: var(--md-sys-typescale-label-large-size);
+    line-height: var(--md-sys-typescale-label-large-line-height);
+    font-weight: var(--md-sys-typescale-label-large-weight);
+    letter-spacing: var(--md-sys-typescale-label-large-tracking);
+    white-space: nowrap;
+    vertical-align: middle;
+    text-decoration: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transition:
+      background-color var(--md-sys-motion-spring-default-effects-duration)
+        var(--md-sys-motion-spring-default-effects-easing),
+      color var(--md-sys-motion-spring-default-effects-duration)
+        var(--md-sys-motion-spring-default-effects-easing),
+      box-shadow var(--md-sys-motion-spring-default-effects-duration)
+        var(--md-sys-motion-spring-default-effects-easing);
+  }
+
+  .mk-chip {
+    gap: var(--md-sys-space-100);
+    padding-block: 0;
+    padding-inline: var(--_pad-start) var(--_pad-end);
+    cursor: pointer;
+  }
+  .mk-chip[data-leading] {
+    --_pad-start: var(--md-sys-space-100);
+  }
+  .mk-chip[data-trailing] {
+    --_pad-end: var(--md-sys-space-100);
+  }
+
+  /* Área táctil de 48 de alto, sin cambiar lo visible (como el Button). */
+  :is(.mk-chip, .mk-input-chip-primary, .mk-input-chip-remove)::before {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    top: 50%;
+    height: max(100%, 48px);
+    transform: translateY(-50%);
+  }
+
+  /* --- Partes --- */
+  .mk-chip-label {
+    min-inline-size: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  :is(.mk-chip-leading, .mk-chip-trailing) {
+    display: inline-flex;
+    flex-shrink: 0;
+    gap: var(--md-sys-space-100);
+  }
+  .mk-chip-leading {
+    color: var(--_leading);
+  }
+  .mk-chip-trailing {
+    color: var(--_trailing);
+  }
+  :is(.mk-chip-leading, .mk-chip-trailing, .mk-chip-avatar) > svg {
+    inline-size: var(--mk-icon-size);
+    block-size: var(--mk-icon-size);
+    fill: currentColor;
+  }
+  .mk-chip-avatar {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    inline-size: 24px;
+    block-size: 24px;
+    border-radius: var(--md-sys-shape-corner-full);
+    /* Para iniciales (el kit solo muestra una imagen, que tapa el fondo): Primary Container, como
+       un avatar de Material. Seleccionado, sin fondo: la marca va sobre el chip. */
+    background-color: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+    font-family: var(--md-sys-typescale-label-small-font);
+    font-size: var(--md-sys-typescale-label-small-size);
+    line-height: var(--md-sys-typescale-label-small-line-height);
+    font-weight: var(--md-sys-typescale-label-small-weight);
+    letter-spacing: var(--md-sys-typescale-label-small-tracking);
+  }
+  .mk-chip-avatar > img {
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+  }
+
+  /* --- Input chip: contenedor y dos acciones --- */
+  .mk-input-chip {
+    position: relative;
+    isolation: isolate;
+  }
+  .mk-input-chip[data-avatar] {
+    /* Redondo con avatar (kit y @material/web, _input-chip.scss; Compose lo deja en 8). */
+    --_radius: calc(var(--_height) / 2);
+  }
+  .mk-input-chip-primary {
+    /* static: la capa, la onda y el anillo se ubican contra el contenedor. */
+    position: static;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--md-sys-space-100);
+    box-sizing: border-box;
+    block-size: 100%;
+    min-inline-size: 0;
+    margin: 0;
+    padding-block: 0;
+    padding-inline: var(--md-sys-space-150) 0;
+    border: none;
+    border-radius: inherit;
+    outline: none;
+    background: none;
+    color: inherit;
+    font: inherit;
+    letter-spacing: inherit;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  span.mk-input-chip-primary {
+    cursor: default;
+  }
+  .mk-input-chip[data-leading] > .mk-input-chip-primary {
+    padding-inline-start: var(--md-sys-space-100);
+  }
+  .mk-input-chip[data-avatar] > .mk-input-chip-primary {
+    padding-inline-start: var(--md-sys-space-50);
+  }
+  .mk-input-chip-remove {
+    position: relative;
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    block-size: 100%;
+    margin: 0;
+    padding-block: 0;
+    padding-inline: var(--md-sys-space-100);
+    border: none;
+    border-start-end-radius: inherit;
+    border-end-end-radius: inherit;
+    outline: none;
+    background: none;
+    color: var(--_trailing);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  /* Capa, onda y anillo del botón de quitar: un círculo de 24 alrededor de la X. */
+  .mk-input-chip-remove > :is(.mk-state-layer, .mk-ripple, .mk-focus-ring) {
+    inset: auto;
+    /* Centrado sobre el icono de 18: 8 de relleno menos 3. */
+    inset-inline-start: calc(var(--md-sys-space-100) - 3px);
+    top: calc(50% - 12px);
+    inline-size: 24px;
+    block-size: 24px;
+    border-radius: var(--md-sys-shape-corner-full);
+  }
+  .mk-input-chip-remove > .mk-focus-ring {
+    --mk-focus-ring-offset: 0px;
+  }
+  .mk-input-chip-remove > svg,
+  .mk-input-chip-remove > .mk-icon {
+    inline-size: var(--mk-icon-size);
+    block-size: var(--mk-icon-size);
+  }
+
+  /* --- Estilos --- */
+  .mk-chip[data-variant='elevated'] {
+    --_container: var(--md-sys-color-surface-container-low);
+    --_outline: transparent;
+    --_elevation: var(--md-sys-elevation-level1);
+    --_elevation-hover: var(--md-sys-elevation-level2);
+  }
+  .mk-chip[data-chip='assist'] {
+    --_label: var(--md-sys-color-on-surface);
+  }
+
+  /* Seleccionado (filter, input y suggestion toggle): Secondary Container, sin borde. */
+  :is(.mk-chip[aria-pressed='true'], .mk-input-chip[data-selected]) {
+    --_container: var(--md-sys-color-secondary-container);
+    --_outline: transparent;
+    --_label: var(--md-sys-color-on-secondary-container);
+    --_leading: var(--md-sys-color-on-secondary-container);
+    --_trailing: var(--md-sys-color-on-secondary-container);
+    --_layer: var(--md-sys-color-on-secondary-container);
+  }
+  /* El icono de inicio seleccionado va en On Secondary Container en todos los tipos, no en el
+     Primary que piden el kit (suggestion) y Compose (input, InputChipTokens.SelectedLeadingIconColor):
+     Primary sobre Secondary Container queda entre 1,4 y 2,5:1 en las 24 combinaciones de paleta,
+     nivel y tema (contrast.test.tsx), y ADR-0008 solo garantiza on-X sobre X. Ver
+     docs/research/07-jetpack-compose.md § Chips. */
+  .mk-chip-avatar[data-checked] {
+    background-color: transparent;
+    color: var(--md-sys-color-on-secondary-container);
+  }
+  .mk-chip-check {
+    color: var(--md-sys-color-on-secondary-container);
+  }
+  /* El filter outlined seleccionado sube a nivel 1 con el puntero (kit; Compose
+     FlatSelectedHoverContainerElevation). */
+  .mk-chip[data-chip='filter'][data-variant='outlined'][aria-pressed='true'] {
+    --_elevation-hover: var(--md-sys-elevation-level1);
+  }
+
+  /* --- Estados --- */
+  @media (hover: hover) {
+    .mk-chip:hover:not(:disabled) {
+      --_elevation: var(--_elevation-hover);
+    }
+    /* Outlined sin seleccionar: con el puntero o el foco, fondo Surface (kit). */
+    .mk-chip[data-variant='outlined']:not([aria-pressed='true']):hover:not(:disabled),
+    .mk-input-chip:not([data-selected], [data-disabled]):hover {
+      --_container: var(--md-sys-color-surface);
+    }
+    .mk-input-chip:not([data-disabled]):hover > .mk-input-chip-primary > .mk-state-layer {
+      opacity: var(--md-sys-state-hover-state-layer-opacity);
+    }
+  }
+  .mk-chip[data-variant='outlined']:not([aria-pressed='true']):focus-visible,
+  .mk-input-chip:not([data-selected]):has(> :focus-visible) {
+    --_container: var(--md-sys-color-surface);
+  }
+  /* Con el foco en el botón de quitar, la capa del chip no se enciende (solo su círculo). */
+  .mk-input-chip:has(> .mk-input-chip-remove:hover) > .mk-input-chip-primary > .mk-state-layer {
+    opacity: 0;
+  }
+  /* Presionado: la capa queda en 8 % y la onda suma su 10 %, como el Button. */
+  :is(.mk-chip, .mk-input-chip-primary, .mk-input-chip-remove):active > .mk-state-layer {
+    opacity: var(--md-sys-state-hover-state-layer-opacity);
+  }
+
+  /* Deshabilitado: borde On Surface y fondo On Surface Variant al 10 %, contenido On Surface al
+     38 % (kit). [data-variant] sube la especificidad a la de las reglas de seleccionado. */
+  :is(.mk-chip[data-variant]:disabled, .mk-input-chip[data-disabled]) {
+    --_outline: color-mix(
+      in srgb,
+      var(--md-sys-color-on-surface) calc(var(--md-sys-state-disabled-container-opacity) * 100%),
+      transparent
+    );
+    --_container: transparent;
+    --_elevation: var(--md-sys-elevation-level0);
+    --_label: var(--_disabled-content);
+    --_leading: var(--_disabled-content);
+    --_trailing: var(--_disabled-content);
+    cursor: default;
+  }
+  :is(.mk-chip[data-variant='elevated']:disabled, .mk-chip[aria-pressed='true']:disabled, .mk-input-chip[data-selected][data-disabled]) {
+    --_outline: transparent;
+    --_container: color-mix(
+      in srgb,
+      var(--md-sys-color-on-surface-variant) calc(var(--md-sys-state-disabled-container-opacity) * 100%),
+      transparent
+    );
+  }
+  :is(.mk-chip-check, .mk-chip-avatar[data-checked]):is(:disabled *, [data-disabled] *) {
+    color: var(--_disabled-content);
+  }
+  /* Compose InputChipTokens.DisabledAvatarOpacity (0,38). */
+  .mk-input-chip[data-disabled] .mk-chip-avatar:not([data-checked]) {
+    opacity: var(--md-sys-state-disabled-content-opacity);
+  }
+  .mk-input-chip[data-disabled] :is(.mk-input-chip-primary, .mk-input-chip-remove) {
+    cursor: default;
+  }
+
+  /* --- Grupo --- */
+  .mk-chip-group {
+    /* Kit: 8 entre chips y 16 entre filas. */
+    row-gap: var(--md-sys-space-200);
+    min-inline-size: 0;
+  }
+  .mk-chip-group[data-layout='scroll'] {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    /* 8 arriba y abajo (kit). A los costados también 8: el anillo de foco (2 + 3 por fuera del
+       chip) no se corta contra el borde del desplazamiento, y el chip enfocado se trae a la vista
+       con ese margen. La barra, fina, se dibuja en el relleno de abajo sin tapar los chips. */
+    padding: var(--md-sys-space-100);
+    scroll-padding-inline: var(--md-sys-space-100);
+    scrollbar-width: thin;
+  }
+  .mk-chip-group[data-layout='scroll'] > * {
+    flex-shrink: 0;
+  }
+
+  /* --- Alto contraste (forced-colors) ---
+     El navegador quita fondos y sombras: la forma la da el contorno, siempre en ButtonText
+     (también en el elevated y el seleccionado, que normalmente no lo tienen). Seleccionado en
+     Highlight/HighlightText; deshabilitado en GrayText sin opacidad. Como enlace se ve como
+     botón (ButtonText, no LinkText), como el Button. */
+  @media (forced-colors: active) {
+    :is(.mk-chip, .mk-input-chip) {
+      outline-color: ButtonText;
+    }
+    .mk-chip:any-link {
+      color: ButtonText;
+    }
+    :is(.mk-chip[aria-pressed='true'], .mk-input-chip[data-selected]) {
+      forced-color-adjust: none;
+      background-color: Highlight;
+      color: HighlightText;
+      outline-color: Highlight;
+      --_leading: HighlightText;
+      --_trailing: HighlightText;
+    }
+    :is(.mk-chip[aria-pressed='true'], .mk-input-chip[data-selected]) :is(.mk-chip-check, .mk-chip-avatar) {
+      color: HighlightText;
+    }
+    /* [data-variant] y [data-chip]: la especificidad de la regla de deshabilitado de arriba (0,3,0),
+       que si no le gana en --_leading y --_trailing. */
+    :is(.mk-chip[data-variant]:disabled, .mk-input-chip[data-chip][data-disabled]) {
+      forced-color-adjust: none;
+      background-color: Canvas;
+      color: GrayText;
+      outline-color: GrayText;
+      --_leading: GrayText;
+      --_trailing: GrayText;
+    }
+    :is(.mk-chip[data-variant]:disabled, .mk-input-chip[data-chip][data-disabled]) :is(.mk-chip-check, .mk-chip-avatar) {
+      color: GrayText;
+    }
+  }
+}

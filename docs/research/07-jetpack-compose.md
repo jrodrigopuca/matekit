@@ -755,6 +755,59 @@ contenedor `CornerLarge`, separación Space25 (2) y elementos `Surface`; acorde�
 | El control final mide 20 dentro de la fila: el área táctil la da la fila | `TrailingDecorator` (`LocalMinimumInteractiveComponentSize` menos el relleno) | El control se mete en el relleno (casilla a 17 del borde) |
 | Alineación por defecto: centrada en los cortos y arriba en los altos | `ListItemDefaults.verticalAlignment()` | No se copia (CSS no conoce el alto final): `align="top"` explícito |
 
+## Chips
+
+Revisión del 2026-11-25. Archivos (en `compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/`
+de `androidx-main`, commit `0d8bdbdb7f`): `tokens/AssistChipTokens.kt`, `tokens/FilterChipTokens.kt`
+(último cambio `76990c62ac`, 2026-11-24), `tokens/InputChipTokens.kt`, `tokens/SuggestionChipTokens.kt`,
+`tokens/ChipsTokens.kt` y `Chip.kt` (último cambio `12f682dfc6`, 2026-09-14). Uso y accesibilidad
+web: `@material/web` `docs/components/chip.md` y `chips/internal/{chip-set,multi-action-chip,input-chip,filter-chip,trailing-icons}.ts`
+(commit `875a8b6b88`). Teclado de quitar: React Aria `packages/react-aria/src/tag/useTag.ts` y
+`useTagGroup.ts` (commit `aadf9e27c0`).
+
+### Lo que confirma
+
+Alto 32, `CornerSmall` (8), Label Large, iconos de 18 y avatar de 24, borde de 1 `OutlineVariant`,
+elevated `SurfaceContainerLow` con nivel 1, seleccionado `SecondaryContainer` sin borde con texto y
+marca `OnSecondaryContainer`, texto del assist `OnSurface` y de los otros `OnSurfaceVariant`, icono
+final `OnSurfaceVariant`, filter outlined seleccionado con el puntero a nivel 1
+(`FlatSelectedHoverContainerElevation`), arrastrado a nivel 4, contenido deshabilitado `OnSurface`
+al 38 %, separación de 8 entre partes (`HorizontalElementsPadding`).
+
+### Conflictos
+
+| Dato | Kit | Compose | matekit |
+|---|---|---|---|
+| Forma del input chip con avatar | Redondo | `ContainerShape` `CornerSmall` (solo el avatar es `CornerFull`) | **Kit.** Tercera fuente: `@material/web` `chips/internal/_input-chip.scss` usa la mitad del alto del contenedor con `avatar`. |
+| Icono de inicio del input sin seleccionar | `Primary` | `OnSurfaceVariant` (`UnselectedLeadingIconColor`; con hover, foco y presionado pasa a `Primary`) | Kit |
+| Icono de inicio seleccionado del suggestion (kit) y del input (Compose) | `Primary` (suggestion) | `Primary` (input, `SelectedLeadingIconColor`) | **`OnSecondaryContainer`** en los dos: `Primary` sobre `SecondaryContainer` mide entre 1,4 y 2,5:1 en las 24 combinaciones de paleta, nivel y tema (`contrast.test.tsx`), y ADR-0008 solo garantiza on-X sobre X. |
+| Deshabilitado: borde del outlined y fondo del elevated y del seleccionado | `OnSurface` al 10 % y `OnSurfaceVariant` al 10 % | `OnSurface` al 12 % los dos | Kit (con `--md-sys-state-disabled-container-opacity`, como Button y List) |
+| Fondo del outlined con el puntero o el foco | `Surface` | Sin fondo (solo la capa) | Kit |
+| Borde del outlined con foco | Sin cambio | `FlatFocusOutlineColor` (`OnSurface` en el assist, `OnSurfaceVariant` en los otros) | Kit (el foco lo marca el anillo) |
+| Rellenos | 16/16 texto, 8/16 con icono, 16/8 con icono final; input 12, 8 o 4 al inicio y 8 al final | `ContentPadding` de 8 a cada lado más `HorizontalSpacing` 8 entre partes; input 4 u 8 al inicio (`contentPadding`) | Kit (los valores del kit son los resultantes; Compose los arma con relleno de etiqueta) |
+| Suggestion seleccionado | Existe | No existe | Kit: `selected` en el `SuggestionChip` (toggle con `aria-pressed`) |
+
+### Datos nuevos (el kit no los trae)
+
+| Dato | Fuente | Uso |
+|---|---|---|
+| Elevated: nivel 2 con el puntero, 1 con foco y presionado, 0 deshabilitado | `Elevated*ContainerElevation` (assist, filter y suggestion) | `--_elevation-hover` |
+| Área táctil de 48 | `Surface(onClick)` aplica `minimumInteractiveComponentSize` | `::before` de 48 de alto en el chip y en el botón de quitar |
+| Avatar deshabilitado al 38 % | `DisabledAvatarOpacity` | Opacidad del `ChipAvatar` |
+| Ancho máximo de 1000 dp para animar dentro de un desplazamiento | `maxChipWidth` | No se copia: en web, `max-inline-size: 100%` del contenedor y recorte de la etiqueta |
+
+### No aplicado
+
+- **`ChipsTokens.kt`** (Expressive, sobrecargas experimentales con `shapes: ChipShapes`): forma por
+  estado (reposo `CornerMedium` 12, seleccionado `CornerFull`, presionado `CornerSmall`), separación
+  de 4 (`GapHorizontal` = Space50), rellenos de 16 en el filter y 12 en el input, borde deshabilitado
+  al 10 %. El kit de Expressive dibuja todos los chips con radio 8 fijo y rellenos distintos, así que
+  se sigue el kit. Si el kit adopta esa forma, va como una variante nueva.
+- **Arrastrado** (nivel 4, capa al 16 %): sin arrastre en esta entrega; las variables quedan (la capa
+  ya responde a `[data-dragged]`).
+- La animación de entrada de la marca del filter (`AnimatingChipContent`, expandir con FastSpatial):
+  la marca aparece sin animar.
+
 ## No revisado
 
 La tipografía (`TypeScaleTokens.kt`, descargado pero sin comparar).

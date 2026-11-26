@@ -5,6 +5,12 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { commands, server, userEvent } from 'vitest/browser'
 import {
+  AssistChip,
+  ChipAvatar,
+  ChipGroup,
+  FilterChip,
+  InputChip,
+  SuggestionChip,
   Badge,
   Button,
   HomeIcon,
@@ -840,5 +846,65 @@ describe('List', () => {
     const line = getComputedStyle(q(c, '.other'), '::before')
     expect(line.borderTopStyle).toBe('solid')
     expect(line.borderTopColor).toBe(systemColor('CanvasText'))
+  })
+})
+
+describe('Chips', () => {
+  test('todos los estilos tienen contorno ButtonText de 1 px, también el elevated y el seleccionado', async () => {
+    const c = await render(
+      <ChipGroup aria-label="Chips">
+        <AssistChip className="as">Asistir</AssistChip>
+        <AssistChip className="el" variant="elevated">Elevado</AssistChip>
+        <SuggestionChip className="su">Sugerir</SuggestionChip>
+        <FilterChip className="fi">Filtro</FilterChip>
+        <InputChip className="in" onRemove={() => {}}><ChipAvatar>A</ChipAvatar>Ana</InputChip>
+      </ChipGroup>,
+    )
+    for (const sel of ['.as', '.el', '.su', '.fi', '.in']) {
+      const s = style(q(c, sel))
+      expect(s.outlineStyle, sel).toBe('solid')
+      expect(s.outlineWidth, sel).toBe('1px')
+      expect(s.outlineColor, sel).toBe(systemColor('ButtonText'))
+      if (autoForced) expect(s.boxShadow, sel).toBe('none')
+    }
+  })
+
+  test('seleccionado en Highlight con texto, marca y quitar en HighlightText', async () => {
+    const c = await render(
+      <div>
+        <FilterChip className="fi" selected>Filtro</FilterChip>
+        <SuggestionChip className="su" selected>Sí</SuggestionChip>
+        <InputChip className="in" selected onRemove={() => {}}>Ana</InputChip>
+      </div>,
+    )
+    for (const sel of ['.fi', '.su', '.in']) {
+      expect(style(q(c, sel)).backgroundColor, sel).toBe(systemColor('Highlight'))
+      expect(style(q(c, sel)).outlineColor, sel).toBe(systemColor('Highlight'))
+      expect(style(q(c, sel)).color, sel).toBe(systemColor('HighlightText'))
+    }
+    expect(style(q(c, '.fi .mk-chip-check')).color).toBe(systemColor('HighlightText'))
+    expect(style(q(c, '.in .mk-input-chip-remove')).color).toBe(systemColor('HighlightText'))
+  })
+
+  test('como enlace se ve como chip: contenido ButtonText, no LinkText', async () => {
+    const c = await render(<AssistChip href="#x" className="a">Ver mapa</AssistChip>)
+    expect(style(q(c, '.a')).color).toBe(systemColor('ButtonText'))
+    expect(style(q(c, '.a')).outlineColor).toBe(systemColor('ButtonText'))
+  })
+
+  test('deshabilitado en GrayText, también seleccionado y el quitar del input', async () => {
+    const c = await render(
+      <div>
+        <AssistChip className="as" disabled>A</AssistChip>
+        <FilterChip className="fi" selected disabled>F</FilterChip>
+        <InputChip className="in" disabled onRemove={() => {}}>I</InputChip>
+      </div>,
+    )
+    for (const sel of ['.as', '.fi', '.in']) {
+      expect(style(q(c, sel)).color, sel).toBe(systemColor('GrayText'))
+      expect(style(q(c, sel)).outlineColor, sel).toBe(systemColor('GrayText'))
+    }
+    expect(style(q(c, '.fi .mk-chip-check')).color).toBe(systemColor('GrayText'))
+    expect(style(q(c, '.in .mk-input-chip-remove')).color).toBe(systemColor('GrayText'))
   })
 })

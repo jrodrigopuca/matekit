@@ -4,6 +4,12 @@
 import type { ReactNode } from 'react'
 import { describe, expect, test } from 'vitest'
 import {
+  AssistChip,
+  ChipAvatar,
+  ChipGroup,
+  FilterChip,
+  InputChip,
+  SuggestionChip,
   AddIcon,
   Badge,
   HomeIcon,
@@ -465,6 +471,29 @@ const GALLERIES: Record<string, ReactNode> = {
           </ListItemDetails>
         </ListItem>
       </List>
+    </>
+  ),
+  // Chips: toolbar con nombre, toggles, enlaces, input con quitar (aria-labelledby) y avatar.
+  Chips: (
+    <>
+      <ChipGroup aria-label="Acciones">
+        <AssistChip><AddIcon />Agendar</AssistChip>
+        <AssistChip variant="elevated" href="#mapa">Ver mapa</AssistChip>
+        <AssistChip disabled>No disponible</AssistChip>
+        <SuggestionChip>Dale</SuggestionChip>
+        <SuggestionChip selected>Me parece bien</SuggestionChip>
+      </ChipGroup>
+      <ChipGroup aria-label="Dieta" selectionMode="multiple" defaultValue={['vegano']} layout="scroll">
+        <FilterChip value="vegano">Vegano</FilterChip>
+        <FilterChip value="sin-tacc" variant="elevated">Sin TACC</FilterChip>
+        <FilterChip value="kosher" disabled>Kosher</FilterChip>
+      </ChipGroup>
+      <ChipGroup aria-label="Destinatarios">
+        <InputChip onRemove={() => {}}><ChipAvatar>A</ChipAvatar>Ana</InputChip>
+        <InputChip selected onRemove={() => {}}><SearchIcon />Búsqueda</InputChip>
+        <InputChip removeOnly onRemove={() => {}}>Etiqueta</InputChip>
+        <InputChip disabled onRemove={() => {}}>Bea</InputChip>
+      </ChipGroup>
     </>
   ),
   // Stack y Group no agregan roles: la semántica la da el elemento de render (lista) o el rol y el

@@ -23,3 +23,4 @@ nueva la reemplaza y la anterior pasa a "superseded by".
 | [0016](0016-escala-de-espaciado-y-cortes-de-ventana.md) | Escala de espaciado como `--md-sys-space-*` y cortes de ventana como datos, no como variables CSS | accepted |
 | [0017](0017-stack-y-group.md) | `Stack` como capa delgada sobre flex y `Group` con esquinas por posición en variables que leen los hijos | accepted |
 | [0018](0018-list-semantica-por-caso-y-partes.md) | List con semántica por caso (contenido, enlaces o botones con un área extendida, selección con el control envolviendo el texto, acordeón con `<details>`), partes de frase y estados derivados de los controles | accepted |
+| [0019](0019-chips-grupo-con-foco-itinerante-seleccion-y-quitado.md) | Chips con un grupo `toolbar` de foco itinerante, selección por contexto como toggles y quitado controlado por el uso, como excepción al ADR-0003 | accepted |
