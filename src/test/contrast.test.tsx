@@ -79,6 +79,10 @@ import {
   RichTooltipSubhead,
   RichTooltipSupporting,
   RichTooltipTrigger,
+  Snackbar,
+  SnackbarAction,
+  SnackbarClose,
+  SnackbarMessage,
 } from '../index.ts'
 import '../tokens/palettes/index.css'
 import { contrastRatio, effectiveBackground, parseColor, textContrast } from './contrast.ts'
@@ -592,6 +596,21 @@ for (const scheme of SCHEMES) {
       for (const sel of ['.mk-plain-tooltip', '.mk-rich-tooltip-subhead', '.mk-rich-tooltip-supporting', '.act']) {
         expect(textContrast(q(c, sel)), sel).toBeGreaterThanOrEqual(TEXT)
       }
+    })
+
+    test('Snackbar: texto y acción sobre Inverse Surface, e icono de cerrar', async () => {
+      const c = await render(
+        <Themed scheme={scheme}>
+          <Snackbar>
+            <SnackbarMessage className="msg">Foto archivada</SnackbarMessage>
+            <SnackbarAction className="act">Deshacer</SnackbarAction>
+            <SnackbarClose className="close" />
+          </Snackbar>
+        </Themed>,
+      )
+      for (const sel of ['.msg', '.act']) expect(textContrast(q(c, sel)), sel).toBeGreaterThanOrEqual(TEXT)
+      const close = q(c, '.close')
+      expect(contrastRatio(cs(q(close, 'svg')).fill, effectiveBackground(close)), 'cerrar').toBeGreaterThanOrEqual(NON_TEXT)
     })
 
     for (const variant of ['standard', 'vibrant'] as const) {

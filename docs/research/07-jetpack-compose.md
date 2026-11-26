@@ -849,6 +849,40 @@ tooltip (ni en `labs`), solo los tokens `_md-comp-plain-tooltip.scss` y `_md-com
 | Animación | Escala 0,8 → 1 (FastSpatial) y opacidad (FastEffects), desde el centro | Igual; con movimiento reducido, solo opacidad | — |
 | Flecha | Opcional (`caretShape`) | Sin flecha | El kit no la trae |
 
+## Snackbar
+
+Fuentes (2026-11-26): `tokens/SnackbarTokens.kt` y `Snackbar.kt` (último commit `76990c62ac`,
+2026-11-24) y `SnackbarHost.kt` (commit `7ac433e44e`, 2026-09-02), en
+`compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/`. Tercera fuente:
+material-components-web, `packages/mdc-snackbar/` (`constants.ts`, `_snackbar-theme.scss` y
+`util.ts`, commit `a246a4439c`), la implementación web de Google del snackbar de Material 2.
+`@material/web` no tiene snackbar (ni en `labs`, revisado el 2026-11-26: badge, card, item,
+navigationbar, navigationdrawer, navigationtab, segmentedbutton).
+
+### Lo que confirma
+
+- `Inverse Surface`, texto Body Medium en `Inverse On Surface`, radio `CornerExtraSmall` (4),
+  elevación `Level3`, alto 48 (`ContainerHeight`) y 68 con dos líneas (`LargeContainerHeight`).
+- Acción Label Large en `Inverse Primary` (también en foco, hover y presionado); icono de cerrar de 24
+  en `Inverse On Surface`.
+- Texto con 14 arriba y abajo (`SnackbarVerticalPadding`) y 16 al inicio (`HorizontalSpacing`); la
+  acción larga debajo del texto, alineada al final, con 4 abajo (`ActionButtonBottomPadding`) y 8 al
+  final sin cerrar (`HorizontalSpacingButtonSide`), como el kit (112 con dos líneas).
+
+### Conflictos y datos nuevos
+
+| Dato | Kit | Compose | Decisión |
+|---|---|---|---|
+| Ancho | 344 (el del ejemplo) | Llena hasta `ContainerMaxWidth` 600, sin mínimo | Ancho del contenido entre 344 (kit y `min-width` de MDC) y 600 (Compose; MDC dice 672). En ventanas compact (< 600), todo el ancho menos los márgenes |
+| Margen con la ventana | Sin dato | `padding(12.dp)` alrededor del snackbar del host | 12 a los lados y abajo (MDC usa 8 en angostas y 24 en anchas) |
+| Separación texto–acción | 4 | Sin separación fija (el texto ocupa lo que sobra) | 4 (kit) |
+| Acción larga | Debajo del texto | `actionOnNewLine`, una prop | Prop `actionOnNewLine` (no se decide por medida) |
+| Tooltip en el cerrar | Sin dato | `TooltipBox` con "Dismiss" sobre el `IconButton` | Sin tooltip: el botón ya tiene nombre, y el Escape del tooltip se llevaría el primer Escape del snackbar (ADR-0022) |
+| Duraciones | Sin dato | `Short` 4000, `Long` 10000, `Indefinite`; por defecto `Indefinite` con acción y `Short` sin ella; Android las alarga con `calculateRecommendedTimeoutMillis` (ajuste del sistema) | Iguales; en web no hay ajuste del sistema: el tiempo se detiene con el puntero, el foco y la pestaña oculta (WCAG 2.2.1). MDC: 5000 por defecto, entre 4000 y 10000 |
+| Animación | Sin dato | Opacidad con FastEffects y escala 0,8 → 1 con FastSpatial (`FadeInFadeOutWithScale`); el siguiente entra mientras el anterior sale | Igual, pero el siguiente entra cuando el anterior terminó de salir (un solo popover); con movimiento reducido, solo opacidad |
+| Accesibilidad | Sin dato | `liveRegion = Polite` en el visible, `paneTitle` y la acción `dismiss` de accesibilidad | Región viva `role="status"` que existe siempre en el host y recibe el texto un cuadro después (MDC hace algo parecido en `util.ts`: vacía y repone el texto para que se anuncie); F6 y Escape (ADR-0022) |
+| Resultado | Sin dato | `ActionPerformed` o `Dismissed` (el tiempo cuenta como `Dismissed`) | `'action'`, `'dismiss'`, `'timeout'` o `'cancel'` |
+
 ## No revisado
 
 La tipografía (`TypeScaleTokens.kt`, descargado pero sin comparar).

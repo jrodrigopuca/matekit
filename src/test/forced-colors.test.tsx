@@ -70,6 +70,12 @@ import {
   RichTooltipSubhead,
   RichTooltipSupporting,
   RichTooltipTrigger,
+  Snackbar,
+  SnackbarAction,
+  SnackbarClose,
+  SnackbarHost,
+  SnackbarMessage,
+  createSnackbarQueue,
 } from '../index.ts'
 import { render, style } from './render.tsx'
 import { near, pixelsOf } from './pixels.ts'
@@ -939,6 +945,36 @@ describe('Tooltip', () => {
     if (autoForced) {
       expect(style(q(c, '.mk-plain-tooltip')).color).toBe(systemColor('CanvasText'))
       expect(style(q(c, '.mk-plain-tooltip')).backgroundColor).toBe(systemColor('Canvas'))
+    }
+  })
+})
+
+describe('Snackbar', () => {
+  test('contorno CanvasText de 1 px (el navegador quita fondo y sombra), fijo y en el host', async () => {
+    const queue = createSnackbarQueue()
+    void queue.show({ message: 'Foto archivada', action: 'Deshacer' })
+    const c = await render(
+      <SnackbarHost queue={queue}>
+        <Snackbar className="static">
+          <SnackbarMessage>Foto archivada</SnackbarMessage>
+          <SnackbarAction>Deshacer</SnackbarAction>
+          <SnackbarClose />
+        </Snackbar>
+      </SnackbarHost>,
+    )
+    const host = q(c, '.mk-snackbar[popover]')
+    await expect.poll(() => host.matches(':popover-open')).toBe(true)
+    for (const el of [q(c, '.static'), host]) {
+      const s = style(el)
+      expect(s.outlineStyle).toBe('solid')
+      expect(s.outlineWidth).toBe('1px')
+      expect(s.outlineColor).toBe(systemColor('CanvasText'))
+    }
+    // WebKit no reemplaza los colores (ver arriba): los del sistema solo donde existe el modo.
+    if (autoForced) {
+      expect(style(q(c, '.static')).backgroundColor).toBe(systemColor('Canvas'))
+      expect(style(q(c, '.static .mk-snackbar-message')).color).toBe(systemColor('CanvasText'))
+      expect(style(q(c, '.static .mk-snackbar-action')).color).toBe(systemColor('ButtonText'))
     }
   })
 })

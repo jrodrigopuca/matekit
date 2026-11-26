@@ -35,7 +35,7 @@ Los identificadores sirven para volver a consultar cada página con el conector 
 | Search | 55141:14254 | no |
 | Sheets | 55141:14170 | no |
 | Sliders | 55141:14255 | sí |
-| Snackbar | 55141:14256 | no |
+| Snackbar | 55141:14256 | sí |
 | Switch | 55141:14257 | sí |
 | Tabs | 55141:14258 | no |
 | Text fields | 55141:14259 | sí |

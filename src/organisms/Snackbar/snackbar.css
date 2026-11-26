@@ -1,0 +1,189 @@
+/* Snackbar de Material 3 Expressive.
+
+   Fuentes:
+   - Kit de Figma (docs/research/05-medidas.md § Snackbar): radio 4 (Corner/Extra-small), fondo
+     Inverse Surface, elevación 3, texto Body Medium en Inverse On Surface con 16 al inicio. Una
+     línea 48 de alto, dos líneas 68. Solo texto: 14 arriba y abajo y 16 a los lados. Con acción: 4
+     arriba y abajo, 8 al final, 4 entre texto y acción. Cerrar: área de 48 pegada al final, círculo
+     de 40, icono close de 24 en Inverse On Surface. Acción: botón de texto de 40, relleno 10/12,
+     Label Large en Inverse Primary, capa Inverse Primary. Acción larga debajo del texto, alineada
+     al final (112 de alto con dos líneas).
+   - Jetpack Compose, para lo que el kit no trae (compose/material3/material3/src/commonMain/
+     kotlin/androidx/compose/material3/; tokens/SnackbarTokens.kt y Snackbar.kt, commit
+     76990c62ac; SnackbarHost.kt, commit 7ac433e44e):
+     - Snackbar.kt: ContainerMaxWidth 600 (ancho máximo), padding(12.dp) alrededor del snackbar del
+       host (margen con la ventana), SnackbarVerticalPadding 14 y HorizontalSpacing 16 del texto,
+       ActionButtonBottomPadding 4 y HorizontalSpacingButtonSide 8 en la fila de la acción larga.
+     - SnackbarHost.kt (FadeInFadeOutWithScale): opacidad con FastEffects y escala 0,8 → 1 con
+       FastSpatial, desde el centro; abajo y centrado (lo ubica el Scaffold).
+     - Sin ancho mínimo en Compose (llena hasta 600): el mínimo de 344 es el ancho del kit y el
+       min-width de material-components-web (packages/mdc-snackbar/_snackbar-theme.scss, commit
+       a246a4439c, que tiene 672 de máximo; ver docs/research/07-jetpack-compose.md § Snackbar).
+
+   Medidas: el contenedor lleva 4 arriba y abajo y el texto 10, así suman los 14 del kit en una
+   línea y 48 / 68 de alto con una y dos líneas (20 de alto de línea de Body Medium).
+
+   Posición (solo en el host, que lo vuelve popover): position: fixed del popover, abajo a 12 de la
+   ventana más --mk-snackbar-offset (pública: el alto de una NavigationBar o un FAB que no debe
+   tapar) y el área segura del dispositivo. Centrado (o al inicio con data-align="start") con
+   márgenes automáticos entre los insets; bajo 37.5rem (600, WINDOW_WIDTH.medium, compact) ocupa
+   el ancho de la ventana menos los márgenes.
+
+   Movimiento: entrada con @starting-style; salida con data-closing, que pone el host y quita al
+   terminar las transiciones, recién ahí oculta el popover (mismo patrón que Tooltip y Menu). */
+
+@layer matekit.components {
+  .mk-snackbar {
+    --_margin: var(--md-sys-space-150);
+    --_scale-from: 0.8;
+
+    box-sizing: border-box;
+    inline-size: fit-content;
+    min-inline-size: min(344px, 100%);
+    max-inline-size: 600px;
+    min-block-size: 48px;
+    margin: 0;
+    padding-block: var(--md-sys-space-50);
+    padding-inline: var(--md-sys-space-200) var(--md-sys-space-100);
+    border: none;
+    border-radius: var(--md-sys-shape-corner-extra-small);
+    background-color: var(--md-sys-color-inverse-surface);
+    box-shadow: var(--md-sys-elevation-level3);
+    color: var(--md-sys-color-inverse-on-surface);
+    font-family: var(--md-sys-typescale-body-medium-font);
+    font-size: var(--md-sys-typescale-body-medium-size);
+    line-height: var(--md-sys-typescale-body-medium-line-height);
+    font-weight: var(--md-sys-typescale-body-medium-weight);
+    letter-spacing: var(--md-sys-typescale-body-medium-tracking);
+    text-align: start;
+    align-items: center;
+    gap: var(--md-sys-space-50);
+  }
+
+  /* display solo si no es popover o está abierto: un display propio le ganaría al display: none
+     del navegador para el popover cerrado. */
+  .mk-snackbar:not([popover]),
+  .mk-snackbar:popover-open {
+    display: flex;
+  }
+
+  /* Con el cerrar al final, el área de 48 queda pegada al borde. */
+  .mk-snackbar:has(> .mk-snackbar-close) {
+    padding-inline-end: 0;
+  }
+
+  .mk-snackbar-message {
+    flex: 1 1 auto;
+    min-inline-size: 0;
+    padding-block: var(--md-sys-space-125);
+    overflow-wrap: anywhere;
+  }
+  /* Solo texto: 16 al final (8 del contenedor + 8). */
+  .mk-snackbar-message:last-child {
+    padding-inline-end: var(--md-sys-space-100);
+  }
+
+  /* La acción: botón de texto de 40 con 12 a los lados en Inverse Primary; la capa de estado toma
+     el color del contenido (Inverse Primary, kit). Mismo especificidad que el estilo text del
+     Button, que se carga antes. */
+  .mk-snackbar .mk-snackbar-action {
+    --_padding: var(--md-sys-space-150);
+    --_content: var(--md-sys-color-inverse-primary);
+  }
+
+  /* Cerrar: el IconButton sm mide 40; con 4 a cada lado, el área de 48 del kit. */
+  .mk-snackbar .mk-snackbar-close {
+    --mk-icon-button-color: var(--md-sys-color-inverse-on-surface);
+    margin-inline: var(--md-sys-space-50);
+  }
+
+  /* --- Acción larga, debajo del texto (actionOnNewLine) ---
+     Texto con 14 arriba (4 + 10) y abajo, y 16 al final; la fila de la acción alineada al final,
+     con 4 abajo (el del contenedor) y 8 al final sin cerrar (Compose, NewLineButtonSnackbar). */
+  .mk-snackbar[data-action-on-new-line] {
+    flex-wrap: wrap;
+    row-gap: 0;
+  }
+  .mk-snackbar[data-action-on-new-line] > .mk-snackbar-message {
+    flex-basis: 100%;
+    padding-block-end: var(--md-sys-space-175);
+    padding-inline-end: var(--md-sys-space-100);
+  }
+  .mk-snackbar[data-action-on-new-line]:has(> .mk-snackbar-close) > .mk-snackbar-message {
+    padding-inline-end: var(--md-sys-space-200);
+  }
+  .mk-snackbar[data-action-on-new-line] > .mk-snackbar-action {
+    margin-inline-start: auto;
+  }
+
+  /* --- En el host: capa superior, abajo de la ventana --- */
+  .mk-snackbar[popover] {
+    /* El popover del navegador ya es position: fixed con inset: 0 y margin: auto. */
+    inset: auto;
+    inset-inline: var(--_margin);
+    inset-block-end: calc(var(--_margin) + var(--mk-snackbar-offset, 0px) + env(safe-area-inset-bottom, 0px));
+    min-inline-size: min(344px, 100% - 2 * var(--_margin));
+    margin-inline: auto;
+    overflow: visible;
+    opacity: 0;
+    scale: var(--_scale-from);
+    transition:
+      opacity var(--md-sys-motion-spring-fast-effects-duration) var(--md-sys-motion-spring-fast-effects-easing),
+      scale var(--md-sys-motion-spring-fast-spatial-duration) var(--md-sys-motion-spring-fast-spatial-easing);
+  }
+  .mk-snackbar[popover][data-align='start'] {
+    margin-inline: 0 auto;
+  }
+  .mk-snackbar:popover-open {
+    opacity: 1;
+    scale: 1;
+  }
+  @starting-style {
+    .mk-snackbar:popover-open {
+      opacity: 0;
+      scale: var(--_scale-from);
+    }
+  }
+  /* Saliendo no recibe el puntero ni el foco (el host también lo pone inert). */
+  .mk-snackbar:popover-open[data-closing] {
+    opacity: 0;
+    scale: var(--_scale-from);
+    pointer-events: none;
+  }
+
+  /* Ventana compact: todo el ancho menos los márgenes. */
+  @media (width < 37.5rem) {
+    .mk-snackbar[popover] {
+      inline-size: auto;
+      max-inline-size: none;
+      margin-inline: 0;
+    }
+  }
+
+  /* Movimiento reducido: los resortes spatial ya valen 0, pero sin esto la salida saltaría de
+     escala antes de desvanecerse. Queda solo el fundido. */
+  @media (prefers-reduced-motion: reduce) {
+    .mk-snackbar {
+      --_scale-from: 1;
+    }
+  }
+
+  /* Región viva del host: existe siempre, fuera de la vista. */
+  .mk-snackbar-announcer {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  /* --- Alto contraste (forced-colors) ---
+     El navegador quita el fondo y la sombra: sin un borde, el snackbar se confunde con la página.
+     El texto pasa solo a CanvasText y los botones a ButtonText. */
+  @media (forced-colors: active) {
+    .mk-snackbar {
+      outline: 1px solid CanvasText;
+    }
+  }
+}

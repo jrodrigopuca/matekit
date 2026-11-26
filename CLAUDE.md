@@ -221,6 +221,11 @@ No llamar al conector de Figma salvo que falte un dato imprescindible: tiene lí
     los tres, salvo Firefox con el ancla en un contexto RTL, que la corre casi 300 px
     (`anchor-center` mal resuelto). `placeNextTo` lo detecta y corrige (ADR-0021).
     `popover="hint"` existe en los tres.
+- Snackbar (comprobado el 2026-11-26): un `popover` dentro de un `<dialog>` modal abierto se puede
+  usar en los tres motores (fuera del diálogo queda inerte). Un F6 real que la página no atrapa
+  saca el foco del documento en Firefox: para probar que un componente no atrapa una tecla, despachar
+  el evento a mano y mirar `defaultPrevented`. Para disparar `onPointerEnter`/`onPointerLeave` de
+  React a mano, despachar `pointerover`/`pointerout` (React no escucha `pointerenter`).
 - Relojes falsos (`vi.useFakeTimers`) con demoras propias (Tooltip, comprobado el 2026-11-26):
   `expect.poll` avanza el reloj falso en cada intento (el código de Vitest 5.1 llama a
   `vi.advanceTimersByTime(interval)`), y las acciones de `userEvent` también lo avanzan (tras un

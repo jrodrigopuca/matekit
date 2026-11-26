@@ -546,6 +546,26 @@ flecha.
   - Acciones: fila con relleno 4 a los lados y 8 abajo (del contenedor), separación 8, con botones
     de texto Small (40 de alto). El conjunto separa contenido y acciones por 8.
 
+## Snackbar
+
+Leído del kit el 2026-11-26 (página Snackbar; conjunto `Snackbar` 53977:33575 con Configuration
+Text only, Text & action o Text & longer action, una o dos líneas y Show close affordance; piezas
+`.Building Blocks/Snackbar-action` y `Snackbar-close-affordance` con sus estados).
+
+- Contenedor: radio 4, fondo `Inverse Surface`, elevación 3; 344 de ancho en el kit. Texto en
+  Body Medium `Inverse On Surface`, con 16 al inicio.
+- Una línea: 48 de alto. Solo texto: relleno 14 arriba y abajo, 16 a los lados. Con acción:
+  relleno 4 arriba y abajo, 8 al final, separación 4 entre texto y acción. Con cerrar, el botón de
+  cerrar de 48 queda pegado al final (sin relleno).
+- Dos líneas: 68 de alto, relleno 10 arriba y abajo; acción y cerrar a la derecha del texto.
+- Acción más larga ("longer action"): la acción pasa debajo del texto, alineada al final; 112 de
+  alto (texto con relleno 14 arriba y 16 a los lados; fila de acción con 8 al inicio o 8 y 4 sin
+  cerrar).
+- Acción: botón de texto de 40 de alto, radio completo, relleno 10/12, Label Large en
+  `Inverse Primary`; capa `Inverse Primary` al 8 % (hover) y 10 % (foco y presionado).
+- Cerrar: área de 48 con un círculo de 40 e icono `close` de 24 en `Inverse On Surface`; capa
+  `Inverse On Surface` al 8 % y 10 %.
+
 ## Diferencias con la especificación a revisar
 
 - El indicador con foco del campo de texto mide 3 en el kit. Confirmar en m3.material.io.

@@ -97,6 +97,12 @@ import {
   RichTooltipSubhead,
   RichTooltipSupporting,
   RichTooltipTrigger,
+  Snackbar,
+  SnackbarAction,
+  SnackbarClose,
+  SnackbarHost,
+  SnackbarMessage,
+  createSnackbarQueue,
 } from '../index.ts'
 import { a11yViolations } from './a11y.ts'
 import { render } from './render.tsx'
@@ -625,6 +631,31 @@ describe('Accesibilidad automática (axe-core)', () => {
           </div>
         </Themed>,
       )
+      expect(await a11yViolations(c)).toEqual([])
+    })
+  }
+
+  for (const theme of THEMES) {
+    test(`Snackbar en el host (con acción y cerrar) y fijos, tema ${theme === 'light' ? 'claro' : 'oscuro'}`, async () => {
+      const queue = createSnackbarQueue()
+      void queue.show({ message: 'Foto archivada', action: 'Deshacer' })
+      const c = await render(
+        <Themed theme={theme}>
+          <SnackbarHost queue={queue}>
+            <div style={{ display: 'grid', gap: 16, justifyItems: 'start' }}>
+              <Snackbar><SnackbarMessage>Solo texto</SnackbarMessage></Snackbar>
+              <Snackbar><SnackbarMessage>Con cerrar</SnackbarMessage><SnackbarClose /></Snackbar>
+              <Snackbar actionOnNewLine>
+                <SnackbarMessage>Acción larga debajo del texto</SnackbarMessage>
+                <SnackbarAction>Reintentar ahora</SnackbarAction>
+                <SnackbarClose />
+              </Snackbar>
+            </div>
+          </SnackbarHost>
+        </Themed>,
+      )
+      await expect.poll(() => c.querySelector('.mk-snackbar[popover]')?.matches(':popover-open')).toBe(true)
+      await expect.poll(() => c.querySelector('[role="status"]')?.textContent).toBe('Foto archivada Deshacer')
       expect(await a11yViolations(c)).toEqual([])
     })
   }
