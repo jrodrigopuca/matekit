@@ -63,6 +63,14 @@ import {
   Shape,
   Divider,
   DividerSubhead,
+  Card,
+  CardActions,
+  CardContent,
+  CardHeader,
+  CardHeadline,
+  CardMedia,
+  CardPrimaryAction,
+  CardSubhead,
 } from '../index.ts'
 import { a11yViolations } from './a11y.ts'
 import { render } from './render.tsx'
@@ -336,6 +344,51 @@ const GALLERIES: Record<string, ReactNode> = {
       <LinearProgressIndicator aria-labelledby="a11y-lp-label" value={0.3} />
       <span id="a11y-cp-label">Copia de seguridad</span>
       <CircularProgressIndicator aria-labelledby="a11y-cp-label" />
+    </>
+  ),
+  // Tarjetas en los tres estilos: superficie, enlace, botón, deshabilitada y horizontal, con
+  // controles adentro que no quedan anidados en la acción principal (axe: nested-interactive).
+  Card: (
+    <>
+      {(['elevated', 'filled', 'outlined'] as const).map((v) => (
+        <Card key={v} variant={v}>
+          <CardHeader>
+            <Shape shape="circle" aria-hidden="true" style={{ width: 40, height: 40, background: 'var(--md-sys-color-primary)' }} />
+            <CardHeadline><CardPrimaryAction href={`#${v}`}>Tarjeta {v}</CardPrimaryAction></CardHeadline>
+            <CardSubhead>Subtítulo</CardSubhead>
+            <IconButton label={`Más opciones de ${v}`} size="sm"><MoreVertIcon /></IconButton>
+          </CardHeader>
+          <CardMedia><img alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" /></CardMedia>
+          <CardContent>
+            <CardHeadline level={4}>Contenido</CardHeadline>
+            <CardSubhead>Subtítulo del contenido</CardSubhead>
+            <p>Texto de apoyo.</p>
+            <CardActions>
+              <Button variant="outlined" size="sm">Compartir {v}</Button>
+              <Button size="sm">Abrir {v}</Button>
+            </CardActions>
+          </CardContent>
+        </Card>
+      ))}
+      <Card variant="filled">
+        <CardContent>
+          <CardHeadline>Superficie</CardHeadline>
+          <p>Sin acción principal.</p>
+        </CardContent>
+      </Card>
+      <Card variant="outlined" orientation="horizontal">
+        <CardHeader>
+          <CardHeadline><CardPrimaryAction>Botón horizontal</CardPrimaryAction></CardHeadline>
+          <CardSubhead>Subtítulo</CardSubhead>
+        </CardHeader>
+        <CardMedia><img alt="Miniatura" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" /></CardMedia>
+      </Card>
+      <Card>
+        <CardContent>
+          <CardHeadline><CardPrimaryAction disabled>Deshabilitada</CardPrimaryAction></CardHeadline>
+          <p>No disponible.</p>
+        </CardContent>
+      </Card>
     </>
   ),
 }

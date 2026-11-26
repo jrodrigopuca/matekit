@@ -669,6 +669,43 @@ Label Large `InverseOnSurface`, deshabilitado `OnSurface` al 38 %.
 | Cuándo aparece el indicador | Presionado | No lo dibuja por defecto | Presionado, arrastrando y con foco de teclado (`@material/web`): con el teclado no hay otra forma de ver el número. No con hover. |
 | Punto centrado del rango ("Track dot - centered") | Con los dos handles en el mismo valor | Sin equivalente | Sin implementar: no está claro dónde va con los handles superpuestos. Pendiente de mirar en el kit. |
 
+## Card
+
+Revisión del 2026-11-25. Archivos (en `compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/`,
+commit `0594f962db80b7deafaaa83d08d4edbe55aa4ccd` de `androidx-main`): `tokens/ElevatedCardTokens.kt`,
+`tokens/FilledCardTokens.kt`, `tokens/OutlinedCardTokens.kt` y `Card.kt` (`CardDefaults`,
+`CardElevation.animateElevation`). `@material/web` no tiene card estable en `docs/components/`;
+en `labs/card/` (commit `5c6c0471bb`) es solo una superficie sin interacción, con el contorno
+encima del contenido y un borde transparente en los tres estilos "para el modo de alto contraste".
+
+### Lo que confirma
+
+Radio `CornerMedium` (12) en los tres; contenedores `SurfaceContainerLow` (elevated),
+`SurfaceContainerHighest` (filled) y `Surface` con borde de 1 `OutlineVariant` (outlined);
+elevated en nivel 1, hover 2, presionado 1, arrastrado 4; outlined arrastrado 3; hover del filled
+en nivel 1.
+
+### Datos nuevos (el kit no los trae)
+
+| Dato | Fuente |
+|---|---|
+| Foco del filled: nivel 0 (como en reposo); del elevated: nivel 1; del outlined: nivel 0 | `*CardTokens.FocusContainerElevation` |
+| Arrastrado del filled: nivel 3 | `FilledCardTokens.DraggedContainerElevation` |
+| Deshabilitada: contenido `OnSurface` (el color de contenido del contenedor) al 38 % | `CardDefaults.*CardColors` (`DisabledAlpha`) |
+| Deshabilitada, contenedor: elevated `Surface` al 38 % sobre `Surface` (o sea `Surface`) con nivel 1; filled `SurfaceVariant` al 38 % sobre `SurfaceContainerHighest`, nivel 0 (con un TODO: "valor desactualizado"); outlined `Surface` | `defaultElevatedCardColors`, `defaultCardColors`, `defaultOutlinedCardColors`, `DisabledContainerElevation` |
+| Deshabilitada, borde del outlined: `Outline` al 12 % sobre `SurfaceContainerLow` | `outlinedCardBorder(enabled = false)` |
+| Al pasar a deshabilitada, la elevación salta sin animación | `animateElevation` (`snapTo`) |
+| Anillo de foco en `Secondary` | `*CardTokens.FocusIndicatorColor` |
+
+### Conflictos y decisiones
+
+| Tema | Kit | Compose | Decisión |
+|---|---|---|---|
+| Elevación del filled presionado | 1 | 0 (`PressedContainerElevation`) | Kit. |
+| Elevación del outlined con el puntero | 1 | El token dice 1 (`HoverContainerElevation`), pero `outlinedCardElevation()` usa el reposo (0) para hover, foco y presionado | Kit, que coincide con el token. |
+| Borde del outlined con foco | Sin dato | `FocusOutlineColor` = `OnSurface`, pero `outlinedCardBorder` no lo usa | Sin cambio de borde: Compose tampoco lo aplica; el foco lo marca el anillo. Pendiente de mirar en el kit (Focused del outlined). |
+| Capa de presionado | 10 % | Onda (ripple) | 8 % más la onda, como Button y FAB (el kit suma la onda sobre la capa de hover). |
+
 ## No revisado
 
 La tipografía (`TypeScaleTokens.kt`, descargado pero sin comparar).

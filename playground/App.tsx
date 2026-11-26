@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import paletteTokens from '../tokens/palettes.json' with { type: 'json' }
 import { ButtonPage } from './pages/ButtonPage.tsx'
+import { CardPage } from './pages/CardPage.tsx'
 import { CheckboxPage } from './pages/CheckboxPage.tsx'
 import { DialogPage } from './pages/DialogPage.tsx'
 import { DividerPage } from './pages/DividerPage.tsx'
@@ -46,6 +47,7 @@ const PAGES = {
   'loading-indicator': { label: 'LoadingIndicator', Page: LoadingIndicatorPage },
   'progress-indicator': { label: 'Progreso', Page: ProgressIndicatorPage },
   divider: { label: 'Divider', Page: DividerPage },
+  card: { label: 'Card', Page: CardPage },
   examples: { label: 'Ejemplos', Page: ExamplesPage },
   icons: { label: 'Iconos', Page: IconsPage },
   shapes: { label: 'Formas', Page: ShapesPage },

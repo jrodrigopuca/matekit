@@ -47,6 +47,10 @@ import {
   TextField,
   TextFieldInput,
   TextFieldLabel,
+  Card,
+  CardContent,
+  CardHeadline,
+  CardPrimaryAction,
 } from '../index.ts'
 import { render, style } from './render.tsx'
 import { near, pixelsOf } from './pixels.ts'
@@ -655,5 +659,53 @@ describe('Divider', () => {
     const px = await pixelsOf(q(c, '.stage'))
     expect(near(px.at(50, 8), rgb(systemColor('CanvasText'))), `línea: ${px.at(50, 8)}`).toBe(true)
     expect(near(px.at(50, 3), rgb(systemColor('Canvas'))), `fondo: ${px.at(50, 3)}`).toBe(true)
+  })
+})
+
+describe('Card', () => {
+  const cards = (action: (v: string) => ReturnType<typeof CardPrimaryAction> | string) => (
+    <div style={{ width: 300 }}>
+      {(['elevated', 'filled', 'outlined'] as const).map((v) => (
+        <Card key={v} variant={v} className={v} style={{ marginBottom: 16 }}>
+          <CardContent>
+            <CardHeadline>{action(v)}</CardHeadline>
+            <p>Texto</p>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  )
+  const border = (el: Element) => getComputedStyle(el, '::before')
+
+  test('los tres estilos dibujan la forma con un contorno CanvasText de 1 px, sin sombra', async () => {
+    // El contorno (transparente en elevated y filled) lo pone en CanvasText card.css: vale en los
+    // tres motores. Quitar la sombra lo hace el navegador.
+    const c = await render(cards((v) => v))
+    for (const v of ['elevated', 'filled', 'outlined']) {
+      const b = border(q(c, `.${v}`))
+      expect(b.borderTopStyle, v).toBe('solid')
+      expect(b.borderTopWidth, v).toBe('1px')
+      expect(b.borderTopColor, v).toBe(systemColor('CanvasText'))
+      if (autoForced) expect(style(q(c, `.${v}`)).boxShadow, v).toBe('none')
+    }
+  })
+
+  test('interactiva: con el puntero, contorno de 2 px en Highlight; el foco, con el anillo por fuera', async () => {
+    const c = await render(cards((v) => <CardPrimaryAction href={`#${v}`}>{v}</CardPrimaryAction>))
+    for (const v of ['elevated', 'filled', 'outlined']) {
+      await userEvent.hover(q(c, `.${v} .mk-card-primary-action`))
+      const b = border(q(c, `.${v}`))
+      expect(b.borderTopWidth, v).toBe('2px')
+      expect(b.borderTopColor, v).toBe(systemColor('Highlight'))
+    }
+  })
+
+  test('deshabilitada: contorno y texto en GrayText', async () => {
+    const c = await render(cards((v) => <CardPrimaryAction disabled>{v}</CardPrimaryAction>))
+    for (const v of ['elevated', 'filled', 'outlined']) {
+      expect(border(q(c, `.${v}`)).borderTopColor, v).toBe(systemColor('GrayText'))
+      expect(style(q(c, `.${v} .mk-card-headline`)).color, v).toBe(systemColor('GrayText'))
+      expect(style(q(c, `.${v} p`)).color, v).toBe(systemColor('GrayText'))
+    }
   })
 })

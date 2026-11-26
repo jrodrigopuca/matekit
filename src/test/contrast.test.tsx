@@ -49,6 +49,12 @@ import {
   TextFieldInput,
   TextFieldLabel,
   TextFieldSupporting,
+  Card,
+  CardContent,
+  CardHeader,
+  CardHeadline,
+  CardPrimaryAction,
+  CardSubhead,
 } from '../index.ts'
 import '../tokens/palettes/index.css'
 import { contrastRatio, effectiveBackground, parseColor, textContrast } from './contrast.ts'
@@ -278,6 +284,40 @@ for (const scheme of SCHEMES) {
         expect(boundary, variant === 'filled' ? 'indicador' : 'borde').toBeGreaterThanOrEqual(NON_TEXT)
       })
     }
+
+    // Card: el texto (título, subtítulo y apoyo, en la cabecera y en el contenido, también el
+    // título enlace) a 4,5:1 sobre el contenedor de cada estilo. El borde de la outlined
+    // (outline-variant) y el borde de las otras no se miden: no identifican el control (lo
+    // identifica el título, que es el nombre y el texto de la acción principal) y agrupan como el
+    // Divider, que Material quiere tenue (WCAG 1.4.11 pide 3:1 a lo necesario para identificar
+    // un componente). El anillo de foco, que es lo que marca la tarjeta enfocada, sí: 3:1 sobre
+    // la superficie de la página, donde se dibuja (por fuera). La deshabilitada está exenta.
+    test('Card: texto de cada estilo sobre su contenedor y anillo de foco sobre la página', async () => {
+      const c = await render(
+        <Themed scheme={scheme}>
+          {(['elevated', 'filled', 'outlined'] as const).map((v) => (
+            <Card key={v} variant={v} className={v} style={{ marginBottom: 16 }}>
+              <CardHeader>
+                <CardHeadline><CardPrimaryAction href={`#${v}`}>Título {v}</CardPrimaryAction></CardHeadline>
+                <CardSubhead>Subtítulo</CardSubhead>
+              </CardHeader>
+              <CardContent>
+                <CardHeadline level={4}>Contenido</CardHeadline>
+                <CardSubhead>Subtítulo</CardSubhead>
+                <p>Texto de apoyo.</p>
+              </CardContent>
+            </Card>
+          ))}
+        </Themed>,
+      )
+      for (const v of ['elevated', 'filled', 'outlined']) {
+        for (const sel of ['.mk-card-primary-action', '.mk-card-header .mk-card-subhead', '.mk-card-content .mk-card-headline', '.mk-card-content .mk-card-subhead', '.mk-card-content p:not(.mk-card-subhead)']) {
+          expect(textContrast(q(c, `.${v} ${sel}`)), `${v} ${sel}`).toBeGreaterThanOrEqual(TEXT)
+        }
+        const ring = cs(q(c, `.${v} .mk-focus-ring`)).outlineColor
+        expect(contrastRatio(ring, effectiveBackground(q(c, 'main'))), `${v} anillo`).toBeGreaterThanOrEqual(NON_TEXT)
+      }
+    })
 
     test('Dialog: título y texto sobre el contenedor', async () => {
       const c = await render(
