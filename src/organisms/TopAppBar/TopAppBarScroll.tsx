@@ -15,25 +15,13 @@
 //    arriba, y al terminar de desplazar se acomoda al estado más cercano.
 
 import { useEffect, useRef } from 'react'
+import { nearestScroller } from '../../internal/nearest-scroller.ts'
 import type { TopAppBarScrollBehavior, TopAppBarSize } from './TopAppBar.tsx'
 
 /** Sin `scrollend` (Safari, según conocimiento previo), el desplazamiento terminó tras esta pausa. */
 const SCROLL_END_FALLBACK_MS = 150
 
 const clamp01 = (n: number) => Math.min(1, Math.max(0, n))
-
-/**
- * El contenedor que se desplaza más cercano, como `scroll(nearest)`: el primer ancestro cuyo
- * `overflow` no es `visible` ni `clip`. `null` es el documento (la ventana).
- */
-function nearestScroller(el: HTMLElement): HTMLElement | null {
-  for (let node = el.parentElement; node; node = node.parentElement) {
-    if (node === document.body || node === document.documentElement) return null
-    const { overflowY } = getComputedStyle(node)
-    if (overflowY !== 'visible' && overflowY !== 'clip') return node
-  }
-  return null
-}
 
 /** Un número de una variable CSS en px (`--_keep: 64px`), o el respaldo. */
 function cssPx(el: HTMLElement, name: string, fallback: number): number {

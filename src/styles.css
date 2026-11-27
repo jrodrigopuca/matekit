@@ -48,6 +48,7 @@
 @import './organisms/Tabs/tabs.css';
 /* Después de icon-button.css: fija el color del icono de inicio y de las acciones. */
 @import './organisms/TopAppBar/top-app-bar.css';
+@import './organisms/Toolbar/toolbar.css';
 /* Después de los controles (checkbox.css, switch.css, radio-button.css) y de group.css: ubica el
    control de selección en la fila y le gana a sus estilos sueltos por orden y especificidad. */
 @import './organisms/List/list.css';

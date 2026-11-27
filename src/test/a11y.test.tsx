@@ -110,6 +110,8 @@ import {
   TabNav,
   TabPanel,
   Tabs,
+  Toolbar,
+  ToolbarLayout,
   TopAppBar,
   TopAppBarActions,
   TopAppBarLeading,
@@ -590,6 +592,36 @@ const GALLERIES: Record<string, ReactNode> = {
           <svg viewBox="0 0 120 40" role="img" aria-label="Logo"><rect width="120" height="40" rx="20" /></svg>
         </TopAppBarTitle>
       </TopAppBar>
+    </>
+  ),
+  // Toolbar: docked y floating (horizontal y vertical), Standard y Vibrant, con toggles
+  // (aria-pressed) seleccionados y no, un deshabilitado por aria-disabled que sigue siendo parada, un
+  // Button toggle, un menú de más acciones y el FAB acompañante fuera del role="toolbar".
+  Toolbar: (
+    <>
+      {(['standard', 'vibrant'] as const).map((color) => (
+        <Toolbar key={color} label={`Edición ${color}`} variant="docked" color={color}>
+          <IconButton label="Editar"><EditIcon /></IconButton>
+          <IconButton label="Favorito" selected><StarIcon filled /></IconButton>
+          <IconButton label="Compartir" selected={false}><StarIcon /></IconButton>
+          <IconButton label="Borrar" aria-disabled><StarIcon /></IconButton>
+          <Button selected>Vista</Button>
+        </Toolbar>
+      ))}
+      <ToolbarLayout>
+        <Toolbar label="Formato" color="vibrant">
+          <IconButton label="Negrita" selected><EditIcon /></IconButton>
+          <Menu>
+            <MenuTrigger><IconButton label="Más opciones"><MoreVertIcon /></IconButton></MenuTrigger>
+            <MenuContent><MenuItem>Archivar</MenuItem></MenuContent>
+          </Menu>
+        </Toolbar>
+        <Fab label="Nuevo" variant="tertiary-container"><StarIcon /></Fab>
+      </ToolbarLayout>
+      <Toolbar label="Herramientas" orientation="vertical">
+        <IconButton label="Lápiz" selected><EditIcon /></IconButton>
+        <IconButton label="Goma"><StarIcon /></IconButton>
+      </Toolbar>
     </>
   ),
   // Stack y Group no agregan roles: la semántica la da el elemento de render (lista) o el rol y el

@@ -50,6 +50,12 @@ export type ButtonProps = ToggleButtonOrLinkProps<ButtonOwnProps>
  * Los iconos se pasan como hijos, sin propiedades especiales: el CSS les da el tamaño del
  * botón y la separación. Con `href` o `render` es un enlace que se ve igual.
  *
+ * Personalización con variables CSS (se heredan; las define la Toolbar para sus botones):
+ * `--mk-button-unselected-container`, `--mk-button-unselected-color`,
+ * `--mk-button-selected-container` y `--mk-button-selected-color` cambian los colores del toggle
+ * del estilo `filled` (el de por defecto) sin seleccionar y seleccionado. Deshabilitado conserva
+ * los suyos.
+ *
  * ```tsx
  * <Button>Guardar</Button>
  * <Button variant="tonal" size="md"><svg …/>Crear</Button>

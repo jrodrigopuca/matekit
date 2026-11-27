@@ -81,6 +81,7 @@ import {
   TabList,
   TabNav,
   Tabs,
+  Toolbar,
   TopAppBar,
   TopAppBarActions,
   TopAppBarLeading,
@@ -1125,6 +1126,36 @@ describe('TopAppBar', () => {
       expect(getComputedStyle(header, '::before').backgroundColor).toBe(systemColor('Canvas'))
     }
     if (autoForced) expect(style(q(c, '.mk-top-app-bar-title')).color).toBe(systemColor('CanvasText'))
+  })
+})
+
+describe('Toolbar', () => {
+  test('contorno CanvasText en la docked y la floating (el navegador quita fondo y sombra); seleccionados en Highlight y deshabilitados en GrayText', async () => {
+    const c = await render(
+      <>
+        {(['docked', 'floating'] as const).map((variant) => (
+          <Toolbar key={variant} label={variant} variant={variant} color="vibrant" className={variant}>
+            <IconButton className="on" label="Favorito" selected><StarIcon filled /></IconButton>
+            <IconButton className="off" label="Guardar" selected={false}><StarIcon /></IconButton>
+            <IconButton className="dis" label="Borrar" disabled><StarIcon /></IconButton>
+            <Button className="t-on" selected>Vista</Button>
+          </Toolbar>
+        ))}
+      </>,
+    )
+    for (const sel of ['.docked', '.floating']) {
+      const bar = q(c, sel)
+      expect(style(bar).outlineStyle, sel).toBe('solid')
+      expect(style(bar).outlineWidth).toBe('1px')
+      expect(style(bar).outlineColor).toBe(systemColor('CanvasText'))
+      for (const on of ['.on', '.t-on']) {
+        expect(style(q(c, `${sel} ${on}`)).backgroundColor, `${sel} ${on}`).toBe(systemColor('Highlight'))
+        expect(style(q(c, `${sel} ${on}`)).color).toBe(systemColor('HighlightText'))
+      }
+      expect(style(q(c, `${sel} .off`)).backgroundColor).not.toBe(systemColor('Highlight'))
+      expect(style(q(c, `${sel} .dis`)).color).toBe(systemColor('GrayText'))
+    }
+    if (autoForced) expect(style(q(c, '.floating')).backgroundColor).toBe(systemColor('Canvas'))
   })
 })
 

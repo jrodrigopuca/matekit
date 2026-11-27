@@ -1105,6 +1105,60 @@ dentro de la barra superior: `@material/web` labs, `labs/gb/components/appbar/_a
 - **Elementos de 64**: el kit dibuja sugerencias de 64 (de dos líneas); las sugerencias usan las
   reglas de List (52 con una línea, 64 con dos).
 
+## Toolbars
+
+Leído el 2026-11-26 en `androidx/androidx`, commit `76990c62ac`, carpeta
+`compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/`: `FloatingToolbar.kt`
+(`HorizontalFloatingToolbar`, `VerticalFloatingToolbar`, `FloatingToolbarDefaults`,
+`FloatingToolbarScrollBehavior`, `FloatingToolbarExitDirection`), `AppBar.kt`
+(`FlexibleBottomAppBar`, `BottomAppBarDefaults`) y `tokens/{Floating,Docked,Standard,Vibrant}ToolbarTokens.kt`
+y `tokens/FloatingToolbarFabTokens.kt`. Kit: `05-medidas.md` § Toolbars. Decisiones: ADR-0027.
+
+### Lo que confirma
+
+- Floating de 64 (`HorizontalContainerHeight`, `VerticalContainerWidth`), redonda (`CornerFull`),
+  elevación 3 (`ContainerElevation`); docked de 64 (`ContainerHeight`), sin radio.
+- Colores: Standard `SurfaceContainer` con iconos `OnSurfaceVariant` y seleccionados
+  `SecondaryContainer`/`OnSecondaryContainer`; Vibrant `PrimaryContainer` con `OnPrimaryContainer` y
+  seleccionados `SurfaceContainer`/`OnSurface`; deshabilitados `OnSurface` al 38 %. El botón sin
+  seleccionar lleva el color de la barra (`ButtonContainerColor`). Hover, foco y presionado no cambian
+  el color del contenido (la capa de estado lo tiñe).
+- Relleno: 8 en la floating (`ContainerLeadingSpace`/`TrailingSpace`, hasta el área de 48) y 4 entre
+  botones (`ContainerBetweenSpace`): con iconos de 40 visibles, 12 del borde y 12 entre iconos, lo que
+  el kit mide como 12 en el eje corto. Docked: 16 a los lados (`ContainerLeadingSpace`).
+
+### Lo que el kit no trae (se toma de Compose)
+
+- Margen al borde: 16 en la horizontal (`HorizontalContainerExternalSpace` =
+  `FloatingToolbarDefaults.ScreenOffset`) y 24 en la vertical (`VerticalContainerExternalSpace`).
+- Docked: los botones repartidos (`FlexibleHorizontalArrangement = Arrangement.SpaceBetween`; con
+  separación fija, `FlexibleFixedHorizontalArrangement` de 32 centrado, que no se hace) y las zonas
+  seguras de abajo y los costados (`BottomAppBarDefaults.windowInsets`).
+- Si no entra, la fila de la floating se desplaza a lo ancho (`horizontalScroll`).
+- FAB acompañante: 8 entre barra y FAB (`FloatingToolbarFabTokens.BetweenSpace`), al final por defecto
+  (`FloatingToolbarHorizontalFabPosition.End`), de 56 con la barra expandida y 80 contraída
+  (`FabSizeRange`); el FAB queda fuera de la fila de la barra.
+- Ocultar al desplazar: `exitAlwaysScrollBehavior(exitDirection)` sigue lo desplazado
+  (`onPostScroll`), sale del todo por el borde (`offsetLimit` = tamaño más distancia al borde) y se
+  acomoda al soltar (`settleFloatingToolbar`); la animación de la barra es `FastSpatial`
+  (`FloatingToolbarDefaults.animationSpec`). Con TalkBack la barra no se contrae ni se esconde.
+
+### Conflictos y cómo se resolvieron
+
+- **Elevación**: kit y `FloatingToolbarTokens.ContainerElevation` dicen 3;
+  `FloatingToolbarDefaults.ContainerExpandedElevation` usa 0 (con un `TODO read from token`) y 1 con FAB
+  (`ContainerExpandedElevationWithFab`). Gana el kit con el token: 3, también con FAB.
+- **Separación mínima de la docked**: kit 8; `DockedToolbarTokens.ContainerMinSpacing` 4. Gana el kit
+  (solo importa cuando los botones casi no entran).
+- **Color del FAB**: `FloatingToolbarFabTokens` dice `SecondaryContainer` con la Standard y
+  `TertiaryContainer` con la Vibrant; `FloatingToolbarDefaults.standardFloatingToolbarColors` usa
+  `PrimaryContainer` con la Standard (con un `TODO load colors from the toolbar tokens`). El kit no lo
+  trae. La librería no fuerza el color del FAB (es un `Fab` del uso); el playground y la documentación
+  usan los tokens.
+- **Forma del icon button seleccionado**: el kit muestra un fondo de 40 sin decir la forma; matekit
+  conserva la del IconButton (redondo que pasa a cuadrado al seleccionar, Expressive). Pendiente de
+  confirmar contra el kit.
+
 ## No revisado
 
 La tipografía (`TypeScaleTokens.kt`, descargado pero sin comparar).

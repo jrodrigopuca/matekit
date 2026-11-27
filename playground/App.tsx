@@ -39,6 +39,7 @@ import { TabsPage } from './pages/TabsPage.tsx'
 import { TextFieldPage } from './pages/TextFieldPage.tsx'
 import { SnackbarPage } from './pages/SnackbarPage.tsx'
 import { TooltipPage } from './pages/TooltipPage.tsx'
+import { ToolbarPage } from './pages/ToolbarPage.tsx'
 import { TopAppBarPage } from './pages/TopAppBarPage.tsx'
 import { TokensPage } from './pages/TokensPage.tsx'
 
@@ -97,6 +98,7 @@ const PAGES = {
   sheets: { label: 'Sheets', group: 'organisms', Page: SheetsPage },
   snackbar: { label: 'Snackbar', group: 'organisms', Page: SnackbarPage },
   tabs: { label: 'Tabs', group: 'organisms', Page: TabsPage },
+  toolbar: { label: 'Toolbar', group: 'organisms', Page: ToolbarPage },
   tooltip: { label: 'Tooltip', group: 'organisms', Page: TooltipPage },
   'top-app-bar': { label: 'TopAppBar', group: 'organisms', Page: TopAppBarPage },
   layout: { label: 'Disposición', group: 'foundations', Page: LayoutPage },

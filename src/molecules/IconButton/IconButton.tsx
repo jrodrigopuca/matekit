@@ -59,6 +59,9 @@ export type IconButtonProps = ToggleButtonOrLinkProps<IconButtonOwnProps>
  * - `--mk-icon-button-color`: color del icono del estilo `standard` sin seleccionar (por
  *   defecto, `on-surface-variant`). Se hereda: definida en un contenedor, afecta a los
  *   botones de adentro. Seleccionado y deshabilitado conservan sus colores.
+ * - `--mk-icon-button-selected-container` y `--mk-icon-button-selected-color`: fondo (por defecto,
+ *   ninguno) y color del icono (`primary`) del toggle `standard` seleccionado. También se heredan;
+ *   la Toolbar las define para sus botones.
  *
  * ```tsx
  * <IconButton label="Buscar"><SearchIcon /></IconButton>

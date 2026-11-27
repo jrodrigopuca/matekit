@@ -98,8 +98,12 @@
     --_container: transparent;
     --_content: var(--mk-icon-button-color, var(--md-sys-color-on-surface-variant));
   }
+  /* Toggle seleccionado: sin contenedor y con el icono en primary. Un contenedor (la Toolbar,
+     ADR-0027) puede darle fondo y color con --mk-icon-button-selected-container y
+     --mk-icon-button-selected-color (públicas, se heredan). */
   .mk-icon-button[data-variant='standard'][aria-pressed='true'] {
-    --_content: var(--md-sys-color-primary);
+    --_container: var(--mk-icon-button-selected-container, transparent);
+    --_content: var(--mk-icon-button-selected-color, var(--md-sys-color-primary));
   }
 
   /* --- Deshabilitado ---

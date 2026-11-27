@@ -1,6 +1,7 @@
 // Módulo interno (no se exporta desde src/index.ts): foco itinerante ("roving tabindex") de los
-// grupos de una sola parada de Tab. Lo usan ChipGroup (ADR-0019) y Tabs (ADR-0023), y está pensado
-// para las Toolbars (ítem 22 del plan): patrones APG "Toolbar" y "Tabs".
+// grupos de una sola parada de Tab. Lo usan ChipGroup (ADR-0019), Tabs (ADR-0023) y Toolbar
+// (ADR-0027): patrones APG "Toolbar" y "Tabs". Una parada con `aria-disabled` no es `:disabled`: sigue
+// siendo parada (lo que APG admite en una toolbar).
 //
 // - Una sola parada con tabIndex 0 en el grupo; las demás en -1. Cuál: la enfocada; si el foco está
 //   afuera, la que indique `preferred` (la pestaña elegida, como pide APG) o la última que tuvo el
@@ -18,7 +19,7 @@
 // registre, también las de `render`. Sin JavaScript (antes de hidratar), cada parada es una parada
 // de Tab: el grupo sigue usable. Contra: un tabIndex propio en una parada se pisa.
 //
-// Sin 'use client': es un hook que solo importan módulos cliente (ChipGroup, TabList).
+// Sin 'use client': es un hook que solo importan módulos cliente (ChipGroup, TabList, Toolbar).
 
 import { useCallback, useLayoutEffect, useRef, type FocusEvent, type KeyboardEvent, type RefObject } from 'react'
 

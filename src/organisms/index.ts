@@ -174,6 +174,15 @@ export {
   type TopAppBarTitleProps,
 } from './TopAppBar/TopAppBar.tsx'
 export {
+  Toolbar,
+  type ToolbarColor,
+  type ToolbarOrientation,
+  type ToolbarProps,
+  type ToolbarScrollBehavior,
+  type ToolbarVariant,
+} from './Toolbar/Toolbar.tsx'
+export { ToolbarLayout, type ToolbarLayoutProps } from './Toolbar/ToolbarLayout.tsx'
+export {
   Search,
   SearchBar,
   SearchSuggestion,

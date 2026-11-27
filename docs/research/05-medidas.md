@@ -657,6 +657,27 @@ y `Search docked layout` 59178:4992, con Configuration Input text o Supporting t
 - Escribiendo: el texto ingresado ocupa el lugar del texto de ayuda (Body Large); al final, el
   botón de borrar.
 
+## Toolbars
+
+Leído del kit el 2026-11-26 (página Toolbars; conjunto `Toolbar` 58467:8206 con Configuration
+Docked o Floating, Orientation Horizontal o Vertical (vertical solo floating) y Color Standard o
+Vibrant; botones en `Building Blocks/{Standard,Vibrant}/{Icon button, Icon button toggleable,
+Button toggleable}` con sus estados; las variantes XR, fuera del plan).
+
+- Floating: 64 de grosor, radio 32 (redonda), relleno 12 en el eje corto y 8 en el largo,
+  separación 4 entre botones, elevación 3. Standard en `Surface Container`; Vibrant en
+  `Primary Container`. Vertical: lo mismo girado (64 × alto).
+- Docked: 64 de alto a todo el ancho, sin radio ni elevación, relleno 12 arriba y abajo y 16 a
+  los lados, botones repartidos (separación mínima 8). Mismos colores que la floating.
+- Icon button (48 de área, 40 visibles, radio completo, icono de 24): Standard `On Surface
+  Variant`; Vibrant `On Primary Container`; deshabilitado `On Surface` al 38 %.
+- Icon button seleccionable (toggle): sin seleccionar como el anterior (icono de contorno);
+  seleccionado con fondo de 40: Standard `Secondary Container` e icono relleno `On Secondary
+  Container`; Vibrant `Surface Container` e icono relleno `On Surface`.
+- Button seleccionable (icono de 20 y etiqueta Label Large, 40 de alto, radio completo, relleno
+  10/16, separación 8): sin seleccionar `Surface Container` con `On Surface Variant` (Standard);
+  seleccionado `Secondary Container` con `On Secondary Container`.
+
 ## Diferencias con la especificación a revisar
 
 - El indicador con foco del campo de texto mide 3 en el kit. Confirmar en m3.material.io.

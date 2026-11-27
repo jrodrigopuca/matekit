@@ -87,6 +87,7 @@ import {
   Tab,
   TabList,
   Tabs,
+  Toolbar,
   TopAppBar,
   TopAppBarActions,
   TopAppBarLeading,
@@ -701,6 +702,32 @@ for (const scheme of SCHEMES) {
         }
       }
     })
+
+    // Toolbar Standard y Vibrant: iconos a 3:1 sobre la barra (sin seleccionar) y sobre su fondo
+    // (seleccionados), y la etiqueta del Button toggle a 4,5:1 en los dos estados. El deshabilitado
+    // está exento.
+    for (const color of ['standard', 'vibrant'] as const) {
+      test(`Toolbar ${color}: icon buttons y Button toggle, seleccionados y no`, async () => {
+        const c = await render(
+          <Themed scheme={scheme}>
+            <Toolbar label="Edición" color={color}>
+              <IconButton className="plain" label="Editar"><EditIcon /></IconButton>
+              <IconButton className="on" label="Favorito" selected><StarIcon filled /></IconButton>
+              <IconButton className="off" label="Guardar" selected={false}><StarIcon /></IconButton>
+              <Button className="t-on" selected>Vista</Button>
+              <Button className="t-off" selected={false}>Lista</Button>
+            </Toolbar>
+          </Themed>,
+        )
+        for (const sel of ['.plain', '.on', '.off']) {
+          const icon = q(c, `${sel} svg`)
+          expect(contrastRatio(cs(icon).fill, effectiveBackground(icon)), `${color} ${sel}`).toBeGreaterThanOrEqual(NON_TEXT)
+        }
+        for (const sel of ['.t-on', '.t-off']) {
+          expect(textContrast(q(c, sel)), `${color} ${sel}`).toBeGreaterThanOrEqual(TEXT)
+        }
+      })
+    }
 
     for (const [expanded, variant] of [[false, 'docked'], [true, 'docked'], [true, 'floating']] as const) {
       test(`NavigationRail ${expanded ? 'expandido' : 'contraído'} ${variant}: iconos y etiquetas, activo e inactivo, e insignias`, async () => {

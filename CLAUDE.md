@@ -56,8 +56,9 @@ src/internal/    ayudas compartidas entre componentes, no exportadas (interactiv
                  el `<div>` (o `<header>`) o el elemento de `render` de Stack, Group y
                  TopAppBar; anchor-position.ts: la posición de una capa junto a su ancla, respaldo sin anchor positioning, de Menu y
                  Tooltip, ADR-0007 y ADR-0021; roving-focus.ts: useRovingFocus, el foco
-                 itinerante de una sola parada de Tab de ChipGroup y Tabs, para las Toolbars,
-                 ADR-0023; settle-animations.ts: settleAnimations, la espera de la salida
+                 itinerante de una sola parada de Tab de ChipGroup, Tabs y Toolbar, ADR-0023 y
+                 ADR-0027; nearest-scroller.ts: el contenedor que se desplaza más cercano, de las
+                 partes cliente de TopAppBar y Toolbar; settle-animations.ts: settleAnimations, la espera de la salida
                  animada de Snackbar, Tooltip, Menu, Dialog y los sheets, que no se traba si una
                  transición se cancela; modal-dialog.ts: useModalDialog, el ciclo de vida modal
                  sobre `<dialog>` (showModal, foco inicial, Escape y scrim, vuelta de Tab, salida
@@ -261,6 +262,14 @@ No llamar al conector de Figma salvo que falte un dato imprescindible: tiene lí
     para borrarlo y, dentro de un `<dialog>` modal, el diálogo no recibe el `cancel` (en los otros dos
     no se aisló: Search cancela ese Escape en todos).
     `aria-disabled` hace que el `click` de Playwright espere (usar `{ force: true }`).
+  - Corrimientos dentro de un contenedor que se desplaza (Toolbar, comprobado el 2026-11-26): un
+    elemento corrido hacia abajo o hacia el final de la línea con `translate` o con márgenes negativos
+    agranda `scrollHeight`/`scrollWidth` en Chrome y Firefox (WebKit no); cambiar el `bottom` de un
+    `position: sticky` a un valor negativo lo saca por el borde sin agrandar nada en los tres. Un
+    `float` con `position: sticky; top: 50%` y un margen inferior negativo mayor que su alto queda
+    centrado en lo visible y el texto no lo rodea, igual en los tres. Firefox, al enfocar un botón que
+    está fuera de lo visible (una barra escondida), desplaza el contenedor antes del `focusin` (Chrome
+    no).
 - Snackbar (comprobado el 2026-11-26): un `popover` dentro de un `<dialog>` modal abierto se puede
   usar en los tres motores (fuera del diálogo queda inerte). Un F6 real que la página no atrapa
   saca el foco del documento en Firefox: para probar que un componente no atrapa una tecla, despachar

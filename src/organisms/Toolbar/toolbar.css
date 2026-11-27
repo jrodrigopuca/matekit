@@ -1,0 +1,213 @@
+/* Toolbar de Material 3 Expressive: docked y floating (horizontal y vertical), Standard y Vibrant
+   (ADR-0027).
+
+   Fuentes: kit de Figma (docs/research/05-medidas.md § Toolbars: floating de 64 de grosor, radio
+   completo, elevación 3; docked de 64 a todo el ancho; colores de la barra y de sus botones) y
+   Jetpack Compose, carpeta compose/material3/material3/src/commonMain/kotlin/androidx/compose/
+   material3/, commit 76990c62ac:
+   - tokens/FloatingToolbarTokens.kt: relleno 8 (ContainerLeadingSpace/TrailingSpace, hasta el área
+     de 48 de cada botón), 4 entre botones (ContainerBetweenSpace), 16 al borde de la pantalla en la
+     horizontal (HorizontalContainerExternalSpace = FloatingToolbarDefaults.ScreenOffset) y 24 en la
+     vertical (VerticalContainerExternalSpace).
+   - tokens/DockedToolbarTokens.kt: 64 de alto, 16 a los lados; FlexibleBottomAppBar (AppBar.kt)
+     reparte los botones (Arrangement.SpaceBetween) y suma las zonas seguras de abajo y los costados
+     (BottomAppBarDefaults.windowInsets).
+   - tokens/StandardToolbarTokens.kt y VibrantToolbarTokens.kt: colores de los botones por estado.
+   - FloatingToolbar.kt: la fila se desplaza a lo ancho si no entra (horizontalScroll); el FAB
+     acompañante va a 8 (FloatingToolbarFabTokens.BetweenSpace); el ocultar al desplazar sale por el
+     borde (exitAlwaysScrollBehavior) y se acomoda con FastSpatial (FloatingToolbarDefaults.animationSpec).
+   Conflictos (elevación con FAB, separación mínima de la docked, colores del FAB): ver
+   docs/research/07-jetpack-compose.md § Toolbars.
+
+   Los botones del kit miden 40 visibles en un área de 48. El IconButton de matekit mide 40 (el área
+   de 48 es un ::before que no ocupa lugar), así que dentro de la barra lleva 4 de margen en el eje
+   de la barra: con eso, rellenos y separaciones son los de Compose, medidos hasta el área de 48 (12
+   del borde a cada icono visible). El Button mide su ancho y 40 de alto, como en Compose. */
+
+@layer matekit.components {
+  /* Distancia de la floating horizontal (sola o con FAB) al borde de abajo, con la zona segura. */
+  :is(.mk-toolbar, .mk-toolbar-layout) {
+    --_edge: calc(var(--md-sys-space-200) + env(safe-area-inset-bottom, 0px));
+  }
+
+  .mk-toolbar {
+    /* Standard (StandardToolbarTokens.kt; el kit coincide). */
+    --_container: var(--md-sys-color-surface-container);
+    --_content: var(--md-sys-color-on-surface-variant);
+    --_selected-container: var(--md-sys-color-secondary-container);
+    --_selected-content: var(--md-sys-color-on-secondary-container);
+    /* Grosor de la barra. */
+    --_size: 64px;
+
+    /* Colores de los hijos (ADR-0027): variables públicas que leen IconButton (Standard, también
+       toggle) y Button (Filled toggle). Se heredan, y se resuelven acá. Los botones sin
+       seleccionar de la barra no tienen contenedor propio: el del Button es el de la barra
+       (ButtonContainerColor). */
+    --mk-icon-button-color: var(--_content);
+    --mk-icon-button-selected-container: var(--_selected-container);
+    --mk-icon-button-selected-color: var(--_selected-content);
+    --mk-button-unselected-container: var(--_container);
+    --mk-button-unselected-color: var(--_content);
+    --mk-button-selected-container: var(--_selected-container);
+    --mk-button-selected-color: var(--_selected-content);
+
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    /* Encima del contenido que pasa por debajo (también de los ítems posicionados). */
+    z-index: 1;
+    margin: 0;
+    background-color: var(--_container);
+    color: var(--_content);
+    /* Si los botones no entran, la barra se desplaza a lo ancho dentro de sí (como la fila de
+       Compose), sin desbordar la página; la recomendación es un Menu de más acciones. */
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    overscroll-behavior-x: contain;
+  }
+
+  .mk-toolbar[data-color='vibrant'] {
+    /* VibrantToolbarTokens.kt; el kit coincide. */
+    --_container: var(--md-sys-color-primary-container);
+    --_content: var(--md-sys-color-on-primary-container);
+    --_selected-container: var(--md-sys-color-surface-container);
+    --_selected-content: var(--md-sys-color-on-surface);
+  }
+
+  /* Área de 48 de los icon buttons en el eje de la barra. */
+  .mk-toolbar[aria-orientation='horizontal'] > .mk-icon-button {
+    margin-inline: var(--md-sys-space-50);
+  }
+  .mk-toolbar[aria-orientation='vertical'] > .mk-icon-button {
+    margin-block: var(--md-sys-space-50);
+  }
+
+  /* --- Docked: abajo de su contenedor, a todo el ancho, sin radio ni elevación --- */
+  .mk-toolbar[data-variant='docked'] {
+    position: sticky;
+    inset-block-end: calc(0px - var(--_offset, 0px));
+    inline-size: 100%;
+    min-block-size: calc(var(--_size) + env(safe-area-inset-bottom, 0px));
+    justify-content: space-between;
+    /* Separación mínima del kit (8; Compose DockedToolbarTokens.ContainerMinSpacing dice 4). */
+    gap: var(--md-sys-space-100);
+    /* 12 arriba y abajo hasta los 40 visibles (64 de alto); 16 a los lados hasta el área de 48. Las
+       zonas seguras son físicas (env): por eso left y right. */
+    padding-block: var(--md-sys-space-150) calc(var(--md-sys-space-150) + env(safe-area-inset-bottom, 0px));
+    padding-left: calc(var(--md-sys-space-200) + env(safe-area-inset-left, 0px));
+    padding-right: calc(var(--md-sys-space-200) + env(safe-area-inset-right, 0px));
+  }
+
+  /* --- Floating: una píldora sobre el contenido, con margen al borde --- */
+  .mk-toolbar[data-variant='floating'] {
+    gap: var(--md-sys-space-50);
+    /* Redonda: la mitad del grosor (32, como el kit), en vez de los 9999px de corner-full. */
+    border-radius: calc(var(--_size) / 2);
+    box-shadow: var(--md-sys-elevation-level3);
+  }
+
+  /* Horizontal: abajo y centrada en su contenedor, sin pasarse de su ancho. */
+  .mk-toolbar[data-variant='floating'][aria-orientation='horizontal'],
+  .mk-toolbar-layout {
+    position: sticky;
+    inset-block-end: calc(var(--_edge) - var(--_offset, 0px));
+    inline-size: fit-content;
+    max-inline-size: calc(
+      100% - 2 * var(--md-sys-space-200) - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)
+    );
+    margin-inline: auto;
+    margin-block: var(--md-sys-space-200) var(--_edge);
+  }
+  .mk-toolbar[data-variant='floating'][aria-orientation='horizontal'] {
+    block-size: var(--_size);
+    padding-block: var(--md-sys-space-150);
+    padding-inline: var(--md-sys-space-100);
+  }
+
+  /* Vertical: al final de la línea (a la derecha en LTR), centrada en lo que se ve del contenedor.
+     Va como primer hijo: un float que no ocupa lugar (el margen negativo deja su caja sin alto, así
+     el texto no lo rodea) y sticky al 50 % del alto visible. */
+  .mk-toolbar[data-variant='floating'][aria-orientation='vertical'],
+  .mk-toolbar-layout:has(> .mk-toolbar[aria-orientation='vertical']) {
+    --_side: var(--md-sys-space-300);
+    position: sticky;
+    float: inline-end;
+    inset-block: 50% auto;
+    inline-size: auto;
+    max-inline-size: none;
+    /* Un float con el margen inferior más negativo que su alto no empuja nada (ver ADR-0027). */
+    margin-block: 0 -100vh; /* lint-css-allow: margen que anula el alto del float, no es espaciado */
+    margin-inline: 0 calc(var(--_side) + env(safe-area-inset-right, 0px));
+    /* Se esconde hacia el costado hasta el borde y se desvanece (ToolbarScroll). */
+    translate: calc(var(--_progress, 0) * var(--_side)) -50%;
+    opacity: calc(1 - var(--_progress, 0));
+  }
+  .mk-toolbar[data-variant='floating'][aria-orientation='vertical']:dir(rtl),
+  .mk-toolbar-layout:has(> .mk-toolbar[aria-orientation='vertical']):dir(rtl) {
+    margin-inline: 0 calc(var(--_side) + env(safe-area-inset-left, 0px));
+    translate: calc(-1 * var(--_progress, 0) * var(--_side)) -50%;
+  }
+  .mk-toolbar[data-variant='floating'][aria-orientation='vertical'] {
+    flex-direction: column;
+    inline-size: var(--_size);
+    max-block-size: calc(100dvh - 2 * var(--_side));
+    padding-inline: var(--md-sys-space-150);
+    padding-block: var(--md-sys-space-100);
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+  }
+
+  /* --- Con FAB al lado (ToolbarLayout): el conjunto se ubica; la barra queda adentro --- */
+  .mk-toolbar-layout {
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    gap: var(--md-sys-space-100);
+    z-index: 1;
+  }
+  .mk-toolbar-layout:has(> .mk-toolbar[aria-orientation='vertical']) {
+    flex-direction: column;
+  }
+  .mk-toolbar-layout > .mk-toolbar.mk-toolbar[data-variant][aria-orientation] {
+    position: static;
+    float: none;
+    flex: 0 1 auto;
+    min-inline-size: 0;
+    max-inline-size: none;
+    margin: 0;
+    translate: none;
+    opacity: 1;
+  }
+  .mk-toolbar-layout > :not(.mk-toolbar) {
+    flex: none;
+  }
+
+  /* Escondida del todo: sin puntero (la vertical queda transparente en su lugar). */
+  :is(.mk-toolbar, .mk-toolbar-layout)[data-hidden] {
+    pointer-events: none;
+  }
+
+  /* Al soltar, se acomoda con FastSpatial (FloatingToolbarDefaults.animationSpec). Con movimiento
+     reducido, sin deslizamiento animado: salta. */
+  @media (prefers-reduced-motion: no-preference) {
+    :is(.mk-toolbar, .mk-toolbar-layout)[data-settling] {
+      transition:
+        inset-block-end var(--md-sys-motion-spring-fast-spatial-duration) var(--md-sys-motion-spring-fast-spatial-easing),
+        translate var(--md-sys-motion-spring-fast-spatial-duration) var(--md-sys-motion-spring-fast-spatial-easing),
+        opacity var(--md-sys-motion-spring-fast-effects-duration) var(--md-sys-motion-spring-fast-effects-easing);
+    }
+  }
+
+  /* --- Alto contraste (forced-colors) ---
+     El navegador quita el fondo y la sombra: un contorno CanvasText dibuja la barra (sigue el radio
+     de la floating). Los botones seleccionados ya se marcan con Highlight y los deshabilitados con
+     GrayText (button.css). */
+  @media (forced-colors: active) {
+    .mk-toolbar {
+      outline: 1px solid CanvasText;
+      outline-offset: -1px;
+    }
+  }
+}

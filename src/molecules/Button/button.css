@@ -192,6 +192,18 @@
     --_container: var(--md-sys-color-surface-container);
     --_content: var(--md-sys-color-on-surface-variant);
   }
+  /* Toggle Filled del Button: un contenedor (la Toolbar, ADR-0027) cambia sus colores con
+     --mk-button-unselected-container, --mk-button-unselected-color, --mk-button-selected-container
+     y --mk-button-selected-color (públicas, se heredan). Sin ellas, los de arriba y la base. Solo el
+     Button: el IconButton Filled no las lee. */
+  .mk-button[data-variant='filled'][aria-pressed='false'] {
+    --_container: var(--mk-button-unselected-container, var(--md-sys-color-surface-container));
+    --_content: var(--mk-button-unselected-color, var(--md-sys-color-on-surface-variant));
+  }
+  .mk-button[data-variant='filled'][aria-pressed='true'] {
+    --_container: var(--mk-button-selected-container, var(--md-sys-color-primary));
+    --_content: var(--mk-button-selected-color, var(--md-sys-color-on-primary));
+  }
 
   :is(.mk-button, .mk-icon-button)[data-variant='tonal'] {
     --_container: var(--md-sys-color-secondary-container);
