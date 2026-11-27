@@ -1,6 +1,6 @@
 import { createRef, useState, type FormEvent, type ReactNode } from 'react'
 import { describe, expect, test, vi } from 'vitest'
-import { commands, page, userEvent } from 'vitest/browser'
+import { commands, page, server, userEvent } from 'vitest/browser'
 import {
   Search,
   SearchBar,
@@ -790,8 +790,10 @@ describe('Search: vista por el ancho de la ventana', () => {
       expect(input(c).getAttribute('aria-expanded')).toBe('true')
       await page.viewport(400, 700)
       await expect.poll(() => root(c).dataset['view']).toBe('full-screen')
-      expect(input(c).getAttribute('aria-expanded')).toBe('false')
-      expect(dialog(c).open).toBe(false)
+      // El cierre puede asentarse un cuadro después del cambio de vista: con la suite completa
+      // cargada, leerlo en el acto fallaba de vez en cuando (visto el 2026-11-26).
+      await expect.poll(() => input(c).getAttribute('aria-expanded')).toBe('false')
+      await expect.poll(() => dialog(c).open).toBe(false)
     } finally {
       await page.viewport(width, height)
     }
@@ -921,5 +923,127 @@ describe('Search: props nativas y ref', () => {
     expect(ref.current?.dataset['y']).toBe('1')
     expect(ref.current?.title).toBe('Sugerencia')
     expect(ref.current?.classList.contains('mk-list-item')).toBe(true)
+  })
+})
+
+describe('Search: anillo de foco solo con teclado', () => {
+  /** Opacidad del anillo de la píldora (la de afuera, o la de la vista). */
+  const ring = (pill: Element) => style(pill.querySelector(':scope > .mk-focus-ring')).opacity
+  const viewBar = (c: ParentNode) => q(dialog(c), '.mk-search-bar')
+  /** Un toque: pointerdown táctil y el clic que le sigue (como lo despacha el navegador). */
+  function tap(el: HTMLElement) {
+    el.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerType: 'touch', isPrimary: true }))
+    el.focus()
+    el.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+  }
+
+  test('un clic en el campo no muestra el anillo', async () => {
+    const c = await render(<Harness />)
+    await userEvent.click(input(c))
+    expect(document.activeElement).toBe(input(c))
+    expect(ring(bar(c))).toBe('0')
+    expect(root(c).hasAttribute('data-pointer-focus')).toBe(true)
+  })
+
+  // WebKit en macOS: Tab sí llega a un campo de texto (ver CLAUDE.md, solo los botones y las casillas
+  // quedan afuera).
+  test('el foco por teclado (Tab) muestra el anillo', async () => {
+    const c = await render(<Harness />)
+    await userEvent.tab()
+    expect(document.activeElement).toBe(input(c))
+    expect(ring(bar(c))).toBe('1')
+  })
+
+  test('un toque no muestra el anillo', async () => {
+    const c = await render(<Harness />)
+    tap(input(c))
+    expect(document.activeElement).toBe(input(c))
+    expect(ring(bar(c))).toBe('0')
+  })
+
+  test('después de un clic, escribir no lo muestra y una tecla de navegación sí', async () => {
+    const c = await render(<Harness />)
+    await userEvent.click(input(c))
+    await userEvent.keyboard('ma{ArrowLeft}{Backspace}')
+    expect(ring(bar(c))).toBe('0')
+    await userEvent.keyboard('{ArrowDown}')
+    expect(ring(bar(c))).toBe('1')
+  })
+
+  test('salir de la búsqueda con un clic y volver con Tab muestra el anillo', async () => {
+    const c = await render(
+      <>
+        {/* Antes de la búsqueda: Tab sigue desde el punto del clic (Chrome). */}
+        <p className="afuera">Afuera</p>
+        <Harness />
+      </>,
+    )
+    await userEvent.click(input(c))
+    await userEvent.click(q(c, '.afuera'))
+    expect(document.activeElement).not.toBe(input(c))
+    await userEvent.tab()
+    expect(document.activeElement).toBe(input(c))
+    expect(ring(bar(c))).toBe('1')
+  })
+
+  test('el botón de borrar con un clic devuelve el foco al campo sin anillo', async () => {
+    const c = await render(<Harness initial="ma" />)
+    await userEvent.click(input(c))
+    await userEvent.click(page.getByRole('button', { name: 'Borrar búsqueda' }))
+    expect(document.activeElement).toBe(input(c))
+    expect(ring(bar(c))).toBe('0')
+  })
+
+  test('la vista a pantalla completa abierta con un toque: su barra sin anillo; una flecha lo muestra', async () => {
+    const c = await render(<Harness view="full-screen" initial="ma" />)
+    tap(input(c))
+    await expect.poll(() => dialog(c).open).toBe(true)
+    expect(document.activeElement).toBe(viewInput(c))
+    expect(ring(viewBar(c))).toBe('0')
+    await userEvent.keyboard('{ArrowDown}')
+    expect(ring(viewBar(c))).toBe('1')
+  })
+
+  test('la vista abierta con el teclado muestra el anillo; cerrada con Escape, la barra también', async () => {
+    const c = await render(<Harness view="full-screen" initial="ma" />)
+    await userEvent.tab()
+    await userEvent.keyboard('{ArrowDown}')
+    expect(dialog(c).open).toBe(true)
+    expect(ring(viewBar(c))).toBe('1')
+    await userEvent.keyboard('{Escape}')
+    await expect.poll(() => dialog(c).open).toBe(false)
+    expect(document.activeElement).toBe(input(c))
+    expect(ring(bar(c))).toBe('1')
+  })
+
+  test('cerrada con el botón de volver (clic), la barra recibe el foco sin anillo', async () => {
+    const c = await render(<Harness view="full-screen" />)
+    await userEvent.click(input(c))
+    await userEvent.click(q(dialog(c), '.mk-search-view-close'))
+    await expect.poll(() => dialog(c).open).toBe(false)
+    expect(document.activeElement).toBe(input(c))
+    expect(ring(bar(c))).toBe('0')
+  })
+
+  test('dentro del TopAppBar: clic sin anillo, teclado con anillo', async () => {
+    const c = await render(
+      <TopAppBar scrollBehavior="none">
+        <Search>
+          <SearchBar label="Buscar en la barra" />
+        </Search>
+      </TopAppBar>,
+    )
+    await userEvent.click(input(c))
+    expect(ring(bar(c))).toBe('0')
+    await userEvent.keyboard('{Escape}')
+    expect(ring(bar(c))).toBe('1')
+  })
+
+  test('el foco por script sin puntero (autoFocus, .focus()) muestra el anillo', async () => {
+    const c = await render(<Harness />)
+    // focusVisible: WebKit no aplica :focus-visible con un .focus() común; acá no hace falta (la
+    // regla mira :focus), se pasa igual para que el caso sea el de un foco de teclado en los tres.
+    input(c).focus(server.browser === 'webkit' ? ({ focusVisible: true } as FocusOptions) : undefined)
+    expect(ring(bar(c))).toBe('1')
   })
 })

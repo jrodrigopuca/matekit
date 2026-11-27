@@ -1175,6 +1175,15 @@ describe('Search', () => {
     expect(s.outlineOffset).toBe('-2px')
   })
 
+  test('el foco por teclado se ve: el anillo de la barra es un contorno en un color del sistema', async () => {
+    const c = await render(search())
+    ;(q(c, '.mk-search-input') as HTMLInputElement).focus()
+    const ring = q(c, '.mk-search-bar > .mk-focus-ring')
+    expect(style(ring).opacity).toBe('1')
+    expect(style(ring).outlineStyle).toBe('solid')
+    if (autoForced) expect(style(ring).outlineColor).not.toBe(style(q(c, '.mk-search-bar')).backgroundColor)
+  })
+
   test('a pantalla completa: la barra de la vista y la lista con contorno', async () => {
     const c = await render(search('full-screen'))
     await userEvent.click(q(c, '.mk-search-input'))

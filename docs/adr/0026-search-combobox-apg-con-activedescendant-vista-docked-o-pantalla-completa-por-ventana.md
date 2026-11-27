@@ -1,6 +1,19 @@
 # ADR-0026: Search como combobox APG con `aria-activedescendant`, raíz `<search>` con estado por contexto, sugerencias como opciones con las partes de ListItem y vista docked o a pantalla completa elegida por la clase de ventana
 
 - Status: accepted (2026-11-26)
+- Actualización (2026-11-26, aprobada por el autor): el anillo de foco de la barra se ve solo con el
+  foco de teclado. Un input de texto siempre es `:focus-visible` (también con un clic o un toque),
+  así que la búsqueda lleva su propia señal: un `pointerdown` dentro de la raíz (mouse, táctil o
+  lápiz, también en la barra de la vista y en las sugerencias) marca `data-pointer-focus` y el CSS
+  oculta el anillo mientras esté. La marca se va cuando el foco vuelve a entrar desde afuera sin un
+  gesto de puntero en curso (Tab, un atajo, un foco por script) o con una tecla de navegación
+  (Flecha arriba y abajo, Escape, Enter, Tab, Re Pág, Av Pág), como hacen los navegadores con
+  `:focus-visible` en un botón enfocado con el mouse cuando después se usa el teclado; escribir o
+  mover el cursor no la quita (es editar, no navegar). Se borra al entrar y no al salir porque en
+  WebKit un clic en un botón (borrar) no lo enfoca: el foco pasa por el `<body>` antes de volver al
+  campo. Una sola marca en la raíz cubre la barra suelta, la de la vista a pantalla completa y la
+  del TopAppBar. No hay otro estado de foco (el kit y Compose no tienen capa de foco en la barra);
+  en alto contraste el anillo es un contorno en un color del sistema.
 - Complementa: [ADR-0002](0002-api-por-composicion-con-capas-atomicas.md) (partes con nombres
   planos), [ADR-0003](0003-componentes-universales-e-interactivos.md) (qué es cliente),
   [ADR-0007](0007-menu-popover-y-anchor-positioning.md) y
@@ -122,8 +135,6 @@
     deshabilitado no envía (como el navegador), y el envío nativo con Enter queda cancelado.
   - Contar las opciones y recorrerlas por el DOM supone que son `role="option"` dentro del listbox;
     una opción propia del uso tiene que respetar eso.
-  - Con el foco en el campo de texto, el anillo de la barra se ve siempre (un input es siempre
-    `:focus-visible`).
   - No se aplica el ancho mínimo de 360 ni el alto mínimo de 240 de Compose, ni el scrim del docked
     (ver 07-jetpack-compose.md).
   - La apertura en iOS (teclado al pasar el foco al campo de la vista dentro del mismo gesto) no se

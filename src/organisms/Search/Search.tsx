@@ -142,6 +142,49 @@ function useSearch(part: string): SearchContextValue {
   return ctx
 }
 
+/**
+ * Un gesto de puntero en curso: desde el `pointerdown` hasta después del `click` que sigue al
+ * `pointerup` (o el `pointercancel`), estén donde estén (un arrastre puede soltarse afuera).
+ */
+function usePointerGesture() {
+  const active = useRef(false)
+  return useMemo(
+    () => ({
+      active: () => active.current,
+      start() {
+        active.current = true
+        const end = () => {
+          window.removeEventListener('pointerup', end, true)
+          window.removeEventListener('pointercancel', end, true)
+          // Después del click, que el navegador despacha enseguida del pointerup.
+          setTimeout(() => {
+            active.current = false
+          })
+        }
+        window.addEventListener('pointerup', end, true)
+        window.addEventListener('pointercancel', end, true)
+      },
+    }),
+    [],
+  )
+}
+
+// Anillo de foco de la barra solo con teclado. Un input de texto siempre es :focus-visible (aunque
+// se lo enfoque con un clic o un toque), así que la búsqueda lleva su propia señal: un
+// `pointerdown` dentro de la raíz (mouse, táctil o lápiz; también en la barra de la vista a pantalla
+// completa y en las sugerencias, que son descendientes en el DOM) marca `data-pointer-focus`, y el
+// CSS oculta el anillo mientras esté. La marca se va cuando el foco vuelve a entrar desde afuera
+// sin un gesto de puntero en curso (volver con Tab muestra el anillo) o con una tecla de navegación (las flechas de la lista, Escape, Enter, Tab,
+// Re Pág y Av Pág), como hacen los navegadores con :focus-visible en un botón enfocado con el mouse
+// cuando después se usa el teclado. Escribir o mover el cursor (letras, Retroceso, Izquierda,
+// Derecha, Inicio, Fin) no la quita: es editar el texto, no navegar. Se escribe en el DOM (sin
+// estado de React): no vuelve a dibujar nada.
+const NAVIGATION_KEYS = new Set(['ArrowDown', 'ArrowUp', 'Escape', 'Enter', 'Tab', 'PageDown', 'PageUp'])
+
+function markPointerFocus(root: HTMLElement, pointer: boolean) {
+  root.toggleAttribute('data-pointer-focus', pointer)
+}
+
 /** Opciones que las flechas recorren, en el orden del DOM (las deshabilitadas se saltean). */
 function enabledOptions(listbox: HTMLElement | null): HTMLElement[] {
   if (!listbox) return []
@@ -219,6 +262,9 @@ export function Search({
   className,
   children,
   ref,
+  onPointerDown,
+  onKeyDown,
+  onFocus,
   ...rest
 }: SearchProps) {
   const id = useId()
@@ -233,6 +279,7 @@ export function Search({
   const [hasView, setHasView] = useState(false)
   const [bar, setBar] = useState<BarSettings>({ name: {}, placeholder: undefined, clearLabel: 'Borrar búsqueda' })
 
+  const pointerGesture = usePointerGesture()
   const rootRef = useRef<HTMLElement | null>(null)
   const setRootRef = useMemo(() => mergeRefs(rootRef, ref), [ref])
   const barRef = useRef<HTMLDivElement | null>(null)
@@ -422,7 +469,30 @@ export function Search({
 
   return (
     <SearchContext value={ctx}>
-      <search {...rest} ref={setRootRef} className={cx('mk-search', className)} data-view={mode}>
+      <search
+        {...rest}
+        ref={setRootRef}
+        className={cx('mk-search', className)}
+        data-view={mode}
+        onPointerDown={(e) => {
+          onPointerDown?.(e)
+          markPointerFocus(e.currentTarget, true)
+          pointerGesture.start()
+        }}
+        onKeyDown={(e) => {
+          onKeyDown?.(e)
+          if (NAVIGATION_KEYS.has(e.key)) markPointerFocus(e.currentTarget, false)
+        }}
+        onFocus={(e) => {
+          onFocus?.(e)
+          // El foco entra desde afuera sin un gesto de puntero en curso: Tab, un atajo o un foco
+          // por script. Con un gesto en curso (el botón de borrar, que en WebKit no se enfoca con el
+          // clic y deja ir el foco al <body> antes de devolverlo al campo), la marca sigue.
+          const from = e.relatedTarget
+          if (from instanceof Node && e.currentTarget.contains(from)) return
+          if (!pointerGesture.active()) markPointerFocus(e.currentTarget, false)
+        }}
+      >
         {children}
       </search>
     </SearchContext>

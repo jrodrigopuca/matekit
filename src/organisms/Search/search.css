@@ -73,9 +73,13 @@
     --mk-focus-ring-color: var(--md-sys-color-secondary);
   }
 
-  /* El anillo de la barra sigue al foco de teclado del campo (un input siempre es :focus-visible
-     con foco). */
-  .mk-search-bar:has(> .mk-search-input:focus-visible) > .mk-focus-ring {
+  /* El anillo de la barra solo con el foco de teclado. Un input de texto siempre es
+     :focus-visible, también con un clic o un toque: Search.tsx marca la raíz con data-pointer-focus
+     tras un pointerdown y la desmarca cuando el foco vuelve a entrar sin puntero o con una tecla de navegación (ver el comentario de
+     NAVIGATION_KEYS). Vale para la barra suelta, la de la vista a pantalla completa y la del
+     TopAppBar. Sin otro estado de foco: el kit y Compose no tienen capa de foco en la barra
+     (Enabled, Hovered y Pressed). */
+  .mk-search:not([data-pointer-focus]) .mk-search-bar:has(> .mk-search-input:focus) > .mk-focus-ring {
     --mk-focus-ring-visible: 1;
   }
 
