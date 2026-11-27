@@ -1,5 +1,5 @@
 import { createRef, useState } from 'react'
-import { describe, expect, test, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import { commands, page, userEvent } from 'vitest/browser'
 import { HomeIcon, MenuIcon, SearchIcon, StarIcon } from '../../icons/icons.tsx'
 import { Badge } from '../../molecules/Badge/Badge.tsx'
@@ -255,7 +255,9 @@ describe('ModalNavigationRail: cierre al elegir un destino', () => {
 })
 
 describe('ModalNavigationRail: medidas y colores (Compose ModalWideNavigationRail)', () => {
-  test('contra el borde de inicio, de alto completo, 220 de ancho, radio 16, surface-container, sin sombra, scrim al 32 %', async () => {
+  // Radio solo del lado del contenido (actualización del ADR-0029: Compose lo pone en las cuatro
+  // esquinas, pero contra el borde asomaba el scrim).
+  test('contra el borde de inicio, de alto completo, 220 de ancho, radio 16 del lado del contenido, surface-container, sin sombra, scrim al 32 %', async () => {
     const c = await render(<Harness initialOpen />)
     const r = rail(c).getBoundingClientRect()
     expect(r.left).toBeCloseTo(0, 1)
@@ -263,9 +265,8 @@ describe('ModalNavigationRail: medidas y colores (Compose ModalWideNavigationRai
     expect(r.height).toBeCloseTo(vh(), 1)
     expect(r.width).toBe(220)
     const s = style(rail(c))
-    for (const corner of ['TopLeft', 'TopRight', 'BottomLeft', 'BottomRight'] as const) {
-      expect(s[`border${corner}Radius`]).toBe('16px')
-    }
+    expect([s.borderTopLeftRadius, s.borderBottomLeftRadius]).toEqual(['0px', '0px'])
+    expect([s.borderTopRightRadius, s.borderBottomRightRadius]).toEqual(['16px', '16px'])
     expect(s.backgroundColor).toBe(roleColor('surface-container'))
     expect(s.boxShadow).toBe('none')
     await expect.poll(() => getComputedStyle(rail(c), '::backdrop').backgroundColor).toBe(mixColor('scrim', 32))
@@ -313,6 +314,13 @@ describe('ModalNavigationRail: medidas y colores (Compose ModalWideNavigationRai
     const padding = (selector: string) => rules.find((r) => r.selectorText === selector)?.style.getPropertyValue('padding') ?? ''
     expect(padding('.mk-navigation-rail-modal')).toMatch(/safe-area-inset-top.*safe-area-inset-bottom.*safe-area-inset-left/)
     expect(padding('.mk-navigation-rail-modal:dir(rtl)')).toMatch(/safe-area-inset-top.*safe-area-inset-right.*safe-area-inset-bottom/)
+  })
+
+  test('RTL: el radio pasa al lado del contenido (la izquierda); contra el borde derecho, 0', async () => {
+    const c = await render(<div dir="rtl"><Harness initialOpen /></div>)
+    const s = style(rail(c))
+    expect([s.borderTopRightRadius, s.borderBottomRightRadius]).toEqual(['0px', '0px'])
+    expect([s.borderTopLeftRadius, s.borderBottomLeftRadius]).toEqual(['16px', '16px'])
   })
 
   test('RTL: contra el borde derecho, con menu_open espejado', async () => {
@@ -412,5 +420,233 @@ describe('ModalNavigationRail: props nativas y ref', () => {
     q(c, '.a').click()
     expect(onKeyDown).toHaveBeenCalled()
     expect(onClick).toHaveBeenCalled()
+  })
+})
+
+// Arrastrar para cerrar. Los gestos táctiles se despachan a mano con el reloj de performance.now()
+// falso (la velocidad depende del tiempo entre movimientos, como en BottomSheet.test.tsx); el
+// mouse real de Playwright (commands.dragThrough) prueba que el rail sigue al puntero.
+
+/** Gesto despachado a mano (táctil por defecto) desde el centro de `target`. */
+function gesture(target: Element, pointerType: 'touch' | 'mouse' = 'touch') {
+  const r = target.getBoundingClientRect()
+  let x = r.left + r.width / 2
+  let y = r.top + r.height / 2
+  const send = (type: string) =>
+    target.dispatchEvent(
+      new PointerEvent(type, {
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+        clientX: x,
+        clientY: y,
+        pointerId: 12,
+        pointerType,
+        isPrimary: true,
+        button: type === 'pointermove' ? -1 : 0,
+        buttons: type === 'pointerup' ? 0 : 1,
+      }),
+    )
+  return {
+    down: () => send('pointerdown'),
+    /** Mueve (`dx`, `dy`) en `n` pasos, cada uno `ms` después del anterior. */
+    move(dx: number, dy = 0, ms = 16, n = Math.max(1, Math.round(Math.max(Math.abs(dx), Math.abs(dy)) / 4))) {
+      for (let i = 0; i < n; i++) {
+        vi.advanceTimersByTime(ms)
+        x += dx / n
+        y += dy / n
+        send('pointermove')
+      }
+    },
+    wait: (ms: number) => vi.advanceTimersByTime(ms),
+    up: () => send('pointerup'),
+  }
+}
+
+const fakeClock = () => vi.useFakeTimers({ toFake: ['performance'] })
+afterEach(() => {
+  vi.useRealTimers()
+})
+
+/** Corrimiento del rail hacia el borde de inicio, medido en pantalla (LTR). */
+const shift = (c: ParentNode) => -rail(c).getBoundingClientRect().left
+
+/** Rail con muchos destinos: la lista se desplaza en vertical (como el menú de páginas del playground). */
+function LongHarness({ onRequest }: { onRequest?: () => void }) {
+  return (
+    <ModalNavigationRail open onClose={onRequest}>
+      {Array.from({ length: 30 }, (_, i) => (
+        <NavigationRailItem key={i} href={`#p${i}`} className={i === 0 ? 'home' : undefined}>
+          <NavigationRailItemLabel>Página {i + 1}</NavigationRailItemLabel>
+        </NavigationRailItem>
+      ))}
+    </ModalNavigationRail>
+  )
+}
+
+describe('ModalNavigationRail: arrastrar para cerrar (Compose: la mitad del ancho o 125 px/s)', () => {
+  test('con el mouse, el rail sigue al puntero hacia el borde; al soltar quieto y corto, vuelve', async () => {
+    const onRequest = vi.fn()
+    const c = await render(<Harness initialOpen onRequest={onRequest} />)
+    await commands.dragThrough('.mk-navigation-rail-modal', [[150, 400], [140, 400], [120, 400], [90, 400]])
+    try {
+      // Pasado el umbral de 8 px (en 140), sigue al puntero desde ahí: 50 px.
+      await expect.poll(() => shift(c)).toBeCloseTo(50, 0)
+      expect(rail(c).hasAttribute('data-dragging')).toBe(true)
+    } finally {
+      // Quieto más de 40 ms antes de soltar: velocidad 0, gana el ancla más cercana (abierto).
+      await new Promise((r) => setTimeout(r, 80))
+      await commands.pressUp()
+    }
+    await expect.poll(() => shift(c)).toBeCloseTo(0, 0)
+    expect(onRequest).not.toHaveBeenCalled()
+    expect(rail(c).hasAttribute('data-dragging')).toBe(false)
+  })
+
+  // Soltando en movimiento lento (80 px/s, menos de 125): decide la distancia contra la mitad del
+  // ancho (110). Quieto antes de soltar (velocidad 0) ganaría el ancla más cercana, sin umbral.
+  test('despacio, más de la mitad del ancho: pide cerrar y cierra', async () => {
+    const onRequest = vi.fn()
+    const c = await render(<Harness initialOpen onRequest={onRequest} />)
+    fakeClock()
+    const g = gesture(q(c, '.home'))
+    g.down()
+    g.move(-10)
+    g.move(-120, 0, 50, 30)
+    expect(shift(c)).toBeCloseTo(120, 0)
+    g.up()
+    expect(onRequest).toHaveBeenCalledTimes(1)
+    vi.useRealTimers()
+    await expect.poll(() => rail(c).open).toBe(false)
+  })
+
+  test('despacio, menos de la mitad: vuelve sin pedir cerrar', async () => {
+    const onRequest = vi.fn()
+    const c = await render(<Harness initialOpen onRequest={onRequest} />)
+    fakeClock()
+    const g = gesture(q(c, '.home'))
+    g.down()
+    g.move(-10)
+    g.move(-100, 0, 50, 25)
+    g.up()
+    expect(onRequest).not.toHaveBeenCalled()
+    expect(rail(c).style.getPropertyValue('--_drag')).toBe('')
+  })
+
+  test('rápido y corto (más de 125 px/s): pide cerrar; si el padre no cierra, vuelve a su lugar', async () => {
+    const onRequest = vi.fn()
+    const c = await render(<Harness initialOpen onRequest={onRequest} obey={false} />)
+    fakeClock()
+    const g = gesture(q(c, '.home'))
+    g.down()
+    g.move(-10)
+    g.move(-30, 0, 10, 3) // 1000 px/s, 30 px
+    g.up()
+    expect(onRequest).toHaveBeenCalledTimes(1)
+    vi.useRealTimers()
+    await expect.poll(() => rail(c).style.getPropertyValue('--_drag')).toBe('')
+    expect(rail(c).open).toBe(true)
+    expect(shift(c)).toBeCloseTo(0, 0)
+  })
+
+  test('elegir un destino después de arrastrar con el mouse no navega ni cierra', async () => {
+    const onRequest = vi.fn()
+    const onNavigate = vi.fn()
+    const c = await render(<Harness initialOpen onRequest={onRequest} onNavigate={onNavigate} />)
+    fakeClock()
+    const g = gesture(q(c, '.home'), 'mouse')
+    g.down()
+    g.move(-10)
+    g.move(-20, 0, 30)
+    g.wait(60)
+    g.up()
+    // El clic que el navegador manda al terminar el gesto con mouse.
+    q(c, '.home').click()
+    expect(onNavigate).not.toHaveBeenCalled()
+    expect(onRequest).not.toHaveBeenCalled()
+  })
+
+  test('un gesto vertical (desplazar la lista) o hacia el contenido no mueve el rail', async () => {
+    const onRequest = vi.fn()
+    const c = await render(<LongHarness onRequest={onRequest} />)
+    fakeClock()
+    for (const [dx, dy] of [[-6, 80], [0, -80], [60, 0]] as const) {
+      const g = gesture(q(c, '.home'))
+      g.down()
+      // Un movimiento vertical no se cancela (el navegador puede desplazar la lista).
+      const target = q(c, '.home')
+      const probe = new PointerEvent('pointermove', { bubbles: true, cancelable: true, clientX: target.getBoundingClientRect().left + 40 + dx, clientY: target.getBoundingClientRect().top + 20 + dy, pointerId: 12, pointerType: 'touch', isPrimary: true })
+      g.move(dx, dy)
+      target.dispatchEvent(probe)
+      expect(probe.defaultPrevented, `${dx}, ${dy}`).toBe(false)
+      expect(rail(c).hasAttribute('data-dragging'), `${dx}, ${dy}`).toBe(false)
+      expect(shift(c)).toBeCloseTo(0, 0)
+      g.up()
+    }
+    expect(onRequest).not.toHaveBeenCalled()
+    const list = q(c, '.mk-navigation-rail')
+    expect(list.scrollHeight).toBeGreaterThan(list.clientHeight)
+    // El táctil vertical queda para el navegador (desplazamiento nativo); el horizontal, para el rail.
+    expect(style(rail(c)).touchAction).toBe('pan-y pinch-zoom')
+  })
+
+  test('con el mouse en un campo de texto no arrastra (selecciona)', async () => {
+    const c = await render(
+      <ModalNavigationRail open>
+        <input className="campo" defaultValue="texto largo para seleccionar" />
+        <NavigationRailItem href="#a"><NavigationRailItemLabel>A</NavigationRailItemLabel></NavigationRailItem>
+      </ModalNavigationRail>,
+    )
+    fakeClock()
+    const g = gesture(q(c, '.campo'), 'mouse')
+    g.down()
+    g.move(-60)
+    expect(rail(c).hasAttribute('data-dragging')).toBe(false)
+    g.up()
+  })
+
+  test('RTL: se arrastra hacia la derecha; hacia la izquierda no', async () => {
+    const onRequest = vi.fn()
+    const c = await render(<div dir="rtl"><Harness initialOpen onRequest={onRequest} /></div>)
+    const right = () => rail(c).getBoundingClientRect().right
+    fakeClock()
+    let g = gesture(q(c, '.home'))
+    g.down()
+    g.move(-60)
+    expect(rail(c).hasAttribute('data-dragging')).toBe(false)
+    g.up()
+    g = gesture(q(c, '.home'))
+    g.down()
+    g.move(10)
+    g.move(50, 0, 30)
+    expect(right() - vw()).toBeCloseTo(50, 0)
+    g.wait(60)
+    g.move(100, 0, 30)
+    g.wait(60)
+    g.up()
+    expect(onRequest).toHaveBeenCalledTimes(1)
+  })
+
+  test('con movimiento reducido: sigue al dedo; al soltar no se desliza (se funde donde quedó)', async () => {
+    await withTransitions(async () => {
+      await commands.reduceMotion(true)
+      const c = await render(<Harness initialOpen />)
+      await entered(rail(c))
+      fakeClock()
+      const g = gesture(q(c, '.home'))
+      g.down()
+      g.move(-10)
+      g.move(-150, 0, 30)
+      expect(shift(c)).toBeCloseTo(150, 0)
+      expect(style(rail(c)).transitionProperty).toBe('none')
+      g.wait(60)
+      g.up()
+      vi.useRealTimers()
+      // Cerrando: se funde (solo opacity) en el lugar donde se soltó, sin volver ni salir deslizándose.
+      await expect.poll(() => rail(c).hasAttribute('data-closing')).toBe(true)
+      expect(style(rail(c)).transitionProperty).toBe('opacity')
+      expect(style(rail(c)).translate).toBe('-150px')
+      await expect.poll(() => rail(c).open).toBe(false)
+    })
   })
 })

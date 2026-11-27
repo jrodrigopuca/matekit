@@ -8,7 +8,7 @@
 // universal (BottomSheetSlots.tsx).
 //
 // Arrastre (ADR-0025): eventos de puntero sobre el <dialog>, con la decisión al soltar portada de
-// Compose (sheet-drag.ts). Dentro de BottomSheetContent, un gesto táctil hacia abajo con el
+// Compose (src/internal/anchored-drag.ts). Dentro de BottomSheetContent, un gesto táctil hacia abajo con el
 // contenido arriba de todo, o cualquier gesto vertical con el sheet parcial, mueve el sheet en lugar
 // de desplazar (el desplazamiento anidado de Compose, ConsumeSwipeWithinBottomSheetBounds…): se
 // decide al pasar el umbral de 8 px y, si el sheet se queda con el gesto, un `touchmove` no pasivo
@@ -34,7 +34,7 @@ import {
 import { FocusRing } from '../../atoms/FocusRing/FocusRing.tsx'
 import { onScrim, useModalDialog, useRegisteredId } from '../../internal/modal-dialog.ts'
 import { partOutsideParent } from '../../internal/diagnostics.ts'
-import { computeTarget, DRAG_SLOP, VelocityTracker, type Anchor } from './sheet-drag.ts'
+import { computeTarget, DRAG_SLOP, VelocityTracker, type Anchor } from '../../internal/anchored-drag.ts'
 import { bottomSheetStrings } from './strings.ts'
 
 /** Estado del sheet abierto: parcial (la mitad de la ventana) o expandido (todo su alto). */
