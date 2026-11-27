@@ -131,3 +131,34 @@ componente. URLs (`#id`) y foco (a la página actual al abrir, al botón al cerr
 - Revisar si: Firefox y los demás motores sostienen container style queries (`@container style()`),
   que quitarían la duplicación de los juegos de la barra; o si una app necesita la suite expandida
   desde 1200 (entonces, un `layout="rail-expanded"` con el CSS del destino del rail).
+
+## Actualización (2026-11-27)
+
+- **Radio solo del lado del contenido** (aprobado por el autor): las esquinas pegadas al borde de
+  inicio van en 0 y las del contenido en 16, con esquinas lógicas (en RTL se invierten). Se aparta de
+  Compose (`CornerLarge` en las cuatro) porque el rail toca el borde arriba, abajo y al inicio, y con
+  radio ahí asomaba el scrim; así queda igual que el SideSheet modal. Anotado en
+  `07-jetpack-compose.md`.
+- **Arrastrar para cerrar** (aprobado por el autor), como `ModalWideNavigationRail` con
+  `hideOnCollapse`: el gesto pasa al rail solo si, pasados 8 px, es horizontal y hacia el borde de
+  inicio (uno vertical desplaza los destinos; con mouse, uno hacia el contenido sigue seleccionando
+  texto, y en un campo de texto nunca arrastra). Sigue al puntero y al soltar decide con
+  `computeTarget` y los umbrales de Compose para el rail: la mitad del ancho
+  (`positionalThreshold = distance * 0.5`) o 125 px/s (`AnchoredDraggableMinFlingVelocity`). Cerrar
+  se pide a `onClose`; si el padre no cierra, vuelve. La lógica del BottomSheet pasó a
+  `src/internal/anchored-drag.ts` (`sheet-drag.ts` la reexporta; el BottomSheet no cambió). Táctil:
+  `touch-action: pan-y pinch-zoom` en el diálogo deja el gesto horizontal a los eventos de puntero
+  y el vertical al navegador, sin `touchmove` no pasivo (comprobado con toques reales por CDP en
+  Chrome contra el playground). Con movimiento reducido, el rail sigue al dedo; al soltar vuelve
+  en el acto o se funde donde quedó (`data-released`). Después de un arrastre con mouse, el clic
+  que sigue no elige el destino, y se cancela el arrastre nativo del enlace (`dragstart`).
+- **Aviso de destinos de más** (aprobado por el autor; diagnóstico del ADR-0028,
+  `MK_NAVIGATION_TOO_MANY_DESTINATIONS`): en desarrollo y una vez por componente, `NavigationBar` con
+  más de 5, `NavigationSuite` con más de 5 (puede ser una barra; con `layout="rail"`, más de 7) y
+  `NavigationRail` contraído con más de 7 (guías de Material: 3 a 5 y 3 a 7); el rail expandido y el
+  modal no avisan (se desplazan). El mensaje propone menos destinos, un `ModalNavigationRail` o un
+  `Menu`, y los detalles traen `count` y `max`. Solo por arriba: con menos de 3 Material sugiere
+  pestañas, pero uno o dos destinos funcionan y no hay arreglo dentro del componente. Se cuenta en el
+  render sobre los hijos de React (`src/internal/navigation-count.ts`: directos, arrays, fragmentos y
+  envueltos de a uno, como en un `Tooltip`) para no pasar los componentes a cliente; no ve los
+  destinos que dibuja otro componente, límite anotado en el JSDoc y en `docs/diagnostics.md`.

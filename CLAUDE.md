@@ -50,14 +50,16 @@ src/internal/    ayudas compartidas entre componentes, no exportadas (interactiv
                  assertRenderElement, el error de render con el nombre del componente, y los
                  tipos de botón que también es enlace, ToggleButtonOrLinkProps;
                  navigation-item.tsx: base de los destinos de NavigationBar, NavigationRail y
-                 NavigationSuite (ADR-0029);
+                 NavigationSuite (ADR-0029); navigation-count.ts: el aviso de destinos de más,
+                 contados en el render sobre los hijos;
                  merge-refs.ts: mergeRefs une varias ref con la limpieza de
                  React 19, sin hooks: memorizarla al llamarla, como Dialog y Menu;
                  accessible-name.ts: AccessibleNameProps, el nombre obligatorio por label,
                  aria-labelledby o aria-label de los indicadores; activity-pulse.css: el latido
                  de los indicadores indeterminados con movimiento reducido; layout-element.tsx:
                  el `<div>` (o `<header>`) o el elemento de `render` de Stack, Group y
-                 TopAppBar; anchor-position.ts: la posición de una capa junto a su ancla, respaldo sin anchor positioning, de Menu y
+                 TopAppBar; anchored-drag.ts: computeTarget y VelocityTracker, la decisión al soltar un
+                 arrastre entre anclas portada de Compose, de BottomSheet y ModalNavigationRail; anchor-position.ts: la posición de una capa junto a su ancla, respaldo sin anchor positioning, de Menu y
                  Tooltip, ADR-0007 y ADR-0021; roving-focus.ts: useRovingFocus, el foco
                  itinerante de una sola parada de Tab de ChipGroup, Tabs y Toolbar, ADR-0023 y
                  ADR-0027; nearest-scroller.ts: el contenedor que se desplaza más cercano, de las

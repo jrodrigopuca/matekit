@@ -23,6 +23,7 @@ import type {
 } from '../../atoms/Interactive/Interactive.tsx'
 import { cx } from '../../internal/interactive.tsx'
 import { navigationItem, type NavigationItemOwnProps } from '../../internal/navigation-item.tsx'
+import { warnTooManyDestinations } from '../../internal/navigation-count.ts'
 
 /**
  * Qué presentación usa. `auto` (por defecto) la elige la ventana, con la regla de Compose
@@ -75,8 +76,15 @@ export interface NavigationSuiteProps extends HTMLAttributes<HTMLElement> {
  *
  * Las props nativas y `ref` llegan al `<nav>`. Si la página tiene más de un `<nav>`, darle nombre con
  * `aria-label`.
+ *
+ * **Destinos:** de 3 a 5, porque en una ventana compacta es una barra (guía de Material). Con más de 5,
+ * avisa en desarrollo (`MK_NAVIGATION_TOO_MANY_DESTINATIONS`); con `layout="rail"`, que nunca es una
+ * barra, con más de 7. Cuenta los
+ * `NavigationSuiteItem` hijos (también en arrays, fragmentos o envueltos de a uno, como en un
+ * `Tooltip`); no ve los que dibuja otro componente.
  */
 export function NavigationSuite({ layout = 'auto', className, ...props }: NavigationSuiteProps) {
+  warnTooManyDestinations(layout === 'rail' ? 'NavigationSuiteRail' : 'NavigationSuite', props.children, NavigationSuiteItem)
   return <nav {...props} className={cx('mk-navigation-suite', className)} data-layout={layout} />
 }
 

@@ -36,9 +36,10 @@ way around.
 | [`MK_TOOLTIP_NO_TEXT`](#mk_tooltip_no_text) | error | Tooltip |
 | [`MK_SNACKBAR_HOST_MISSING`](#mk_snackbar_host_missing) | error | useSnackbar |
 | [`MK_SNACKBAR_DURATION_INVALID`](#mk_snackbar_duration_invalid) | error | Snackbar (`createSnackbarQueue().show`) |
-| [`MK_INTERNAL_INVARIANT`](#mk_internal_invariant) | error (matekit bug) | BottomSheet |
+| [`MK_INTERNAL_INVARIANT`](#mk_internal_invariant) | error (matekit bug) | BottomSheet, ModalNavigationRail |
 | [`MK_TAB_UNNAMED`](#mk_tab_unnamed) | warning | Tab, TabLink |
 | [`MK_TOOLBAR_EXPAND_IGNORED`](#mk_toolbar_expand_ignored) | warning | ToolbarLayout |
+| [`MK_NAVIGATION_TOO_MANY_DESTINATIONS`](#mk_navigation_too_many_destinations) | warning | NavigationBar, NavigationRail (collapsed), NavigationSuite |
 
 ## MK_PART_OUTSIDE_PARENT
 
@@ -183,10 +184,11 @@ queue.show({ message: 'Saved', duration: 'short' })
 ## MK_INTERNAL_INVARIANT
 
 - **Kind:** error, a matekit bug rather than a usage problem.
-- **Components:** `BottomSheet` (`computeTarget`, the decision taken when a drag ends).
+- **Components:** `BottomSheet` and `ModalNavigationRail` (`computeTarget`, the decision taken when a
+  drag ends).
 - **Details:** `where`, the internal function that detected it.
-- **Cause:** a condition matekit's own code guarantees did not hold (the BottomSheet always builds at
-  least the `hidden` anchor). No usage triggers it on purpose.
+- **Cause:** a condition matekit's own code guarantees did not hold (the BottomSheet and the modal rail
+  always build at least their hidden anchor). No usage triggers it on purpose.
 - **Fix:** nothing to change in the app: report it with steps to reproduce, the browser and the
   version.
 - **Related:** [ADR-0025](adr/0025-sheets-sobre-dialog-base-modal-comun-arrastre-con-puntero-y-desplazamiento-anidado.md)
@@ -233,3 +235,41 @@ queue.show({ message: 'Saved', duration: 'short' })
 
 - **Related:** [ADR-0027](adr/0027-toolbar-apg-con-foco-itinerante-colores-por-variables-fab-en-toolbarlayout-y-ocultar-con-el-inset-del-sticky.md)
   and the JSDoc of `ToolbarLayout` (`src/organisms/Toolbar/ToolbarLayout.tsx`).
+
+## MK_NAVIGATION_TOO_MANY_DESTINATIONS
+
+- **Kind:** warning (development only, once per component).
+- **Components:** `NavigationBar` (more than 5), `NavigationSuite` (more than 5, since it is shown as a
+  navigation bar in compact windows; more than 7 with `layout="rail"`), collapsed `NavigationRail`
+  (more than 7). The expanded rail and `ModalNavigationRail` never warn: their destinations scroll.
+- **Details:** `count`, the destinations found, and `max`, the limit for that case. The message says
+  which case it was (the component, and "while collapsed" or `layout="rail"`).
+- **Cause:** Material recommends 3 to 5 destinations in a navigation bar and 3 to 7 in a navigation
+  rail ([navigation bar](https://m3.material.io/components/navigation-bar/guidelines),
+  [navigation rail](https://m3.material.io/components/navigation-rail/guidelines)): more make each
+  target narrow or the rail taller than the window, and harder to scan. matekit does not warn below
+  3: Material suggests tabs there, but one or two destinations work and have no fix inside the
+  component.
+- **Fix:** keep at most the limit; move the rest to a `ModalNavigationRail` opened from a menu button,
+  or to a `Menu` of more options.
+- **Limit:** the count runs during render, on the React children (the components stay universal, with
+  no client code): it sees the destination items passed directly, in arrays (`map`), in fragments, and
+  each wrapped alone in another element (a `Tooltip`). It does not see destinations rendered by
+  another component of yours (`<MyDestinations />`), so it may stay silent there.
+
+```tsx
+// Warns: [matekit] NavigationBar: has more destinations than Material recommends, at most 5 … (MK_NAVIGATION_TOO_MANY_DESTINATIONS)
+<NavigationBar>
+  {sections.map((s) => <NavigationBarItem key={s.id} href={s.href}>…</NavigationBarItem>)} {/* 6 */}
+</NavigationBar>
+
+// Fixed: four destinations and "More" opens the rest in a ModalNavigationRail
+<NavigationBar>
+  {sections.slice(0, 4).map((s) => <NavigationBarItem key={s.id} href={s.href}>…</NavigationBarItem>)}
+  <NavigationBarItem onClick={() => setMoreOpen(true)} aria-haspopup="dialog">…</NavigationBarItem>
+</NavigationBar>
+<ModalNavigationRail open={moreOpen} onClose={() => setMoreOpen(false)}>…</ModalNavigationRail>
+```
+
+- **Related:** [ADR-0029](adr/0029-navigation-suite-con-una-sola-estructura-y-media-queries-y-navigation-rail-modal.md)
+  (update of 2026-11-27) and the JSDoc of `NavigationBar`, `NavigationRail` and `NavigationSuite`.

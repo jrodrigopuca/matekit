@@ -11,8 +11,8 @@
      Zonas seguras: WideNavigationRailDefaults.windowInsets = barras del sistema arriba, abajo y al
      inicio. Escape (al soltar) y el scrim cierran.
    - tokens/NavigationRailExpandedTokens.kt (v41.1.19, commit 76990c62ac): ModalContainerColor =
-     Surface Container, ModalContainerShape = CornerLarge (16, las cuatro esquinas: Compose lo
-     aplica como RoundedCornerShape a toda la superficie), ancho 220 a 360. ModalContainerElevation
+     Surface Container, ModalContainerShape = CornerLarge (16; Compose lo aplica a las cuatro
+     esquinas), ancho 220 a 360. ModalContainerElevation
      = Level2 existe pero el Surface del modal no lo usa (sin tonalElevation ni shadowElevation):
      sin sombra, como la barra.
 
@@ -20,7 +20,16 @@
    relleno arriba y 20 abajo, bloque superior), estirado a lo ancho del diálogo.
 
    Ancho en ventanas angostas (decisión propia, como el SideSheet modal, ADR-0025): deja al menos 48
-   de scrim al costado para tocar y cerrar. Con el ancho del kit (220) no pasa hasta 268 px. */
+   de scrim al costado para tocar y cerrar. Con el ancho del kit (220) no pasa hasta 268 px.
+
+   Radio solo del lado del contenido (apartamiento de Compose, decidido con el autor el 2026-11-27,
+   actualización del ADR-0029): el rail toca el borde de inicio, arriba y abajo, y con 16 en las
+   esquinas de ese borde asomaba el scrim; así queda igual que el SideSheet modal, que toca el borde
+   final. Esquinas lógicas: en RTL se invierten solas.
+
+   Arrastre para cerrar (ModalNavigationRail.tsx): data-dragging y --_drag (px hacia el borde)
+   ponen el rail donde está el puntero, sin transición. touch-action: pan-y deja el desplazamiento
+   vertical al navegador y el gesto horizontal a los eventos de puntero (sin touchmove no pasivo). */
 
 @layer matekit.components {
   .mk-navigation-rail-modal {
@@ -28,6 +37,8 @@
     --_scrim: color-mix(in srgb, var(--md-sys-color-scrim) 32%, transparent);
     /* Afuera, del lado del borde de inicio: a la izquierda, o a la derecha en RTL. */
     --_hidden: -100% 0;
+    /* Sentido del borde de inicio sobre el eje x: el arrastre corre el rail hacia ahí. */
+    --_edge: -1;
 
     position: fixed;
     inset-block: 0;
@@ -41,17 +52,22 @@
     /* Zonas seguras: toca arriba, abajo y el costado de inicio. env() es físico. */
     padding: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
     border: none;
-    border-radius: var(--md-sys-shape-corner-large);
+    border-start-start-radius: 0;
+    border-end-start-radius: 0;
+    border-start-end-radius: var(--md-sys-shape-corner-large);
+    border-end-end-radius: var(--md-sys-shape-corner-large);
     background-color: var(--md-sys-color-surface-container);
     color: var(--md-sys-color-on-surface);
     box-shadow: none;
     overflow: hidden;
+    touch-action: pan-y pinch-zoom;
     translate: var(--_hidden);
     transition: translate var(--md-sys-motion-spring-default-spatial-duration)
       var(--md-sys-motion-spring-default-spatial-easing);
   }
   .mk-navigation-rail-modal:dir(rtl) {
     --_hidden: 100% 0;
+    --_edge: 1;
 
     padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) 0;
   }
@@ -78,6 +94,14 @@
 
   .mk-navigation-rail-modal[open][data-closing] {
     translate: var(--_hidden);
+  }
+
+  /* Arrastrando: donde está el puntero, sin transición ni selección de texto. Al soltar, sin
+     data-dragging, la transición lo lleva a su lugar o (data-closing) afuera desde ahí. */
+  .mk-navigation-rail-modal[open][data-dragging] {
+    translate: calc(var(--_edge) * var(--_drag, 0px)) 0;
+    user-select: none;
+    transition: none;
   }
   .mk-navigation-rail-modal[data-closing]::backdrop {
     background-color: transparent;
@@ -115,6 +139,10 @@
     }
     .mk-navigation-rail-modal[open][data-closing] {
       opacity: 0;
+    }
+    /* Al cerrar arrastrando (data-released), se funde donde se soltó, sin deslizarse. */
+    .mk-navigation-rail-modal[open][data-closing][data-released] {
+      translate: calc(var(--_edge) * var(--_drag, 0px)) 0;
     }
   }
 

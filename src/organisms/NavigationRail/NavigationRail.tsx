@@ -31,6 +31,7 @@ import type {
 } from '../../atoms/Interactive/Interactive.tsx'
 import { cx } from '../../internal/interactive.tsx'
 import { navigationItem, type NavigationItemOwnProps } from '../../internal/navigation-item.tsx'
+import { warnTooManyDestinations } from '../../internal/navigation-count.ts'
 
 export type NavigationRailVariant = 'docked' | 'floating'
 export type NavigationRailAlign = 'top' | 'middle'
@@ -83,6 +84,11 @@ export interface NavigationRailProps extends HTMLAttributes<HTMLElement> {
  *
  * Nombre: si la página tiene más de un `<nav>`, darle nombre con `aria-label`.
  *
+ * **Destinos:** de 3 a 7 contraído (guía de Material). Contraído con más de 7, avisa en desarrollo
+ * (`MK_NAVIGATION_TOO_MANY_DESTINATIONS`); expandido no, porque los destinos se desplazan. Cuenta los
+ * `NavigationRailItem` hijos (también en arrays, fragmentos o envueltos de a uno, como en un
+ * `Tooltip`); no ve los que dibuja otro componente.
+ *
  * ```tsx
  * const [expanded, setExpanded] = useState(false)
  *
@@ -120,6 +126,7 @@ export function NavigationRail({
   className,
   ...props
 }: NavigationRailProps) {
+  if (!expanded) warnTooManyDestinations('NavigationRail', props.children, NavigationRailItem)
   return (
     <nav
       {...props}

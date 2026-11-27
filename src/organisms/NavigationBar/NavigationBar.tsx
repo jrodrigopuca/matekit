@@ -33,6 +33,7 @@ import type {
 } from '../../atoms/Interactive/Interactive.tsx'
 import { cx } from '../../internal/interactive.tsx'
 import { navigationItem, type NavigationItemOwnProps } from '../../internal/navigation-item.tsx'
+import { warnTooManyDestinations } from '../../internal/navigation-count.ts'
 
 export type NavigationBarLayout = 'vertical' | 'horizontal'
 
@@ -54,6 +55,11 @@ export interface NavigationBarProps extends HTMLAttributes<HTMLElement> {
  *
  * Si la página tiene más de un `<nav>`, conviene darle nombre con `aria-label`.
  *
+ * De 3 a 5 destinos (guía de Material). Con más de 5, avisa en desarrollo
+ * (`MK_NAVIGATION_TOO_MANY_DESTINATIONS`): menos destinos, un `ModalNavigationRail` para el resto o un
+ * `Menu`. Cuenta los `NavigationBarItem` hijos (también en arrays, fragmentos o envueltos de a uno,
+ * como en un `Tooltip`); no ve los que dibuja otro componente.
+ *
  * ```tsx
  * <NavigationBar aria-label="Principal">
  *   <NavigationBarItem href="/" active>
@@ -69,6 +75,7 @@ export interface NavigationBarProps extends HTMLAttributes<HTMLElement> {
  * ```
  */
 export function NavigationBar({ layout = 'vertical', className, ...props }: NavigationBarProps) {
+  warnTooManyDestinations('NavigationBar', props.children, NavigationBarItem)
   return <nav {...props} className={cx('mk-navigation-bar', className)} data-layout={layout} />
 }
 
