@@ -19,6 +19,7 @@ import {
   use,
   useEffect,
   useId,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -37,12 +38,26 @@ import { computeTarget, DRAG_SLOP, VelocityTracker, type Anchor } from './sheet-
 /** Estado del sheet abierto: parcial (la mitad de la ventana) o expandido (todo su alto). */
 export type BottomSheetState = 'partial' | 'expanded'
 
+/**
+ * Por qué cambió el estado (`onStateChange`):
+ * - `drag`: se soltó un arrastre y el sheet se acomoda en otro estado;
+ * - `handle`: el asa (clic o teclado);
+ * - `focus`: el foco llegó a algo que el parcial deja fuera de la ventana y el sheet se expande;
+ * - `resize`: el parcial dejó de existir (el sheet ya no pasa la mitad de la ventana, o
+ *   `skipPartiallyExpanded`) y el sheet se muestra expandido, o volvió a existir y el sheet, con
+ *   `state="partial"`, vuelve al parcial.
+ */
+export type BottomSheetStateChangeReason = 'drag' | 'handle' | 'focus' | 'resize'
+
+/** Variable CSS con el avance del sheet: lo visible de su alto, de 0 (cerrado) a 1 (expandido). */
+const PROGRESS = '--mk-bottom-sheet-progress'
+
 interface BottomSheetContextValue {
   titleId: string
   setTitleId: (id: string | undefined) => void
   state: BottomSheetState
   hasPartial: boolean
-  setState: (state: BottomSheetState) => void
+  requestState: (state: BottomSheetState, reason: BottomSheetStateChangeReason) => void
   requestClose: () => void
 }
 
@@ -105,6 +120,28 @@ export interface BottomSheetProps extends Omit<DialogHTMLAttributes<HTMLDialogEl
    * el parcial (la mitad de la ventana) y se expande con el asa o arrastrando hacia arriba.
    */
   skipPartiallyExpanded?: boolean | undefined
+  /**
+   * Estado controlado (`partial` o `expanded`). Sin `state`, el sheet maneja el suyo. Con
+   * `state`, manda el padre: el arrastre, el asa y el foco solo piden el cambio con
+   * `onStateChange`, y si el padre no actualiza `state`, el sheet vuelve al anterior (un veto,
+   * como `confirmValueChange` de Compose). `partial` sin parcial disponible (sheet que no pasa la
+   * mitad de la ventana, o `skipPartiallyExpanded`) se muestra expandido y se avisa con
+   * `onStateChange('expanded', 'resize')`; si el parcial vuelve a existir y `state` sigue en
+   * `partial`, vuelve al parcial y avisa `('partial', 'resize')`.
+   */
+  state?: BottomSheetState | undefined
+  /**
+   * Estado con el que abre, sin controlarlo. Por defecto, el parcial si existe y si no,
+   * expandido. Se aplica cada vez que se abre.
+   */
+  defaultState?: BottomSheetState | undefined
+  /**
+   * El estado se asentó en otro valor (o, controlado, se pidió): una llamada por cambio, al soltar
+   * el arrastre con el destino decidido o al usar el asa, no en cada cuadro. El cambio que hace
+   * el padre con `state` no se avisa. El progreso del arrastre está en la variable CSS
+   * `--mk-bottom-sheet-progress`.
+   */
+  onStateChange?: ((state: BottomSheetState, reason: BottomSheetStateChangeReason) => void) | undefined
   /** Referencia al `<dialog>` nativo. */
   ref?: Ref<HTMLDialogElement> | undefined
 }
@@ -124,7 +161,17 @@ export interface BottomSheetProps extends Omit<DialogHTMLAttributes<HTMLDialogEl
  * - **Estados:** parcial y expandido, como `SheetState` de Compose. Abre en el parcial si el sheet
  *   es más alto que la mitad de la ventana (y no hay `skipPartiallyExpanded`); si no, expandido.
  *   El estado actual queda en `data-state` (`partial` o `expanded`). Con el foco en algo que el
- *   parcial deja fuera de la ventana, se expande.
+ *   parcial deja fuera de la ventana, se expande. Controlado con `state` y `onStateChange`, o con
+ *   `defaultState` (como `value`/`defaultValue` del `RadioGroup`):
+ *
+ *   ```tsx
+ *   const [state, setState] = useState<BottomSheetState>('partial')
+ *   <BottomSheet open={open} onClose={close} state={state} onStateChange={(next) => setState(next)}>
+ *   ```
+ * - **Progreso:** `--mk-bottom-sheet-progress` en el `<dialog>`, lo visible de su alto (0 cerrado,
+ *   1 expandido; el parcial, la mitad de la ventana sobre el alto del sheet), mientras se arrastra
+ *   y durante las animaciones, sin volver a dibujar con React. Lo heredan el contenido y el
+ *   `::backdrop` (en los tres motores): sirve para atenuar el scrim o revelar algo al expandir.
  * - **Arrastre:** con mouse, táctil o lápiz desde cualquier parte del sheet (con mouse, no desde
  *   el contenido ni desde campos: ahí selecciona texto), siguiendo al puntero. Al soltar, decide
  *   por velocidad (125 px/s) y distancia (56 px) como Compose: siguiente estado, volver o cerrar.
@@ -140,6 +187,9 @@ export function BottomSheet({
   onClose,
   closeOnScrimClick = true,
   skipPartiallyExpanded = false,
+  state: stateProp,
+  defaultState,
+  onStateChange,
   className,
   children,
   ref,
@@ -154,35 +204,91 @@ export function BottomSheet({
   onFocus,
   ...props
 }: BottomSheetProps) {
-  const [state, setStateValue] = useState<BottomSheetState>('expanded')
+  // Controlado o no, como RadioGroup (ADR-0012). `requested` es lo pedido; `state`, lo que se
+  // muestra: el parcial pedido sin parcial disponible se muestra expandido.
+  const controlled = stateProp !== undefined
+  const [uncontrolled, setUncontrolled] = useState<BottomSheetState>(defaultState ?? 'partial')
+  const requested = controlled ? stateProp : uncontrolled
   const [hasPartial, setHasPartial] = useState(false)
+  const state: BottomSheetState = requested === 'partial' && !hasPartial ? 'expanded' : requested
   // Copias para los manejadores nativos y las medidas, que no esperan a un nuevo render.
-  const current = useRef({ state, skipPartiallyExpanded })
-  current.current.skipPartiallyExpanded = skipPartiallyExpanded
+  const live = useRef({ state, requested, controlled, skipPartiallyExpanded, defaultState, onStateChange })
+  live.current = { state, requested, controlled, skipPartiallyExpanded, defaultState, onStateChange }
   const anchors = useRef<{ partial: number | null; hidden: number }>({ partial: null, hidden: 0 })
   const drag = useRef<Drag | null>(null)
   // Después de un arrastre, el clic que sigue (el del asa, o el de un botón donde empezó) no cuenta.
   const swallowClick = useRef(false)
+  const progressFrame = useRef(0)
 
-  const setState = (next: BottomSheetState) => {
-    current.current.state = next
-    setStateValue(next)
+  /**
+   * Pide otro estado: sin controlar, lo aplica; controlado, solo avisa (si el padre no cambia
+   * `state`, el sheet vuelve al que tenía). Una llamada por cambio.
+   */
+  const requestState = (next: BottomSheetState, reason: BottomSheetStateChangeReason) => {
+    const l = live.current
+    if (next === l.state) return
+    // Controlado, lo que se muestra no cambia hasta que el padre cambie `state`: la copia queda
+    // igual, así un pedido vetado se puede repetir.
+    if (!l.controlled) {
+      setUncontrolled(next)
+      l.state = next
+    }
+    l.onStateChange?.(next, reason)
   }
 
   /** Mide el sheet: si cabe el parcial y dónde queda (`--_partial`). */
   const measure = (dialog: HTMLDialogElement, opening: boolean) => {
+    const l = live.current
     const height = dialog.offsetHeight
     const half = viewportHeight() / 2
-    const available = !current.current.skipPartiallyExpanded && height > half
+    const available = !l.skipPartiallyExpanded && height > half
     const partial = available ? Math.round(height - half) : null
     anchors.current = { partial, hidden: height }
     if (partial === null) dialog.style.removeProperty('--_partial')
     else dialog.style.setProperty('--_partial', `${partial}px`)
     setHasPartial(available)
-    // Al abrir, el estado se elige en el efecto de apertura: React vuelve a dibujar antes del
-    // primer cuadro, así que la entrada ya va hacia el estado elegido.
-    const next = opening ? (available ? 'partial' : 'expanded') : current.current.state === 'partial' && !available ? 'expanded' : null
-    if (next && next !== current.current.state) setState(next)
+    // Al abrir sin controlar, vuelve al estado inicial (el parcial si existe, o defaultState). Se
+    // elige en el efecto de apertura: React vuelve a dibujar antes del primer cuadro.
+    let wanted = l.requested
+    if (opening && !l.controlled) {
+      wanted = l.defaultState ?? (available ? 'partial' : 'expanded')
+      setUncontrolled(wanted)
+    }
+    const shown = wanted === 'partial' && !available ? 'expanded' : wanted
+    const before = opening ? wanted : l.state
+    // La copia se actualiza ya: otra medición (el efecto pasivo, el ResizeObserver) puede correr
+    // antes del próximo render y no tiene que volver a avisar.
+    l.requested = wanted
+    l.state = shown
+    if (shown === before) return
+    // El parcial apareció o desapareció: se avisa con 'resize'. Sin controlar, el estado queda en
+    // el que se muestra (como Compose, que pasa al expandido y se queda ahí).
+    if (!l.controlled) setUncontrolled(shown)
+    l.onStateChange?.(shown, 'resize')
+  }
+
+  /** Escribe el progreso a partir de la posición en pantalla. */
+  const writeProgress = (dialog: HTMLDialogElement, offset?: number) => {
+    const height = dialog.offsetHeight
+    if (!dialog.open || height === 0) {
+      dialog.style.setProperty(PROGRESS, '0')
+      return
+    }
+    const y = offset ?? dialog.getBoundingClientRect().top - (viewportHeight() - height)
+    const progress = Math.min(1, Math.max(0, 1 - y / height))
+    dialog.style.setProperty(PROGRESS, String(Math.round(progress * 10000) / 10000))
+  }
+
+  /** Sigue el progreso cuadro a cuadro mientras haya arrastre o animaciones del sheet. */
+  const trackProgress = (dialog: HTMLDialogElement) => {
+    writeProgress(dialog)
+    if (progressFrame.current) return
+    const tick = () => {
+      writeProgress(dialog)
+      const moving = drag.current?.active || dialog.getAnimations().some((a) => a.playState === 'running')
+      progressFrame.current = moving ? requestAnimationFrame(tick) : 0
+    }
+    progressFrame.current = requestAnimationFrame(tick)
   }
 
   const clearDrag = (dialog: HTMLDialogElement) => {
@@ -204,10 +310,12 @@ export function BottomSheet({
       drag.current = null
       clearDrag(dialog)
       measure(dialog, true)
+      trackProgress(dialog)
     },
     onClosed: (dialog) => {
       drag.current = null
       clearDrag(dialog)
+      writeProgress(dialog)
     },
   })
 
@@ -234,6 +342,32 @@ export function BottomSheet({
     }
     // measure lee todo de refs: no hace falta volver a suscribirse cuando cambia.
   }, [open, dialogRef])
+
+  // El progreso sigue a cada cambio de estado (la transición hacia el nuevo) y a la salida.
+  // Después del efecto de useModalDialog, que acaba de poner data-closing.
+  useLayoutEffect(() => {
+    const dialog = dialogRef.current
+    if (dialog?.open) trackProgress(dialog)
+  }, [state, open, dialogRef])
+
+  useEffect(
+    () => () => {
+      cancelAnimationFrame(progressFrame.current)
+      progressFrame.current = 0
+    },
+    [],
+  )
+
+  // El padre pide el parcial y no existe: se muestra expandido y se avisa (como al medir).
+  // Solo cuando cambia `state` con el sheet abierto: al abrir ya avisa la medición.
+  const previousStateProp = useRef(stateProp)
+  useLayoutEffect(() => {
+    const changed = previousStateProp.current !== stateProp
+    previousStateProp.current = stateProp
+    const dialog = dialogRef.current
+    if (!changed || !dialog?.open || stateProp !== 'partial' || anchors.current.partial !== null) return
+    live.current.onStateChange?.('expanded', 'resize')
+  }, [stateProp, dialogRef])
 
   // Cambiar skipPartiallyExpanded con el sheet abierto vuelve a medir.
   useEffect(() => {
@@ -275,7 +409,7 @@ export function BottomSheet({
       // En el contenido, el sheet se queda con el gesto si está parcial (hacia arriba se expande,
       // hacia abajo baja) o si se desliza hacia abajo con el contenido arriba de todo; si no, el
       // gesto desplaza el contenido.
-      const ownsGesture = !d.inContent || current.current.state === 'partial' || (dy > 0 && !scrolledBetween(d.target, dialog))
+      const ownsGesture = !d.inContent || live.current.state === 'partial' || (dy > 0 && !scrolledBetween(d.target, dialog))
       if (!vertical || !ownsGesture) {
         drag.current = null
         return
@@ -297,22 +431,28 @@ export function BottomSheet({
     d.offset = Math.min(Math.max(d.from + (e.clientY - d.startY), 0), anchors.current.hidden)
     d.tracker.add(performance.now(), e.clientY)
     dialog.style.setProperty('--_drag', `${d.offset}px`)
+    writeProgress(dialog, d.offset)
   }
 
   const release = (dialog: HTMLDialogElement, velocity: number | null) => {
     const d = drag.current
     drag.current = null
     if (!d?.active) return
-    swallowClick.current = true
+    // Con mouse, el mismo gesto siempre termina en un clic (con la captura, al menos sobre el
+    // <dialog>): ese no cuenta. Táctil y lápiz no generan clic después de moverse; si dejaran la
+    // marca, se comería la próxima activación del asa con el teclado.
+    swallowClick.current = d.mouse
     const list: Anchor<BottomSheetState | 'hidden'>[] = [['expanded', 0]]
     if (anchors.current.partial !== null) list.push(['partial', anchors.current.partial])
     list.push(['hidden', anchors.current.hidden])
     // Cancelado (pointercancel): vuelve al estado donde estaba, sin cerrar.
-    const target = velocity === null ? current.current.state : computeTarget(list, d.offset, velocity)
+    const target = velocity === null ? live.current.state : computeTarget(list, d.offset, velocity)
     if (target !== 'hidden') {
-      // Sin data-dragging vuelve la transición: el sheet va del punto donde se soltó a su estado.
+      // Sin data-dragging vuelve la transición: el sheet va del punto donde se soltó a su estado
+      // (o al anterior, si el padre controla `state` y no lo cambia).
       clearDrag(dialog)
-      if (target !== current.current.state) setState(target)
+      requestState(target, 'drag')
+      trackProgress(dialog)
       return
     }
     // Cerrar: se pide al padre. Si cierra, la salida parte del punto donde se soltó (data-closing
@@ -321,6 +461,7 @@ export function BottomSheet({
     requestClose()
     requestAnimationFrame(() => {
       if (!dialog.hasAttribute('data-closing')) dialog.style.removeProperty('--_drag')
+      trackProgress(dialog)
     })
   }
 
@@ -351,9 +492,9 @@ export function BottomSheet({
   const handleFocus = (e: FocusEvent<HTMLDialogElement>) => {
     onFocus?.(e)
     const target = e.target
-    if (current.current.state !== 'partial' || target === e.currentTarget) return
+    if (live.current.state !== 'partial' || target === e.currentTarget) return
     if (target.matches('.mk-bottom-sheet-content')) return
-    if (target.getBoundingClientRect().bottom > viewportHeight()) setState('expanded')
+    if (target.getBoundingClientRect().bottom > viewportHeight()) requestState('expanded', 'focus')
   }
 
   const generatedId = useId()
@@ -364,10 +505,10 @@ export function BottomSheet({
       setTitleId,
       state,
       hasPartial,
-      setState,
+      requestState,
       requestClose,
     }),
-    // setState solo escribe la ref y el estado; requestClose cambia con onClose.
+    // requestState lee todo de refs; requestClose cambia con onClose.
     [generatedId, state, hasPartial, onClose],
   )
 
@@ -435,7 +576,7 @@ export function BottomSheetHandle({
         onClick?.(e)
         if (e.defaultPrevented) return
         if (action === 'close') ctx.requestClose()
-        else ctx.setState(action === 'expand' ? 'expanded' : 'partial')
+        else ctx.requestState(action === 'expand' ? 'expanded' : 'partial', 'handle')
       }}
     >
       <FocusRing />

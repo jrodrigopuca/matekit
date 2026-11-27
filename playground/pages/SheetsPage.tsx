@@ -4,6 +4,7 @@ import {
   BottomSheetContent,
   BottomSheetHandle,
   BottomSheetTitle,
+  type BottomSheetState,
   Button,
   Checkbox,
   DownloadIcon,
@@ -24,12 +25,14 @@ import {
   Switch,
 } from '../../src/index.ts'
 
-type Case = 'short' | 'long' | 'skip' | 'side' | 'side-back'
+type Case = 'short' | 'long' | 'skip' | 'controlled' | 'progress' | 'side' | 'side-back'
 
 const CASES: Record<Case, string> = {
   short: 'Bottom sheet corto',
   long: 'Bottom sheet largo (parcial)',
   skip: 'Largo sin parcial',
+  controlled: 'Estado controlado',
+  progress: 'Progreso en CSS',
   side: 'Side sheet modal',
   'side-back': 'Side sheet con volver',
 }
@@ -67,6 +70,7 @@ export function SheetsPage() {
   const [log, setLog] = useState<string[]>([])
   const [standardOpen, setStandardOpen] = useState(true)
   const [rtl, setRtl] = useState(false)
+  const [sheetState, setSheetState] = useState<BottomSheetState>('partial')
 
   const note = (text: string) => setLog((l) => [text, ...l].slice(0, 5))
   const close = (why: string) => {
@@ -177,6 +181,68 @@ export function SheetsPage() {
           </BottomSheetContent>
         </BottomSheet>
       ))}
+
+      {/* Controlado: la página guarda el estado (state/onStateChange) y lo cambia con sus propios
+          botones; el arrastre, el asa y el foco solo lo piden. */}
+      <BottomSheet
+        open={isOpen('controlled')}
+        onClose={() => close('Controlado: pedido de cierre')}
+        state={sheetState}
+        onStateChange={(next, reason) => {
+          note(`Controlado: ${next} (${reason})`)
+          setSheetState(next)
+        }}
+      >
+        <BottomSheetHandle />
+        <BottomSheetTitle>Estado: {sheetState === 'partial' ? 'parcial' : 'expandido'}</BottomSheetTitle>
+        <BottomSheetContent>
+          <div className="pg-controls" style={{ padding: '0 16px' }}>
+            <Button size="sm" variant="tonal" disabled={sheetState === 'partial'} onClick={() => setSheetState('partial')}>
+              Parcial
+            </Button>
+            <Button size="sm" variant="tonal" disabled={sheetState === 'expanded'} onClick={() => setSheetState('expanded')}>
+              Expandido
+            </Button>
+          </div>
+          <p className="pg-hint" style={{ padding: '0 16px' }}>Últimos eventos: {log.length ? log.join(' · ') : '—'}</p>
+          <List>
+            {PLACES.map((p) => (
+              <ListItem key={p}>
+                <ListItemHeadline>{p}</ListItemHeadline>
+              </ListItem>
+            ))}
+          </List>
+        </BottomSheetContent>
+      </BottomSheet>
+
+      {/* Progreso: --mk-bottom-sheet-progress (0 cerrado, 1 expandido) lo heredan el contenido y el
+          ::backdrop. El scrim se oscurece al subir y el aviso aparece recién al expandir. */}
+      <style>{`
+        .pg-sheet-progress::backdrop {
+          background-color: color-mix(in srgb, var(--md-sys-color-scrim) calc(var(--mk-bottom-sheet-progress, 0) * 64%), transparent);
+          transition: none;
+        }
+        .pg-sheet-progress .pg-sheet-reveal {
+          opacity: clamp(0, (var(--mk-bottom-sheet-progress, 0) - 0.6) * 2.5, 1);
+          translate: 0 calc((1 - var(--mk-bottom-sheet-progress, 0)) * 24px);
+        }
+      `}</style>
+      <BottomSheet className="pg-sheet-progress" open={isOpen('progress')} onClose={() => close('Progreso: pedido de cierre')}>
+        <BottomSheetHandle />
+        <BottomSheetTitle>Recorrido</BottomSheetTitle>
+        <BottomSheetContent>
+          <p className="pg-hint pg-sheet-reveal" style={{ padding: '0 16px' }}>
+            Expandido: el scrim llega al 64 % y este aviso aparece; los dos siguen al arrastre.
+          </p>
+          <List>
+            {PLACES.map((p) => (
+              <ListItem key={p}>
+                <ListItemHeadline>{p}</ListItemHeadline>
+              </ListItem>
+            ))}
+          </List>
+        </BottomSheetContent>
+      </BottomSheet>
 
       {(['side', 'side-back'] as const).map((c) => (
         <SideSheet key={c} open={isOpen(c)} onClose={() => close(`${CASES[c]}: pedido de cierre`)}>

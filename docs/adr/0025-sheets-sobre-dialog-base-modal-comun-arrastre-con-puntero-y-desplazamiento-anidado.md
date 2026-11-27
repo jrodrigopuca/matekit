@@ -102,3 +102,30 @@
   o la variante modal del NavigationRail (ítem 23) necesita algo del ciclo de vida que el hook no
   da (por ejemplo, arrastre horizontal para cerrar, que Compose tiene: se reutilizaría
   `computeTarget` en el eje horizontal).
+- Actualización (2026-11-26): el estado del bottom sheet se puede controlar y el arrastre expone su
+  avance, con el modelo de Vaul (elegido por el autor tras comparar `SheetState` de Compose,
+  `BottomSheetBehavior` de MDC, el sheet modal de Ionic, Vaul y gorhom: todas avisan cuando el
+  estado se asienta, dejan fijarlo desde afuera y casi todas exponen el avance).
+  - **`state`/`defaultState`/`onStateChange(state, reason)`**, separados de `open`/`onClose` (que no
+    cambian), con el patrón controlado o no de `RadioGroup` (ADR-0012). Sin `state`, como antes (y
+    `defaultState` elige el de apertura, por defecto el parcial si existe). Con `state`, el arrastre,
+    el asa y el foco solo piden: si el padre no actualiza `state`, el sheet vuelve al anterior (el
+    veto de `confirmValueChange`, como ya pasaba con el cierre por arrastre y `onClose`).
+  - **`reason`**: `drag` (al soltar, con el destino decidido), `handle`, `focus` (el foco en algo que
+    el parcial deja fuera de la ventana expande, ya lo hacía) y `resize`. Una llamada por cambio
+    asentado, nunca por cuadro; los cambios que hace el padre no se avisan.
+  - **`partial` sin parcial** (sheet que no pasa la mitad de la ventana, o `skipPartiallyExpanded`):
+    se muestra expandido y avisa `('expanded', 'resize')`, al abrir, al medir o cuando el padre lo
+    pide. Si el parcial vuelve a existir y `state` sigue en `partial`, vuelve y avisa
+    `('partial', 'resize')`. Sin controlar, el estado queda en expandido (como Compose).
+  - **Avance**: `--mk-bottom-sheet-progress` en el `<dialog>`, lo visible de su alto (0 cerrado, 1
+    expandido; el parcial, media ventana sobre el alto del sheet), escrito con `style.setProperty` al
+    mover el puntero y cuadro a cuadro mientras corren las transiciones (entrada, acomodo, salida),
+    sin volver a dibujar con React. Se eligió la fracción visible y no la posición entre estados
+    porque sirve igual con y sin parcial, y porque con 1 − progreso × alto se recupera la
+    posición. Una variable en el `<dialog>` no llega a la página de atrás (la herencia baja), pero sí
+    al contenido y al `::backdrop`, que la hereda en los tres motores (sonda del 2026-11-26): alcanza
+    para atenuar el scrim o revelar algo al expandir (ejemplo en el playground).
+  - Corregido de paso: un arrastre táctil dejaba puesta la marca que descarta el clic siguiente y se
+    comía la próxima activación del asa con el teclado; ahora solo la deja un arrastre con mouse,
+    que siempre termina en un clic.

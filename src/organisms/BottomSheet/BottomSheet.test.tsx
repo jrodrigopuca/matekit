@@ -1,7 +1,14 @@
 import { createRef, useState, type ReactNode } from 'react'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { commands, page, userEvent } from 'vitest/browser'
-import { BottomSheet, BottomSheetHandle, BottomSheetTitle, type BottomSheetProps } from './BottomSheet.tsx'
+import {
+  BottomSheet,
+  BottomSheetHandle,
+  BottomSheetTitle,
+  type BottomSheetProps,
+  type BottomSheetState,
+  type BottomSheetStateChangeReason,
+} from './BottomSheet.tsx'
 import { BottomSheetContent } from './BottomSheetSlots.tsx'
 import { computeTarget, VelocityTracker } from './sheet-drag.ts'
 import { Button } from '../../molecules/Button/Button.tsx'
@@ -678,5 +685,270 @@ describe('BottomSheet: props nativas y ref', () => {
     )
     expect(ref.current?.id).toBe('t1')
     expect(sheet(c).getAttribute('aria-labelledby')).toBe('t1')
+  })
+})
+
+// --- Estado controlado y progreso (ADR-0025, actualización del 2026-11-26) ---
+
+/** Un cuadro de la página. */
+const frame = () => new Promise<void>((r) => requestAnimationFrame(() => r()))
+const progress = (c: ParentNode) => Number(sheet(c).style.getPropertyValue('--mk-bottom-sheet-progress'))
+
+/** Cambiar desde la prueba lo que el padre controla (la página de atrás es inerte al puntero). */
+let parent: { setState: (s: BottomSheetState) => void; setTall: (t: boolean) => void } | undefined
+
+function Controlled({
+  initial = 'partial',
+  accept = true,
+  initialTall = true,
+  onStateChange,
+  ...props
+}: Omit<BottomSheetProps, 'state' | 'onStateChange'> & {
+  initial?: BottomSheetState | undefined
+  accept?: boolean
+  initialTall?: boolean
+  onStateChange?: (s: BottomSheetState, r: BottomSheetStateChangeReason) => void
+}) {
+  const [state, setState] = useState<BottomSheetState>(initial)
+  const [tall, setTall] = useState(initialTall)
+  parent = { setState, setTall }
+  return (
+    <BottomSheet
+      open
+      aria-label="Hoja"
+      {...props}
+      state={props.defaultState ? undefined : state}
+      onStateChange={(next, reason) => {
+        onStateChange?.(next, reason)
+        if (accept) setState(next)
+      }}
+    >
+      <BottomSheetHandle />
+      <BottomSheetContent>{tall ? ITEMS : <p style={{ margin: 0, height: 120 }}>Corto</p>}</BottomSheetContent>
+    </BottomSheet>
+  )
+}
+
+describe('BottomSheet: estado controlado (state, defaultState, onStateChange)', () => {
+  test('el padre lo pasa a expandido y vuelve al parcial; esos cambios no se avisan', async () => {
+    const onStateChange = vi.fn()
+    const c = await render(<Controlled onStateChange={onStateChange} />)
+    expect(sheet(c).dataset['state']).toBe('partial')
+    parent!.setState('expanded')
+    await expect.poll(() => sheet(c).dataset['state']).toBe('expanded')
+    expect(sheet(c).getBoundingClientRect().top).toBeCloseTo(0, 0)
+    parent!.setState('partial')
+    await expect.poll(() => sheet(c).dataset['state']).toBe('partial')
+    expect(sheet(c).getBoundingClientRect().top).toBeCloseTo(vh() / 2, 0)
+    expect(onStateChange).not.toHaveBeenCalled()
+  })
+
+  test('arrastre: una sola llamada con el destino y el motivo "drag"', async () => {
+    const onStateChange = vi.fn()
+    const c = await render(<Controlled onStateChange={onStateChange} />)
+    fakeClock()
+    const g = gesture(handle(c))
+    g.down()
+    g.move(-8)
+    g.move(-60, 100, -10)
+    g.up()
+    await expect.poll(() => sheet(c).dataset['state']).toBe('expanded')
+    expect(onStateChange).toHaveBeenCalledTimes(1)
+    expect(onStateChange).toHaveBeenCalledWith('expanded', 'drag')
+  })
+
+  test('un arrastre que vuelve al mismo estado no avisa', async () => {
+    const onStateChange = vi.fn()
+    const c = await render(<Controlled onStateChange={onStateChange} />)
+    fakeClock()
+    const g = gesture(handle(c))
+    g.down()
+    g.move(8)
+    g.move(30, 100, 10)
+    g.up()
+    expect(onStateChange).not.toHaveBeenCalled()
+    expect(sheet(c).dataset['state']).toBe('partial')
+  })
+
+  test('asa: "handle", una llamada por cambio, también sin controlar', async () => {
+    const onStateChange = vi.fn()
+    const c = await render(<Controlled onStateChange={onStateChange} />)
+    handle(c).click()
+    await expect.poll(() => sheet(c).dataset['state']).toBe('expanded')
+    handle(c).click()
+    await expect.poll(() => sheet(c).dataset['state']).toBe('partial')
+    expect(onStateChange.mock.calls).toEqual([['expanded', 'handle'], ['partial', 'handle']])
+
+    const free = vi.fn()
+    const u = await render(<Harness initialOpen tall onStateChange={free} />)
+    handle(u).click()
+    await expect.poll(() => sheet(u).dataset['state']).toBe('expanded')
+    expect(free.mock.calls).toEqual([['expanded', 'handle']])
+  })
+
+  test('foco: "focus" al expandir por el foco', async () => {
+    const onStateChange = vi.fn()
+    const body = <>{ITEMS}<button className="far">Lejos</button></>
+    const c = await render(<Harness initialOpen body={body} onStateChange={onStateChange} />)
+    q(c, '.far').focus()
+    await expect.poll(() => sheet(c).dataset['state']).toBe('expanded')
+    expect(onStateChange.mock.calls).toEqual([['expanded', 'focus']])
+  })
+
+  test('veto: si el padre no cambia state, el sheet vuelve al anterior (arrastre y asa)', async () => {
+    const onStateChange = vi.fn()
+    const c = await render(<Controlled accept={false} onStateChange={onStateChange} />)
+    fakeClock()
+    const g = gesture(handle(c))
+    g.down()
+    g.move(-8)
+    g.move(-200, 16, -20)
+    g.up()
+    expect(onStateChange).toHaveBeenCalledWith('expanded', 'drag')
+    vi.useRealTimers()
+    await frame()
+    expect(sheet(c).dataset['state']).toBe('partial')
+    expect(sheet(c).hasAttribute('data-dragging')).toBe(false)
+    expect(sheet(c).getBoundingClientRect().top).toBeCloseTo(vh() / 2, 0)
+    handle(c).click()
+    expect(onStateChange).toHaveBeenLastCalledWith('expanded', 'handle')
+    await frame()
+    expect(sheet(c).dataset['state']).toBe('partial')
+    expect(handle(c).getAttribute('aria-label')).toBe('Expandir')
+  })
+
+  test('state="partial" sin parcial (sheet corto): se muestra expandido y avisa "resize" una vez', async () => {
+    const onStateChange = vi.fn()
+    const c = await render(<Controlled initialTall={false} accept={false} onStateChange={onStateChange} />)
+    expect(sheet(c).dataset['state']).toBe('expanded')
+    expect(handle(c).getAttribute('aria-label')).toBe('Cerrar')
+    expect(onStateChange.mock.calls).toEqual([['expanded', 'resize']])
+  })
+
+  test('state="partial" con skipPartiallyExpanded: expandido y "resize"', async () => {
+    const onStateChange = vi.fn()
+    const c = await render(<Controlled skipPartiallyExpanded accept={false} onStateChange={onStateChange} />)
+    expect(sheet(c).dataset['state']).toBe('expanded')
+    expect(onStateChange.mock.calls).toEqual([['expanded', 'resize']])
+  })
+
+  test('el padre pide el parcial cuando no existe: sigue expandido y avisa "resize"', async () => {
+    const onStateChange = vi.fn()
+    const c = await render(<Controlled initial="expanded" initialTall={false} accept={false} onStateChange={onStateChange} />)
+    expect(onStateChange).not.toHaveBeenCalled()
+    parent!.setState('partial')
+    await expect.poll(() => onStateChange.mock.calls).toEqual([['expanded', 'resize']])
+    expect(sheet(c).dataset['state']).toBe('expanded')
+  })
+
+  test('resize: el parcial desaparece y vuelve con el alto del contenido; con state="partial", vuelve', async () => {
+    const onStateChange = vi.fn()
+    const c = await render(<Controlled accept={false} onStateChange={onStateChange} />)
+    expect(sheet(c).dataset['state']).toBe('partial')
+    parent!.setTall(false)
+    await expect.poll(() => sheet(c).dataset['state']).toBe('expanded')
+    expect(onStateChange.mock.calls).toEqual([['expanded', 'resize']])
+    parent!.setTall(true)
+    await expect.poll(() => sheet(c).dataset['state']).toBe('partial')
+    expect(onStateChange.mock.calls).toEqual([['expanded', 'resize'], ['partial', 'resize']])
+  })
+
+  test('resize sin controlar: queda expandido aunque el parcial vuelva (como Compose)', async () => {
+    const onStateChange = vi.fn()
+    const c = await render(<Controlled defaultState="partial" onStateChange={onStateChange} />)
+    expect(sheet(c).dataset['state']).toBe('partial')
+    parent!.setTall(false)
+    await expect.poll(() => sheet(c).dataset['state']).toBe('expanded')
+    parent!.setTall(true)
+    await expect.poll(() => handle(c).getAttribute('aria-label')).toBe('Contraer')
+    expect(sheet(c).dataset['state']).toBe('expanded')
+    expect(onStateChange.mock.calls).toEqual([['expanded', 'resize']])
+  })
+
+  test('defaultState="expanded": abre expandido cada vez, sin avisar', async () => {
+    const onStateChange = vi.fn()
+    const c = await render(<Harness initialOpen tall defaultState="expanded" onStateChange={onStateChange} />)
+    expect(sheet(c).dataset['state']).toBe('expanded')
+    expect(onStateChange).not.toHaveBeenCalled()
+  })
+})
+
+describe('BottomSheet: progreso (--mk-bottom-sheet-progress)', () => {
+  test('lo visible del alto: parcial, valores intermedios al arrastrar, final al soltar y al expandir', async () => {
+    const c = await render(<Harness initialOpen tall />)
+    const h = sheet(c).offsetHeight
+    const partial = vh() / 2 / h
+    await expect.poll(() => progress(c)).toBeCloseTo(partial, 3)
+    fakeClock()
+    const g = gesture(handle(c))
+    g.down()
+    g.move(8)
+    g.move(100)
+    expect(progress(c)).toBeCloseTo(1 - (h - vh() / 2 + 100) / h, 3)
+    g.move(-400, 16, -20)
+    expect(progress(c)).toBeCloseTo(1 - (h - vh() / 2 - 300) / h, 3)
+    g.wait(100)
+    g.up()
+    vi.useRealTimers()
+    // Quieto más cerca de expandido: se acomoda en 1.
+    await expect.poll(() => progress(c)).toBeCloseTo(1, 3)
+    handle(c).click()
+    await expect.poll(() => sheet(c).dataset['state']).toBe('partial')
+    await expect.poll(() => progress(c)).toBeCloseTo(partial, 3)
+  })
+
+  test('cerrado vale 0', async () => {
+    const c = await render(<Harness initialOpen />)
+    await expect.poll(() => progress(c)).toBeCloseTo(1, 3)
+    await userEvent.keyboard('{Escape}')
+    await expect.poll(() => sheet(c).open).toBe(false)
+    expect(progress(c)).toBe(0)
+  })
+
+  test('sigue la animación al soltar: pasa por valores intermedios hasta el final', async () => {
+    await withTransitions(async () => {
+      const c = await render(<Harness initialOpen tall />)
+      await entered(sheet(c))
+      await expect.poll(() => progress(c)).toBeCloseTo(vh() / 2 / sheet(c).offsetHeight, 3)
+      const start = progress(c)
+      handle(c).click()
+      const seen: number[] = []
+      for (let i = 0; i < 6; i++) {
+        await frame()
+        seen.push(progress(c))
+      }
+      expect(seen.some((p) => p > start + 0.01 && p < 0.99)).toBe(true)
+      await expect.poll(() => progress(c), { timeout: 3000 }).toBeCloseTo(1, 2)
+    })
+  })
+
+  test('el ::backdrop hereda la variable (para atenuar el scrim con el progreso)', async () => {
+    const st = document.createElement('style')
+    st.textContent = '.prog::backdrop { opacity: var(--mk-bottom-sheet-progress); }'
+    document.head.append(st)
+    try {
+      const c = await render(<Harness initialOpen tall className="prog" />)
+      await expect.poll(() => Number(getComputedStyle(sheet(c), '::backdrop').opacity)).toBeCloseTo(progress(c), 3)
+      expect(progress(c)).toBeGreaterThan(0)
+    } finally {
+      st.remove()
+    }
+  })
+})
+
+describe('BottomSheet: el asa después de un arrastre táctil', () => {
+  // Un arrastre táctil no genera clic: antes dejaba puesta la marca que descarta el clic siguiente
+  // y se comía la próxima activación del asa (teclado o clic).
+  test('la próxima activación del asa funciona', async () => {
+    const c = await render(<Harness initialOpen tall />)
+    fakeClock()
+    const g = gesture(handle(c))
+    g.down()
+    g.move(8)
+    g.move(20, 100, 10)
+    g.up()
+    vi.useRealTimers()
+    handle(c).click()
+    await expect.poll(() => sheet(c).dataset['state']).toBe('expanded')
   })
 })

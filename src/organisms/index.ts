@@ -14,6 +14,7 @@ export {
   type BottomSheetHandleProps,
   type BottomSheetProps,
   type BottomSheetState,
+  type BottomSheetStateChangeReason,
   type BottomSheetTitleProps,
 } from './BottomSheet/BottomSheet.tsx'
 export { BottomSheetContent, type BottomSheetContentProps } from './BottomSheet/BottomSheetSlots.tsx'
