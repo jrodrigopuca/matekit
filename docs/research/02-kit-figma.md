@@ -32,7 +32,7 @@ Los identificadores sirven para volver a consultar cada página con el conector 
 | Menu | 55141:14250 | sí |
 | Navigation | 55141:14251 | sí |
 | Radio button | 55141:14253 | sí |
-| Search | 55141:14254 | no |
+| Search | 55141:14254 | sí |
 | Sheets | 55141:14170 | sí |
 | Sliders | 55141:14255 | sí |
 | Snackbar | 55141:14256 | sí |

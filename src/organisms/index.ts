@@ -173,3 +173,18 @@ export {
   type TopAppBarSubtitleProps,
   type TopAppBarTitleProps,
 } from './TopAppBar/TopAppBar.tsx'
+export {
+  Search,
+  SearchBar,
+  SearchSuggestion,
+  SearchSuggestionGroup,
+  SearchView,
+  type SearchBarProps,
+  type SearchProps,
+  type SearchSuggestionGroupProps,
+  type SearchSuggestionProps,
+  type SearchViewChoice,
+  type SearchViewMode,
+  type SearchViewProps,
+} from './Search/Search.tsx'
+export { SearchBarLeading, SearchBarTrailing, type SearchBarPartProps } from './Search/SearchSlots.tsx'

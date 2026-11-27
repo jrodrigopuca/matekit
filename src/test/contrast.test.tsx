@@ -5,6 +5,7 @@
 
 import type { ReactNode } from 'react'
 import { describe, expect, test } from 'vitest'
+import { userEvent } from 'vitest/browser'
 import {
   AssistChip,
   ChipAvatar,
@@ -91,6 +92,13 @@ import {
   TopAppBarLeading,
   TopAppBarSubtitle,
   TopAppBarTitle,
+  Search,
+  SearchBar,
+  SearchBarLeading,
+  SearchBarTrailing,
+  SearchSuggestion,
+  SearchSuggestionGroup,
+  SearchView,
   BottomSheet,
   BottomSheetContent,
   BottomSheetHandle,
@@ -103,7 +111,7 @@ import {
   SideSheetTitle,
 } from '../index.ts'
 import '../tokens/palettes/index.css'
-import { contrastRatio, effectiveBackground, parseColor, textContrast } from './contrast.ts'
+import { contrastRatio, effectiveBackground, parseColor, textContrast, type RGBA } from './contrast.ts'
 import { render } from './render.tsx'
 
 const TEXT = 4.5
@@ -573,6 +581,89 @@ for (const scheme of SCHEMES) {
         expect(contrastRatio(cs(q(c, '.on .mk-tab-indicator')).backgroundColor, bar), 'indicador').toBeGreaterThanOrEqual(NON_TEXT)
       })
     }
+
+    // Search: texto escrito y de ayuda a 4,5:1 e iconos a 3:1 sobre la barra (suelta, Surface
+    // Container High; en el TopAppBar, Surface Container y Surface Container Highest al desplazar);
+    // en la lista, el texto de las sugerencias, el nombre del grupo y el vacío a 4,5:1, la activa
+    // con su capa de foco (10 %) compuesta sobre el fondo, y su anillo a 3:1.
+    test('Search: barra (suelta y en el TopAppBar), sugerencias, activa, grupo y vacío', async () => {
+      const c = await render(
+        <Themed scheme={scheme}>
+          <Search className="empty">
+            <SearchBar label="Buscar" placeholder="Buscar frutas">
+              <SearchBarLeading><StarIcon /></SearchBarLeading>
+              <SearchBarTrailing><IconButton label="Voz"><HomeIcon /></IconButton></SearchBarTrailing>
+            </SearchBar>
+          </Search>
+          <Search className="docked" view="docked" defaultValue="ma">
+            <SearchBar label="Buscar" />
+            <SearchView>
+              <SearchSuggestionGroup label="Recientes">
+                <SearchSuggestion value="mandarina" className="first">
+                  <ListItemLeading><StarIcon /></ListItemLeading>
+                  <ListItemHeadline>Mandarina</ListItemHeadline>
+                  <ListItemSupporting>Cítrico</ListItemSupporting>
+                </SearchSuggestion>
+                <SearchSuggestion value="mango" className="second" />
+              </SearchSuggestionGroup>
+            </SearchView>
+          </Search>
+          <Search className="none" view="docked" defaultValue="zz">
+            <SearchBar label="Sin resultados" />
+            <SearchView />
+          </Search>
+          <div className="scroller" style={{ height: 200, overflow: 'auto' }}>
+            <TopAppBar>
+              <Search className="in-bar">
+                <SearchBar label="Buscar en la barra" placeholder="Buscar" />
+              </Search>
+            </TopAppBar>
+            <div style={{ height: 1000 }} />
+          </div>
+        </Themed>,
+      )
+      const barChecks = (sel: string) => {
+        const input = q(c, `${sel} .mk-search-input`)
+        const bg = effectiveBackground(input)
+        expect(contrastRatio(cs(input).color, bg), `${sel} texto`).toBeGreaterThanOrEqual(TEXT)
+        expect(contrastRatio(getComputedStyle(input, '::placeholder').color, bg), `${sel} ayuda`).toBeGreaterThanOrEqual(TEXT)
+      }
+      barChecks('.empty')
+      for (const part of ['.mk-search-bar-leading svg', '.mk-search-bar-trailing svg']) {
+        const el = q(c, `.empty ${part}`)
+        expect(contrastRatio(cs(el).fill, effectiveBackground(el)), `icono ${part}`).toBeGreaterThanOrEqual(NON_TEXT)
+      }
+      expect(contrastRatio(cs(q(c, '.docked .mk-search-bar-clear svg')).fill, effectiveBackground(q(c, '.docked .mk-search-bar'))), 'borrar').toBeGreaterThanOrEqual(NON_TEXT)
+      barChecks('.in-bar')
+      q(c, '.scroller').scrollTop = 500
+      const highest = document.createElement('span')
+      highest.style.color = 'var(--md-sys-color-surface-container-highest)'
+      q(c, 'main').append(highest)
+      await expect.poll(() => cs(q(c, '.in-bar .mk-search-bar')).backgroundColor).toBe(cs(highest).color)
+      barChecks('.in-bar')
+
+      await userEvent.click(q(c, '.docked .mk-search-input'))
+      await userEvent.keyboard('{ArrowDown}')
+      const first = q(c, '.docked .first')
+      expect(first.hasAttribute('data-active')).toBe(true)
+      const layer = q(first, '.mk-state-layer')
+      const [r, g, b] = parseColor(cs(layer).backgroundColor)
+      const base = effectiveBackground(first)
+      const a = Number(cs(layer).opacity)
+      const active: RGBA = [r * a + base[0] * (1 - a), g * a + base[1] * (1 - a), b * a + base[2] * (1 - a), 1]
+      for (const part of ['headline', 'supporting']) {
+        expect(contrastRatio(cs(q(first, `.mk-list-item-${part}`)).color, active), `activa ${part}`).toBeGreaterThanOrEqual(TEXT)
+      }
+      expect(contrastRatio(cs(q(first, '.mk-list-item-leading')).color, active), 'activa icono').toBeGreaterThanOrEqual(NON_TEXT)
+      expect(contrastRatio(cs(q(first, '.mk-focus-ring')).outlineColor, active), 'activa anillo').toBeGreaterThanOrEqual(NON_TEXT)
+      expect(textContrast(q(c, '.docked .second .mk-list-item-headline')), 'en reposo').toBeGreaterThanOrEqual(TEXT)
+      expect(textContrast(q(c, '.docked .mk-search-suggestion-group-label')), 'grupo').toBeGreaterThanOrEqual(TEXT)
+      // Cerrar la lista abierta, que tapa al campo siguiente.
+      await userEvent.keyboard('{Escape}')
+      await expect.poll(() => q(c, '.docked .mk-search-results').matches(':popover-open')).toBe(false)
+      await userEvent.click(q(c, '.none .mk-search-input'))
+      expect(textContrast(q(c, '.none .mk-search-empty')), 'vacío').toBeGreaterThanOrEqual(TEXT)
+    })
 
     // TopAppBar: título y subtítulo a 4,5:1 e iconos de inicio y acciones a 3:1, plana (Surface) y con
     // contenido debajo (Surface Container, la barra fija desplazada). Las copias de la barra

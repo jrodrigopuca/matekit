@@ -5,7 +5,7 @@
 // botones e inputs su resultado queda "incompleto". Acá el fondo se obtiene componiendo los
 // background-color del elemento y sus ancestros hasta llegar a uno opaco.
 
-type RGBA = [r: number, g: number, b: number, a: number]
+export type RGBA = [r: number, g: number, b: number, a: number]
 
 /** Lee "rgb(…)", "rgba(…)" o "color(srgb r g b / a)" como componentes de 0 a 1. */
 export function parseColor(value: string): RGBA {

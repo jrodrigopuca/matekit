@@ -638,6 +638,25 @@ False y `Side Sheet` 53198:27851 con Type Modal o Standard y Show back).
     arriba, 24 a los lados y 20 abajo (del contenedor), separación 8, con un botón filled Small y
     uno outlined Small.
 
+## Search
+
+Leído del kit el 2026-11-26 (página Search; conjunto `Search bar` 52977:33813 con State Enabled,
+Hovered o Pressed y Show avatar; los diseños de Expressive `Search full-screen layout` 59178:4963
+y `Search docked layout` 59178:4992, con Configuration Input text o Supporting text; los
+"baseline" anteriores no se usan).
+
+- Search bar: 56 de alto, radio 28, `Surface Container High` (en la página de App bars, la barra
+  dentro del app bar figura en `Surface Container`: conflicto a resolver con Compose). Relleno 4;
+  icon button de inicio de 48 (por ejemplo volver o menú), el texto de ayuda en Body Large
+  `On Surface Variant` con 20 a los lados, y al final uno o dos icon buttons de 48 o un avatar de
+  30 (área de 50, relleno 8 al inicio y 12 al final). Hover: capa `On Surface` al 8 %.
+- Docked (sugerencias pegadas a la barra): la barra y debajo, separadas por 2, una lista de
+  sugerencias con fondo `Surface Container High` y radio 12, de elementos de lista de 64.
+- Full-screen: contenedor con radio 16; la barra con 12 a los lados, y debajo (separación 2) la
+  lista de sugerencias con radio 12, sin fondo propio.
+- Escribiendo: el texto ingresado ocupa el lugar del texto de ayuda (Body Large); al final, el
+  botón de borrar.
+
 ## Diferencias con la especificación a revisar
 
 - El indicador con foco del campo de texto mide 3 en el kit. Confirmar en m3.material.io.

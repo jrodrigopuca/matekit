@@ -251,6 +251,16 @@ No llamar al conector de Figma salvo que falte un dato imprescindible: tiene lí
     arriba y abajo y `min-block-size`, el centrado da lo esperado. Un ítem que abarca columnas
     `minmax(max-content, 1fr) auto minmax(max-content, 1fr)` aporta su ancho máximo y le quita lugar
     a la columna `auto` (de 204 libres le dejó 72, o 0): `contain: inline-size` en ese ítem lo evita.
+  - Capa anclada del ancho del ancla (Search, comprobado el 2026-11-26): un `popover` trae `width:
+    fit-content` del navegador; `position-area` con un solo valor (`bottom`, `block-end`) abarca todo el
+    otro eje (`span-all`). `position-area: block-end center` con `justify-self: stretch` e
+    `inline-size: auto` la deja del ancho del ancla y alineada con sus dos bordes igual en los tres,
+    también en RTL (con `span-inline-end` y el ancho escrito, Firefox la corría unos 114 px en RTL).
+    `<search>` tiene rol `search` en los tres (árbol de Playwright), pero los localizadores de Vitest
+    (`getByRole('search')`) no lo encuentran. En un `<input type="search">` con texto, Chrome usa Escape
+    para borrarlo y, dentro de un `<dialog>` modal, el diálogo no recibe el `cancel` (en los otros dos
+    no se aisló: Search cancela ese Escape en todos).
+    `aria-disabled` hace que el `click` de Playwright espere (usar `{ force: true }`).
 - Snackbar (comprobado el 2026-11-26): un `popover` dentro de un `<dialog>` modal abierto se puede
   usar en los tres motores (fuera del diálogo queda inerte). Un F6 real que la página no atrapa
   saca el foco del documento en Firefox: para probar que un componente no atrapa una tecla, despachar

@@ -3,6 +3,7 @@
 
 import type { ReactNode } from 'react'
 import { describe, expect, test } from 'vitest'
+import { userEvent } from 'vitest/browser'
 import {
   AssistChip,
   ChipAvatar,
@@ -114,6 +115,13 @@ import {
   TopAppBarLeading,
   TopAppBarSubtitle,
   TopAppBarTitle,
+  Search,
+  SearchBar,
+  SearchBarLeading,
+  SearchBarTrailing,
+  SearchSuggestion,
+  SearchSuggestionGroup,
+  SearchView,
   ArrowBackIcon,
   BottomSheet,
   BottomSheetContent,
@@ -781,6 +789,77 @@ describe('Accesibilidad automática (axe-core)', () => {
       )
       await expect.poll(() => c.querySelector('.mk-snackbar[popover]')?.matches(':popover-open')).toBe(true)
       await expect.poll(() => c.querySelector('[role="status"]')?.textContent).toBe('Foto archivada Deshacer')
+      expect(await a11yViolations(c)).toEqual([])
+    })
+  }
+})
+
+describe('Accesibilidad automática (axe-core): Search', () => {
+  const suggestions = (
+    <SearchView>
+      <SearchSuggestionGroup label="Recientes">
+        <SearchSuggestion value="mate" />
+      </SearchSuggestionGroup>
+      <SearchSuggestionGroup label="Frutas">
+        <SearchSuggestion value="mandarina">
+          <ListItemLeading><StarIcon /></ListItemLeading>
+          <ListItemHeadline>Mandarina</ListItemHeadline>
+          <ListItemSupporting>Cítrico</ListItemSupporting>
+        </SearchSuggestion>
+        <SearchSuggestion value="mango" disabled />
+      </SearchSuggestionGroup>
+    </SearchView>
+  )
+  for (const theme of THEMES) {
+    const themeName = theme === 'light' ? 'claro' : 'oscuro'
+    test(`suelta, deshabilitada y en el TopAppBar, tema ${themeName}`, async () => {
+      const c = await render(
+        <Themed theme={theme}>
+          <Search>
+            <SearchBar label="Buscar en el sitio" placeholder="Buscar" name="q">
+              <SearchBarLeading><IconButton label="Menú"><MenuIcon /></IconButton></SearchBarLeading>
+              <SearchBarTrailing><IconButton label="Favoritos"><StarIcon /></IconButton></SearchBarTrailing>
+            </SearchBar>
+          </Search>
+          <Search defaultValue="mate">
+            <SearchBar label="Buscar (deshabilitada)" disabled />
+          </Search>
+          <TopAppBar scrollBehavior="none">
+            <TopAppBarLeading><IconButton label="Volver"><ArrowBackIcon /></IconButton></TopAppBarLeading>
+            <Search view="docked" defaultValue="m">
+              <SearchBar label="Buscar en la bandeja" />
+              {suggestions}
+            </Search>
+          </TopAppBar>
+        </Themed>,
+      )
+      expect(await a11yViolations(c)).toEqual([])
+    })
+    test(`docked abierta con una sugerencia activa, tema ${themeName}`, async () => {
+      const c = await render(
+        <Themed theme={theme}>
+          <Search view="docked" defaultValue="m">
+            <SearchBar label="Buscar frutas" />
+            {suggestions}
+          </Search>
+        </Themed>,
+      )
+      await userEvent.click(c.querySelector('.mk-search-input') as HTMLElement)
+      await userEvent.keyboard('{ArrowDown}')
+      expect(c.querySelector('[data-active]')).not.toBeNull()
+      expect(await a11yViolations(c)).toEqual([])
+    })
+    test(`a pantalla completa abierta, con vacío y carga, tema ${themeName}`, async () => {
+      const c = await render(
+        <Themed theme={theme}>
+          <Search view="full-screen" defaultValue="zz">
+            <SearchBar label="Buscar frutas" />
+            <SearchView loading />
+          </Search>
+        </Themed>,
+      )
+      await userEvent.click(c.querySelector('.mk-search-input') as HTMLElement)
+      expect((c.querySelector('.mk-search-view') as HTMLDialogElement).open).toBe(true)
       expect(await a11yViolations(c)).toEqual([])
     })
   }

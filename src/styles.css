@@ -51,3 +51,5 @@
 /* Después de los controles (checkbox.css, switch.css, radio-button.css) y de group.css: ubica el
    control de selección en la fila y le gana a sus estilos sueltos por orden y especificidad. */
 @import './organisms/List/list.css';
+/* Después de list.css: las sugerencias son elementos de lista y muestran sus átomos. */
+@import './organisms/Search/search.css';

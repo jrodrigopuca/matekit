@@ -31,6 +31,7 @@ import { NavigationBarPage } from './pages/NavigationBarPage.tsx'
 import { NavigationRailPage } from './pages/NavigationRailPage.tsx'
 import { ProgressIndicatorPage } from './pages/ProgressIndicatorPage.tsx'
 import { RadioButtonPage } from './pages/RadioButtonPage.tsx'
+import { SearchPage } from './pages/SearchPage.tsx'
 import { ShapesPage } from './pages/ShapesPage.tsx'
 import { SliderPage } from './pages/SliderPage.tsx'
 import { SwitchPage } from './pages/SwitchPage.tsx'
@@ -92,6 +93,7 @@ const PAGES = {
   menu: { label: 'Menu', group: 'organisms', Page: MenuPage },
   'navigation-bar': { label: 'NavigationBar', group: 'organisms', Page: NavigationBarPage },
   'navigation-rail': { label: 'NavigationRail', group: 'organisms', Page: NavigationRailPage },
+  search: { label: 'Search', group: 'organisms', Page: SearchPage },
   sheets: { label: 'Sheets', group: 'organisms', Page: SheetsPage },
   snackbar: { label: 'Snackbar', group: 'organisms', Page: SnackbarPage },
   tabs: { label: 'Tabs', group: 'organisms', Page: TabsPage },

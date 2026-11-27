@@ -1,0 +1,518 @@
+/* Search de Material 3 Expressive: search bar y search view (docked y a pantalla completa), con
+   el patrón APG de combobox para las sugerencias. ADR-0026.
+
+   Fuentes:
+   - Kit de Figma (docs/research/05-medidas.md § Search): barra de 56, radio 28, Surface Container
+     High, relleno 4, icon button de inicio de 48, texto de ayuda Body Large On Surface Variant con
+     20 a los lados, al final uno o dos icon buttons de 48 o un avatar de 30 (área de 50, relleno 8
+     al inicio y 12 al final); hover con capa On Surface al 8 %. Docked: la lista debajo, separada 2,
+     Surface Container High y radio 12. Pantalla completa: la barra con 12 a los lados y debajo
+     (separación 2) la lista con radio 12, sin fondo propio.
+   - Jetpack Compose (compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/,
+     commit 76990c62ac del 2026-11-24), lo que el kit no trae:
+     - tokens/SearchBarTokens.kt: icono de 24, inicio On Surface y final On Surface Variant, texto
+       On Surface, anillo de foco Secondary, separaciones de la barra contenida (ContainedLeadingSpace
+       y ContainedIconLabelGap 4; ContainedNoActionsLeadingSpace/TrailingSpace 16: con el relleno de
+       4, los 20 del kit), avatar de 30 en un área de 48.
+     - tokens/SearchViewTokens.kt: ContainedBackgroundColor Surface Container Low (el fondo de la
+       vista a pantalla completa), ContainedDockedResultsShape Corner Medium (12),
+       ContainedDockedBarResultsGap Space25 (2), ContainedLeadingMargin y TrailingMargin Space150
+       (12), ContainerElevation Level3 (la sombra de la lista docked).
+     - tokens/AppBarTokens.kt: en la barra superior, SearchContainerColor Surface Container,
+       SearchOnScrollContainerColor Surface Container Highest y SearchLeadingSpace/TrailingSpace
+       Space100 (8).
+     - SearchBar.kt: ancho máximo 720 (SearchBarMaxWidth), el desplegable docked de hasta la mitad
+       de la ventana (DockedExpandedWithGapTableMaxHeightScreenRatio), relleno vertical de 4 dentro
+       de la barra superior (AppBarWithSearchVerticalPadding), caret Primary (FilledTextFieldTokens),
+       la vista contenida con FastSpatial (rememberContainedSearchBarState).
+     Conflictos (radio de la vista a pantalla completa, color dentro de la barra superior, alto
+     mínimo del desplegable, elementos de 64) en docs/research/07-jetpack-compose.md § Search.
+
+   Estructura: .mk-search (<search>) > .mk-search-bar (la píldora, una grilla: inicio | campo |
+   borrar | final) y, del SearchView, .mk-search-results (popover anclado, docked) o .mk-search-view
+   (<dialog> modal, pantalla completa) con su propia .mk-search-bar. Las sugerencias son
+   .mk-list-item de List con role="option" (.mk-search-suggestion). */
+
+/* Colores de la barra dentro de un TopAppBar, registrados como <color> (fuera de las capas): la
+   animación por desplazamiento se recalcula al cambiar el tema (ver top-app-bar.css). */
+@property --_search-bar-flat {
+  syntax: '<color>';
+  inherits: false;
+  initial-value: transparent;
+}
+
+@property --_search-bar-scrolled {
+  syntax: '<color>';
+  inherits: false;
+  initial-value: transparent;
+}
+
+@layer matekit.components {
+  .mk-search {
+    display: block;
+    box-sizing: border-box;
+    min-inline-size: 0;
+    max-inline-size: 720px;
+  }
+
+  /* --- La barra (píldora) --- */
+  .mk-search-bar {
+    --_container: var(--md-sys-color-surface-container-high);
+    display: grid;
+    grid-template-columns: [leading] auto [input] minmax(0, 1fr) [clear] auto [trailing] auto;
+    align-items: center;
+    box-sizing: border-box;
+    block-size: 56px;
+    min-inline-size: 0;
+    padding-inline: var(--md-sys-space-50);
+    border-radius: var(--md-sys-shape-corner-full);
+    background-color: var(--_container);
+    color: var(--md-sys-color-on-surface);
+    cursor: text;
+    --mk-state-layer-color: var(--md-sys-color-on-surface);
+    --mk-focus-ring-color: var(--md-sys-color-secondary);
+  }
+
+  /* El anillo de la barra sigue al foco de teclado del campo (un input siempre es :focus-visible
+     con foco). */
+  .mk-search-bar:has(> .mk-search-input:focus-visible) > .mk-focus-ring {
+    --mk-focus-ring-visible: 1;
+  }
+
+  .mk-search-input {
+    grid-column: input;
+    grid-row: 1;
+    box-sizing: border-box;
+    inline-size: 100%;
+    block-size: 100%;
+    min-inline-size: 0;
+    margin: 0;
+    padding-block: 0;
+    padding-inline: var(--md-sys-space-200);
+    border: none;
+    border-radius: 0;
+    background: none;
+    outline: none;
+    appearance: none;
+    color: var(--md-sys-color-on-surface);
+    caret-color: var(--md-sys-color-primary);
+    font-family: var(--md-sys-typescale-body-large-font);
+    font-size: var(--md-sys-typescale-body-large-size);
+    line-height: var(--md-sys-typescale-body-large-line-height);
+    font-weight: var(--md-sys-typescale-body-large-weight);
+    letter-spacing: var(--md-sys-typescale-body-large-tracking);
+    text-overflow: ellipsis;
+    cursor: text;
+  }
+  .mk-search-input::placeholder {
+    color: var(--md-sys-color-on-surface-variant);
+    opacity: 1;
+  }
+  /* El botón de borrar es propio (ClearButton): sin el del navegador. */
+  .mk-search-input::-webkit-search-cancel-button,
+  .mk-search-input::-webkit-search-decoration {
+    appearance: none;
+  }
+
+  /* Con inicio, el texto a 4 de su área (ContainedIconLabelGap); sin él, a 4 + 16 del borde (los
+     20 del kit, ContainedNoActionsLeadingSpace). Igual al final con borrar o el final. */
+  .mk-search-bar:has(> .mk-search-bar-leading) > .mk-search-input {
+    padding-inline-start: var(--md-sys-space-50);
+  }
+  .mk-search-bar:has(> :is(.mk-search-bar-clear, .mk-search-bar-trailing)) > .mk-search-input {
+    padding-inline-end: var(--md-sys-space-50);
+  }
+
+  .mk-search-bar-leading,
+  .mk-search-bar-clear,
+  .mk-search-bar-trailing {
+    grid-row: 1;
+    display: flex;
+    align-items: center;
+    --mk-icon-size: 24px;
+  }
+  .mk-search-bar-leading {
+    grid-column: leading;
+    color: var(--md-sys-color-on-surface);
+    --mk-icon-button-color: var(--md-sys-color-on-surface);
+  }
+  .mk-search-bar-clear {
+    grid-column: clear;
+    color: var(--md-sys-color-on-surface-variant);
+    --mk-icon-button-color: var(--md-sys-color-on-surface-variant);
+  }
+  .mk-search-bar-trailing {
+    grid-column: trailing;
+    color: var(--md-sys-color-on-surface-variant);
+    --mk-icon-button-color: var(--md-sys-color-on-surface-variant);
+  }
+  /* Icon buttons de 40 en un área de 48 (kit), sin separación entre ellos
+     (ContainedTrailingActionsGap 0); un icono suelto, de 24 en el centro de 48. */
+  :is(.mk-search-bar-leading, .mk-search-bar-clear, .mk-search-bar-trailing) > .mk-icon-button {
+    margin-inline: var(--md-sys-space-50);
+  }
+  :is(.mk-search-bar-leading, .mk-search-bar-trailing) > .mk-icon {
+    margin-inline: var(--md-sys-space-150);
+  }
+  /* Avatar de 30, redondo, en un área de 50: 8 al inicio y 12 al final (kit). */
+  .mk-search-bar-trailing > img,
+  .mk-search-bar-trailing > :is(a, button) > img {
+    display: block;
+    inline-size: 30px;
+    block-size: 30px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  .mk-search-bar-trailing > img,
+  .mk-search-bar-trailing > :is(a, button):has(> img) {
+    margin-inline: var(--md-sys-space-100) var(--md-sys-space-150);
+  }
+
+  /* Deshabilitado: el contenido On Surface al 38 %, sin capa. */
+  .mk-search-bar:has(> .mk-search-input:disabled) {
+    cursor: default;
+  }
+  .mk-search-bar:has(> .mk-search-input:disabled) > :is(.mk-search-input, .mk-search-bar-leading, .mk-search-bar-trailing) {
+    opacity: var(--md-sys-state-disabled-content-opacity);
+  }
+  .mk-search-bar:has(> .mk-search-input:disabled) > .mk-state-layer {
+    display: none;
+  }
+
+  /* --- Docked: la lista anclada debajo de la barra (popover, CSS anchor positioning) --- */
+  .mk-search-results {
+    --_clip-from: inset(0 0 100% 0);
+    /* El popover del navegador es position: fixed con inset 0 y margin auto: lo ubica el ancla. */
+    inset: auto;
+    position-anchor: var(--_anchor);
+    /* Debajo, en la columna del ancla (`block-end center`; con un solo valor sería `span-all`, todo
+       el ancho), estirada: del ancho de la barra y alineada con sus dos bordes, sin escribir el
+       ancho. Con `span-inline-end` y el ancho escrito, Firefox (159) la corría unos 114 px en RTL
+       (como el `anchor-center` de ADR-0021); estirada no hay alineación que resolver. En esa
+       columna, `normal` es `anchor-center` (ajusta al contenido): por eso `stretch`. */
+    position-area: block-end center;
+    justify-self: stretch;
+    position-try-fallbacks: flip-block;
+    box-sizing: border-box;
+    /* El navegador le da `width: fit-content` a un popover. */
+    inline-size: auto;
+    max-block-size: 50dvh;
+    margin: 0;
+    margin-block: var(--md-sys-space-25);
+    padding: 0;
+    border: none;
+    border-radius: var(--md-sys-shape-corner-medium);
+    background-color: var(--md-sys-color-surface-container-high);
+    box-shadow: var(--md-sys-elevation-level3);
+    color: var(--md-sys-color-on-surface);
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    opacity: 0;
+    clip-path: var(--_clip-from);
+    transition:
+      opacity var(--md-sys-motion-spring-fast-effects-duration) var(--md-sys-motion-spring-fast-effects-easing),
+      clip-path var(--md-sys-motion-spring-fast-spatial-duration) var(--md-sys-motion-spring-fast-spatial-easing);
+  }
+  /* Se despliega desde la barra: de arriba hacia abajo, o al revés si quedó arriba. */
+  .mk-search-results[data-side='top'] {
+    --_clip-from: inset(100% 0 0 0);
+  }
+  .mk-search-results:popover-open {
+    display: block;
+    opacity: 1;
+    clip-path: inset(0);
+  }
+  @starting-style {
+    .mk-search-results:popover-open {
+      opacity: 0;
+      clip-path: var(--_clip-from);
+    }
+  }
+  .mk-search-results:popover-open[data-closing] {
+    opacity: 0;
+    clip-path: var(--_clip-from);
+  }
+  /* Sin anchor positioning, Search.tsx escribe top y left (respaldo, ADR-0007). */
+  @supports not (position-area: bottom) {
+    .mk-search-results {
+      position: fixed;
+    }
+  }
+
+  /* --- La lista y las sugerencias --- */
+  .mk-search-listbox {
+    display: block;
+  }
+  .mk-search-listbox:empty {
+    display: none;
+  }
+
+  /* La sugerencia es un elemento de lista (List): con sus átomos a la vista (List los oculta fuera
+     de las filas de selección) y los estados de una fila. */
+  .mk-search-suggestion {
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .mk-search-suggestion > :is(.mk-state-layer, .mk-ripple, .mk-focus-ring) {
+    display: block;
+  }
+  @media (hover: hover) {
+    .mk-search-suggestion:where(:hover:not([aria-disabled='true'])) {
+      --_state-radius: var(--md-sys-shape-corner-medium);
+    }
+  }
+  /* La activa (aria-activedescendant): el foco visual de la lista, como el foco de una fila
+     (capa al 10 %, anillo por dentro y radio 16, List). */
+  .mk-search-suggestion:where([data-active]) {
+    --_state-radius: var(--md-sys-shape-corner-large);
+  }
+  .mk-search-suggestion[data-active] > .mk-state-layer {
+    --mk-state-layer-opacity: var(--md-sys-state-focus-state-layer-opacity);
+  }
+  .mk-search-suggestion[data-active] > .mk-focus-ring {
+    --mk-focus-ring-visible: 1;
+  }
+  .mk-search-suggestion:where(:active:not([aria-disabled='true'])) {
+    --_state-radius: var(--md-sys-shape-corner-large);
+  }
+  .mk-search-suggestion[aria-disabled='true'] {
+    cursor: default;
+  }
+  .mk-search-suggestion[aria-disabled='true'] > :is(.mk-list-item-leading, .mk-list-item-overline, .mk-list-item-headline, .mk-list-item-supporting, .mk-list-item-trailing) {
+    opacity: var(--md-sys-state-disabled-content-opacity);
+  }
+  .mk-search-suggestion[aria-disabled='true'] > :is(.mk-state-layer, .mk-ripple) {
+    display: none;
+  }
+
+  .mk-search-suggestion-group {
+    display: block;
+    margin: 0;
+  }
+  .mk-search-suggestion-group-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  /* Nombre del grupo: como el subtítulo de una lista (Title Small, On Surface Variant), alineado
+     con el texto de los elementos (16 a los lados). */
+  .mk-search-suggestion-group-label {
+    display: block;
+    padding-block: var(--md-sys-space-150) var(--md-sys-space-50);
+    padding-inline: var(--md-sys-space-200);
+    color: var(--md-sys-color-on-surface-variant);
+    font-family: var(--md-sys-typescale-title-small-font);
+    font-size: var(--md-sys-typescale-title-small-size);
+    line-height: var(--md-sys-typescale-title-small-line-height);
+    font-weight: var(--md-sys-typescale-title-small-weight);
+    letter-spacing: var(--md-sys-typescale-title-small-tracking);
+  }
+
+  /* Vacío y carga. */
+  .mk-search-empty {
+    margin: 0;
+    padding: var(--md-sys-space-200);
+    color: var(--md-sys-color-on-surface-variant);
+    font-family: var(--md-sys-typescale-body-large-font);
+    font-size: var(--md-sys-typescale-body-large-size);
+    line-height: var(--md-sys-typescale-body-large-line-height);
+    font-weight: var(--md-sys-typescale-body-large-weight);
+    letter-spacing: var(--md-sys-typescale-body-large-tracking);
+  }
+  .mk-search-progress {
+    display: block;
+    margin-block: var(--md-sys-space-100);
+    margin-inline: var(--md-sys-space-200);
+  }
+
+  /* Región viva: solo para los lectores de pantalla. */
+  .mk-search-status {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  /* --- Pantalla completa: <dialog> modal que ocupa la ventana --- */
+  .mk-search-view {
+    position: fixed;
+    inset: 0;
+    box-sizing: border-box;
+    inline-size: 100%;
+    block-size: 100%;
+    max-inline-size: none;
+    max-block-size: none;
+    margin: 0;
+    padding: 0;
+    border: none;
+    /* Compose FullScreenContainerShape (CornerNone): ocupa la ventana. */
+    border-radius: 0;
+    background-color: var(--md-sys-color-surface-container-low);
+    color: var(--md-sys-color-on-surface);
+    overflow: hidden;
+    opacity: 0;
+    /* La salida (data-closing) espera esta transición antes de close() (useModalDialog). */
+    transition: opacity var(--md-sys-motion-spring-fast-effects-duration) var(--md-sys-motion-spring-fast-effects-easing);
+  }
+  .mk-search-view[open] {
+    display: flex;
+    flex-direction: column;
+    opacity: 1;
+  }
+  @starting-style {
+    .mk-search-view[open] {
+      opacity: 0;
+    }
+  }
+  .mk-search-view[open][data-closing] {
+    opacity: 0;
+  }
+  /* Ocupa toda la ventana: el fondo no se ve, sin scrim. */
+  .mk-search-view::backdrop {
+    background: transparent;
+  }
+
+  /* La barra arriba con 12 a los lados (kit, ContainedLeadingMargin) y 4 arriba
+     (AppBarWithSearchVerticalPadding), dentro de las zonas seguras. */
+  .mk-search-view-header {
+    flex: none;
+    padding-block: calc(var(--md-sys-space-50) + env(safe-area-inset-top)) 0; /* lint-css-allow: zona segura sumada al relleno del token */
+    padding-inline: calc(var(--md-sys-space-150) + env(safe-area-inset-left)) calc(var(--md-sys-space-150) + env(safe-area-inset-right)); /* lint-css-allow: zona segura sumada al relleno del token */
+  }
+  /* El anillo por dentro: con 4 arriba, uno por fuera (2 + 3) quedaría recortado por la ventana. */
+  .mk-search-view-header > .mk-search-bar {
+    --mk-focus-ring-offset: calc(-1 * var(--md-sys-state-focus-indicator-thickness));
+  }
+  /* Volver es una flecha: en RTL apunta al otro lado. */
+  .mk-search-view-close:dir(rtl) > .mk-icon {
+    scale: -1 1;
+  }
+  /* Debajo, separada 2, la lista con radio 12 y sin fondo propio (kit), que se desplaza sola. */
+  .mk-search-view-results {
+    flex: 1 1 auto;
+    min-block-size: 0;
+    margin-block-start: var(--md-sys-space-25);
+    margin-inline: calc(var(--md-sys-space-150) + env(safe-area-inset-left)) calc(var(--md-sys-space-150) + env(safe-area-inset-right)); /* lint-css-allow: zona segura sumada al margen del token */
+    padding-block-end: env(safe-area-inset-bottom); /* lint-css-allow: zona segura del borde inferior */
+    border-radius: var(--md-sys-shape-corner-medium);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  /* --- Dentro de un TopAppBar (configuración Search del kit, ADR-0024) ---
+     En el lugar del título, centrada hasta 720, con 8 a los lados de la barra o del inicio y las
+     acciones (AppBarTokens.SearchLeadingSpace/TrailingSpace; la barra superior ya pone 4 de
+     relleno y 4 de separación) y 4 arriba y abajo (los 56 entran en los 64). Surface Container,
+     y Surface Container Highest al desplazar, con el mismo avance que el color de la barra
+     superior. */
+  /* Los 4 que faltan a cada lado van como relleno de la raíz (no como margen: con el 100 % del
+     ancho y centrada, un margen se repartiría a los dos lados). */
+  .mk-top-app-bar > .mk-search {
+    justify-self: center;
+    inline-size: 100%;
+    margin-block: calc(-1 * var(--md-sys-space-50));
+  }
+  .mk-top-app-bar:has(> .mk-top-app-bar-leading) > .mk-search {
+    padding-inline-start: var(--md-sys-space-50);
+  }
+  .mk-top-app-bar:has(> .mk-top-app-bar-actions) > .mk-search {
+    padding-inline-end: var(--md-sys-space-50);
+  }
+  .mk-top-app-bar > .mk-search > .mk-search-bar {
+    --_search-bar-flat: var(--md-sys-color-surface-container);
+    --_search-bar-scrolled: var(--md-sys-color-surface-container-highest);
+    background-color: var(--_search-bar-flat);
+  }
+
+  @keyframes mk-search-bar-tint {
+    from {
+      background-color: var(--_search-bar-flat);
+    }
+    to {
+      background-color: var(--_search-bar-scrolled);
+    }
+  }
+
+  @keyframes mk-search-bar-tint-paused {
+    from {
+      background-color: var(--_search-bar-flat);
+    }
+    to {
+      background-color: var(--_search-bar-scrolled);
+    }
+  }
+
+  /* Atada al mismo desplazamiento que la barra superior (scroll(nearest block) y su rango,
+     --_tint-range, que se hereda). */
+  @supports (animation-timeline: scroll()) {
+    .mk-top-app-bar:is([data-scroll-behavior='pinned'], [data-scroll-behavior='exit-until-collapsed']):not([data-scroll-driver='script']) > .mk-search > .mk-search-bar {
+      animation: mk-search-bar-tint both;
+      animation-timing-function: var(--_tint-easing);
+      animation-timeline: scroll(nearest block);
+      animation-range: var(--_tint-range);
+    }
+  }
+
+  /* Respaldo y enter-always: detenida en el avance que escribe TopAppBarScroll (--_tint). */
+  .mk-top-app-bar:is([data-scroll-driver='script'], [data-scroll-behavior='enter-always']) > .mk-search > .mk-search-bar {
+    animation: mk-search-bar-tint-paused 1s paused both; /* lint-css-allow: escala del avance de una animación detenida, no un tiempo */
+    animation-timing-function: var(--_tint-easing);
+    animation-delay: calc(var(--_tint, 0) * -1s); /* lint-css-allow: el avance como tiempo de una animación detenida */
+  }
+
+  /* --- Alto contraste (forced-colors) ---
+     El navegador quita los fondos: la barra y la lista se dibujan con un contorno CanvasText; la
+     sugerencia activa en Highlight con HighlightText (saliendo del ajuste automático), y el hover
+     con un contorno de 2 en Highlight por dentro. El anillo de foco es un contorno (color del
+     sistema). La deshabilitada, en GrayText sin opacidad. */
+  @media (forced-colors: active) {
+    .mk-search-bar {
+      outline: 1px solid CanvasText;
+      outline-offset: -1px;
+    }
+    /* Misma especificidad que las reglas de la animación (va después: gana). */
+    .mk-top-app-bar[data-size][data-scroll-behavior] > .mk-search > .mk-search-bar {
+      animation: none;
+    }
+    .mk-search-results {
+      border: 1px solid CanvasText;
+    }
+    .mk-search-view-results {
+      border: 1px solid CanvasText;
+    }
+    @media (hover: hover) {
+      .mk-search-suggestion:hover:not([data-active], [aria-disabled='true']) {
+        outline: 2px solid Highlight;
+        outline-offset: -2px;
+      }
+    }
+    .mk-search-suggestion[data-active] {
+      forced-color-adjust: none;
+      --_container: Highlight;
+      --_headline: HighlightText;
+      --_supporting: HighlightText;
+      --_overline: HighlightText;
+      --_leading: HighlightText;
+      --_trailing: HighlightText;
+      --_layer: HighlightText;
+      --_ring: HighlightText;
+    }
+    .mk-search-suggestion[aria-disabled='true'] {
+      forced-color-adjust: none;
+      --_container: Canvas;
+      --_headline: GrayText;
+      --_supporting: GrayText;
+      --_overline: GrayText;
+      --_leading: GrayText;
+      --_trailing: GrayText;
+    }
+    .mk-search-suggestion[aria-disabled='true'] > :is(.mk-list-item-leading, .mk-list-item-overline, .mk-list-item-headline, .mk-list-item-supporting, .mk-list-item-trailing) {
+      opacity: 1;
+    }
+  }
+}

@@ -85,6 +85,11 @@ import {
   TopAppBarActions,
   TopAppBarLeading,
   TopAppBarTitle,
+  Search,
+  SearchBar,
+  SearchBarLeading,
+  SearchSuggestion,
+  SearchView,
   BottomSheet,
   BottomSheetContent,
   BottomSheetHandle,
@@ -1120,5 +1125,75 @@ describe('TopAppBar', () => {
       expect(getComputedStyle(header, '::before').backgroundColor).toBe(systemColor('Canvas'))
     }
     if (autoForced) expect(style(q(c, '.mk-top-app-bar-title')).color).toBe(systemColor('CanvasText'))
+  })
+})
+
+describe('Search', () => {
+  const search = (view: 'docked' | 'full-screen' = 'docked') => (
+    <Search view={view} defaultValue="ma">
+      <SearchBar label="Buscar">
+        <SearchBarLeading><StarIcon /></SearchBarLeading>
+      </SearchBar>
+      <SearchView>
+        <SearchSuggestion value="mandarina" className="a" />
+        <SearchSuggestion value="manzana" className="b" />
+        <SearchSuggestion value="mango" className="off" disabled />
+      </SearchView>
+    </Search>
+  )
+
+  test('la barra y la lista con contorno CanvasText (el navegador quita los fondos y la sombra)', async () => {
+    const c = await render(search())
+    const bar = q(c, '.mk-search-bar')
+    expect(style(bar).outlineStyle).toBe('solid')
+    expect(style(bar).outlineWidth).toBe('1px')
+    expect(style(bar).outlineColor).toBe(systemColor('CanvasText'))
+    await userEvent.click(q(c, '.mk-search-input'))
+    const list = q(c, '.mk-search-results')
+    expect(style(list).borderTopStyle).toBe('solid')
+    expect(style(list).borderTopColor).toBe(systemColor('CanvasText'))
+  })
+
+  test('la sugerencia activa en Highlight con el texto en HighlightText; la deshabilitada en GrayText', async () => {
+    const c = await render(search())
+    await userEvent.click(q(c, '.mk-search-input'))
+    await userEvent.keyboard('{ArrowDown}')
+    expect(style(q(c, '.a')).backgroundColor).toBe(systemColor('Highlight'))
+    expect(style(q(c, '.a .mk-list-item-headline')).color).toBe(systemColor('HighlightText'))
+    expect(style(q(c, '.b')).backgroundColor).not.toBe(systemColor('Highlight'))
+    expect(style(q(c, '.off .mk-list-item-headline')).color).toBe(systemColor('GrayText'))
+    expect(style(q(c, '.off .mk-list-item-headline')).opacity).toBe('1')
+  })
+
+  test('con el puntero, contorno de 2 px en Highlight por dentro', async () => {
+    const c = await render(search())
+    await userEvent.click(q(c, '.mk-search-input'))
+    await userEvent.hover(q(c, '.b'))
+    const s = style(q(c, '.b'))
+    expect(s.outlineWidth).toBe('2px')
+    expect(s.outlineColor).toBe(systemColor('Highlight'))
+    expect(s.outlineOffset).toBe('-2px')
+  })
+
+  test('a pantalla completa: la barra de la vista y la lista con contorno', async () => {
+    const c = await render(search('full-screen'))
+    await userEvent.click(q(c, '.mk-search-input'))
+    const view = q(c, '.mk-search-view')
+    expect(style(q(view, '.mk-search-bar')).outlineColor).toBe(systemColor('CanvasText'))
+    expect(style(q(view, '.mk-search-view-results')).borderTopColor).toBe(systemColor('CanvasText'))
+  })
+
+  test('dentro del TopAppBar, sin la animación del color (el fondo forzado la borraría)', async () => {
+    const c = await render(
+      <div style={{ height: 300, overflow: 'auto' }}>
+        <TopAppBar>
+          <Search>
+            <SearchBar label="Buscar" />
+          </Search>
+        </TopAppBar>
+        <div style={{ height: 1000 }} />
+      </div>,
+    )
+    expect(style(q(c, '.mk-search-bar')).animationName).toBe('none')
   })
 })

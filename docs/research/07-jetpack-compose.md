@@ -1043,6 +1043,68 @@ sheets: `material-components-android`, `lib/java/com/google/android/material/sid
 | Desplazamiento anidado | — | `ConsumeSwipeWithinBottomSheetBoundsNestedScrollConnection`: hacia arriba, el sheet consume antes que el contenido; hacia abajo, después (lo que sobra cuando el contenido llegó arriba) | Se decide al empezar el gesto (ADR-0025): en web no se puede pasar a mitad del gesto un desplazamiento nativo ya empezado |
 | Rebote de la entrada | — | `verticalScaleUp` estira el sheet para no dejar hueco abajo | Un `::after` del color del sheet debajo |
 
+## Search
+
+Revisado el 2026-11-26 para el ítem 21 (ADR-0026). Archivos en
+`compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/`, todos en el commit
+`76990c62ac` (2026-11-24): `tokens/SearchBarTokens.kt`, `tokens/SearchViewTokens.kt`,
+`tokens/AppBarTokens.kt` y `SearchBar.kt` (`SearchBar`, `TopSearchBar`, `AppBarWithSearch`,
+`ExpandedFullScreenSearchBar`, `ExpandedFullScreenContainedSearchBar`, `ExpandedDockedSearchBar`,
+`ExpandedDockedSearchBarWithGap`, `SearchBarDefaults`, `SearchBarState`). Tercera fuente para el color
+dentro de la barra superior: `@material/web` labs, `labs/gb/components/appbar/_app-bar-tokens.scss`
+(commit `9200eb8a0e`).
+
+### Lo que confirma
+
+- Barra de 56 (`ContainerHeight`), `CornerFull`, Surface Container High (`ContainerColor`), texto y
+  ayuda en Body Large, ayuda On Surface Variant, avatar de 30.
+- Docked con separación (`ExpandedDockedSearchBarWithGap`): la lista separada 2 de la barra
+  (`ContainedDockedBarResultsGap` = Space25), radio 12 (`dockedDropdownShape`), mismo color que la
+  barra.
+- Pantalla completa contenida (`ExpandedFullScreenContainedSearchBar`): la barra con 12 a los lados
+  (`ContainedLeadingMargin`/`TrailingMargin` = Space150) y la lista con radio 12
+  (`ContainedDockedResultsShape` = Corner Medium).
+
+### Lo que el kit no trae (se toma de Compose)
+
+- Iconos de 24; inicio On Surface, final On Surface Variant; anillo de foco Secondary; caret Primary
+  (`FilledTextFieldTokens.CaretColor`, como el TextField).
+- Separaciones de la barra contenida: 4 entre un icono y el texto (`ContainedIconLabelGap`), 16 sin
+  iconos (`ContainedNoActionsLeadingSpace`/`TrailingSpace`): con el relleno de 4 dan los 20 del kit.
+- Ancho máximo 720 (`SearchBarMaxWidth`). El mínimo de 360 (`SearchBarMinWidth`) no se aplica: en
+  una ventana de 320 desbordaría; la barra es fluida.
+- Fondo de la vista a pantalla completa contenida: Surface Container Low (`ContainedBackgroundColor`).
+- Sombra de la lista docked: Level3 (`SearchViewTokens.ContainerElevation`). Compose dibuja la
+  versión con separación sin sombra pero con un scrim; en web, sin scrim (la página sigue usable
+  hasta que el foco sale), la sombra la separa del contenido.
+- Lista docked de hasta la mitad de la ventana (`DockedExpandedWithGapTableMaxHeightScreenRatio`).
+- Animación: la contenida usa `FastSpatial` para expandir y contraer
+  (`rememberContainedSearchBarState`); la barra se estira desde su lugar hasta el de la vista.
+- En la barra superior: 8 a los lados (`AppBarTokens.SearchLeadingSpace`/`TrailingSpace`), 4 arriba y
+  abajo (`AppBarWithSearchVerticalPadding`), Surface Container Highest al desplazar
+  (`SearchOnScrollContainerColor`).
+- Cuándo docked y cuándo pantalla completa: Compose no lo elige (son dos composables); matekit elige
+  por la clase de ventana (ADR-0026).
+
+### Diferencias y cómo se resolvieron
+
+- **Color dentro de la barra superior**: el kit (página App bars) y `AppBarTokens.SearchContainerColor`
+  dicen Surface Container; `SearchBar.kt` (`appBarWithSearchColors`) usa `SearchBarDefaults.colors()`,
+  es decir Surface Container High, y no lee ese token. Labs de `@material/web`
+  (`md.comp.app-bar.search.container.color`) también dice Surface Container. Tres contra uno: dentro
+  del TopAppBar, Surface Container; suelta, Surface Container High (página Search del kit).
+- **Radio de la vista a pantalla completa**: el kit muestra 16; Compose `FullScreenContainerShape` es
+  Corner None. Se usa 0: la vista ocupa la ventana, y con radio se verían las esquinas de la página
+  inerte detrás; los 16 del kit coinciden con las esquinas de la pantalla del teléfono de la maqueta.
+- **Separación barra–lista a pantalla completa**: kit 2; Compose deja 8 abajo de la barra
+  (`SearchBarVerticalPadding`). Gana el kit (y coincide con `ContainedDockedBarResultsGap`).
+- **Relleno lateral de la barra a pantalla completa**: kit y tokens 12; `SearchBar.kt` usa 8
+  (`FullScreenExpandedHorizontalPadding`). Ganan kit y tokens.
+- **Alto mínimo de la lista docked**: Compose 240 (`DockedExpandedTableMinHeight`). No se aplica: con
+  una sola sugerencia la lista quedaría vacía en sus dos tercios.
+- **Elementos de 64**: el kit dibuja sugerencias de 64 (de dos líneas); las sugerencias usan las
+  reglas de List (52 con una línea, 64 con dos).
+
 ## No revisado
 
 La tipografía (`TypeScaleTokens.kt`, descargado pero sin comparar).
