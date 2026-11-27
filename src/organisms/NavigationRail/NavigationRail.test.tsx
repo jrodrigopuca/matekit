@@ -182,7 +182,7 @@ describe('NavigationRail: href, <button> y render', () => {
     const bad = { render: 'x' } as unknown as { render: never }
     await expect(
       render(<NavigationRailItem {...bad}><NavigationRailItemLabel>X</NavigationRailItemLabel></NavigationRailItem>),
-    ).rejects.toThrow(/NavigationRailItem espera en `render` un elemento/)
+    ).rejects.toMatchObject({ code: 'MK_RENDER_NOT_ELEMENT', details: { component: 'NavigationRailItem' } })
   })
 })
 

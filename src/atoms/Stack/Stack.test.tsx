@@ -72,7 +72,9 @@ describe('Stack: estructura y props', () => {
 
   test('render con algo que no es un elemento: error claro', async () => {
     // @ts-expect-error render espera un elemento
-    expect(() => Stack({ render: 'ul', children: null })).toThrow(/render=\{<ul \/>\}/)
+    expect(() => Stack({ render: 'ul', children: null })).toThrow(
+      expect.objectContaining({ code: 'MK_RENDER_NOT_ELEMENT', message: expect.stringContaining('render={<ul />}') }),
+    )
   })
 
   test('tipos: gap solo acepta pasos de la escala, y switchAt excluye direction y wrap', () => {

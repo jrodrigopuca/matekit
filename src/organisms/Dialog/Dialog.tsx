@@ -20,6 +20,7 @@ import {
   type Ref,
 } from 'react'
 import { useModalDialog, useRegisteredId } from '../../internal/modal-dialog.ts'
+import { partOutsideParent } from '../../internal/diagnostics.ts'
 
 interface DialogContextValue {
   headlineId: string
@@ -32,7 +33,7 @@ const DialogContext = createContext<DialogContextValue | null>(null)
 
 function useDialog(part: string): DialogContextValue {
   const ctx = use(DialogContext)
-  if (!ctx) throw new Error(`${part} tiene que estar dentro de un <Dialog>.`)
+  if (!ctx) throw partOutsideParent(part, 'Dialog')
   return ctx
 }
 

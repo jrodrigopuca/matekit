@@ -153,7 +153,7 @@ describe('SideSheet modal: apertura, cierre y accesibilidad', () => {
 
   test('las partes cliente fuera de un SideSheet avisan con un error', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => {})
-    await expect(render(<SideSheetClose />)).rejects.toThrow('SideSheetClose tiene que estar dentro de un <SideSheet>.')
+    await expect(render(<SideSheetClose />)).rejects.toMatchObject({ code: 'MK_PART_OUTSIDE_PARENT', details: { component: 'SideSheetClose', parent: 'SideSheet' } })
   })
 })
 

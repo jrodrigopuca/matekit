@@ -897,7 +897,7 @@ describe('aviso en desarrollo: ToolbarLayout controlado que ignora el pedido del
     const c = await render(<Controlled accept={false} />)
     focusKeyboard(q(c, '.fab'))
     await expect.poll(() => warn.mock.calls.length).toBe(1)
-    expect(String(warn.mock.calls[0]![0])).toContain('inaccesibles por teclado')
+    expect(warn.mock.calls[0]![1]).toMatchObject({ code: 'MK_TOOLBAR_EXPAND_IGNORED', component: 'ToolbarLayout' })
     expect(q(c, '.mk-toolbar').inert).toBe(true)
     focusKeyboard(q(c, '.otro'))
     focusKeyboard(q(c, '.fab'))

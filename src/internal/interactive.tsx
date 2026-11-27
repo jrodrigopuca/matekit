@@ -5,6 +5,7 @@
 // el nombre del componente y los tipos de botón que también puede ser enlace (Button, IconButton).
 
 import { isValidElement, type ReactElement } from 'react'
+import { renderNotElement } from './diagnostics.ts'
 import type {
   ButtonElementProps,
   LinkElementProps,
@@ -15,7 +16,8 @@ import type {
 export const cx = (base: string, extra: string | undefined) => (extra ? `${base} ${extra}` : base)
 
 /**
- * Lanza el error de `render` inválido con el nombre del componente que lo recibió. `Interactive`
+ * Lanza el error de `render` inválido (`MK_RENDER_NOT_ELEMENT`) con el nombre del componente que lo
+ * recibió. `Interactive`
  * lo llama con su propio nombre; un componente que dibuja un `<Interactive>` lo llama antes con
  * el suyo (`assertRenderElement('Fab', rest.render)`), para que el mensaje nombre lo que escribió
  * quien lo usa. Con `render` sin definir no hace nada.
@@ -25,7 +27,7 @@ export function assertRenderElement(
   render: unknown,
 ): asserts render is ReactElement<RenderedProps> | undefined {
   if (render !== undefined && !isValidElement(render)) {
-    throw new Error(`${name} espera en \`render\` un elemento, por ejemplo render={<Link href="/" />}.`)
+    throw renderNotElement(name, render, 'render={<Link href="/" />}')
   }
 }
 

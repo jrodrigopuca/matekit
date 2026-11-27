@@ -24,6 +24,7 @@
 
 import { createContext, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type FocusEvent, type HTMLAttributes, type ReactNode, type Ref } from 'react'
 import { isDevelopment } from '../../internal/dev.ts'
+import { mkWarn } from '../../internal/diagnostics.ts'
 import { cx } from '../../internal/interactive.tsx'
 
 /** Por qué se pide expandir o contraer: el desplazamiento (`scrollBehavior="collapse"`) o el foco de teclado. */
@@ -66,8 +67,8 @@ export interface ToolbarLayoutProps extends HTMLAttributes<HTMLDivElement> {
  * Con la barra contraída, el foco de teclado que llega al FAB la vuelve a expandir (así los botones
  * de la barra quedan a un Mayús+Tab). Controlado (`expanded`), eso es un pedido:
  * `onExpandedChange(true, 'focus')`. Si la app no lo acepta, la barra sigue contraída e inerte y sus
- * botones quedan fuera del alcance del teclado; en desarrollo se avisa por consola (`console.warn`,
- * una vez por ToolbarLayout).
+ * botones quedan fuera del alcance del teclado; en desarrollo se avisa por consola
+ * (`MK_TOOLBAR_EXPAND_IGNORED`, una vez por ToolbarLayout; docs/diagnostics.md).
  */
 export function ToolbarLayout(props: ToolbarLayoutProps) {
   const { className, children, expanded: expandedProp, defaultExpanded = true, onExpandedChange, onFocus, ...rest } = props
@@ -91,7 +92,8 @@ export function ToolbarLayout(props: ToolbarLayoutProps) {
   useLayoutEffect(() => {
     latestExpanded.current = expanded
   })
-  const warned = useRef(false)
+  // Clave de la deduplicación de mkWarn: una vez por ToolbarLayout montado.
+  const instance = useRef({}).current
   const warnTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   useEffect(() => () => clearTimeout(warnTimer.current), [])
 
@@ -99,15 +101,20 @@ export function ToolbarLayout(props: ToolbarLayoutProps) {
     onFocus?.(event)
     if (!expanded && event.target.matches(':focus-visible')) {
       requestExpanded(true, 'focus')
-      if (controlled && !warned.current && isDevelopment()) {
+      if (controlled && isDevelopment()) {
         clearTimeout(warnTimer.current)
         warnTimer.current = setTimeout(() => {
-          if (latestExpanded.current || warned.current) return
-          warned.current = true
-          console.warn(
-            'ToolbarLayout: el foco de teclado llegó al FAB y pidió expandir la barra ' +
-              "(onExpandedChange(true, 'focus')), pero `expanded` sigue en false. La barra contraída es " +
-              'inerte: sus botones quedan inaccesibles por teclado. Aceptá el pedido actualizando `expanded`.',
+          if (latestExpanded.current) return
+          mkWarn(
+            'MK_TOOLBAR_EXPAND_IGNORED',
+            {
+              component: 'ToolbarLayout',
+              problem:
+                "keyboard focus reached the FAB and requested expanding the toolbar (onExpandedChange(true, 'focus')), but `expanded` is still false: the collapsed toolbar is inert and its buttons cannot be reached with the keyboard",
+              fix: "accept the request by updating `expanded` in onExpandedChange (onExpandedChange={(next) => setExpanded(next)}), at least for reason 'focus'",
+            },
+            { expanded: false, reason: 'focus' },
+            { once: instance },
           )
         }, 0)
       }

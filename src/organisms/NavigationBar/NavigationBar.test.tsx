@@ -208,7 +208,7 @@ describe('NavigationBar: enrutadores (render)', () => {
     const bad = { render: 'x' } as unknown as { render: never }
     await expect(
       render(<NavigationBarItem {...bad}><NavigationBarItemLabel>X</NavigationBarItemLabel></NavigationBarItem>),
-    ).rejects.toThrow(/espera en `render` un elemento/)
+    ).rejects.toMatchObject({ code: 'MK_RENDER_NOT_ELEMENT', details: { component: 'NavigationBarItem' } })
   })
 })
 

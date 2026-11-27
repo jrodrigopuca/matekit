@@ -20,6 +20,7 @@ import {
 import { IconButton } from '../../molecules/IconButton/IconButton.tsx'
 import { CloseIcon } from '../../icons/icons.tsx'
 import { useModalDialog, useRegisteredId } from '../../internal/modal-dialog.ts'
+import { partOutsideParent } from '../../internal/diagnostics.ts'
 
 interface SideSheetContextValue {
   titleId: string
@@ -31,7 +32,7 @@ const SideSheetContext = createContext<SideSheetContextValue | null>(null)
 
 function useSideSheet(part: string): SideSheetContextValue {
   const ctx = use(SideSheetContext)
-  if (!ctx) throw new Error(`${part} tiene que estar dentro de un <SideSheet>.`)
+  if (!ctx) throw partOutsideParent(part, 'SideSheet')
   return ctx
 }
 

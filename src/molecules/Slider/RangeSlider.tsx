@@ -30,6 +30,7 @@ import {
   type Ref,
 } from 'react'
 import type { AccessibleNameProps } from '../../internal/accessible-name.ts'
+import { partOutsideParent } from '../../internal/diagnostics.ts'
 import { mergeRefs } from '../../internal/merge-refs.ts'
 import {
   formatValue,
@@ -277,7 +278,7 @@ function RangeSliderThumb({
   ...inputProps
 }: RangeSliderThumbProps & { index: 0 | 1 }) {
   const ctx = useContext(RangeSliderContext)
-  if (!ctx) throw new Error(`${index === 0 ? 'RangeSliderStart' : 'RangeSliderEnd'} va dentro de un RangeSlider`)
+  if (!ctx) throw partOutsideParent(index === 0 ? 'RangeSliderStart' : 'RangeSliderEnd', 'RangeSlider')
   const { inputs } = ctx
   const setRef = useMemo(
     () =>

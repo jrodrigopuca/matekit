@@ -294,7 +294,7 @@ describe('Dialog: accesibilidad', () => {
 
   test('las partes fuera de un Dialog avisan con un error', async () => {
     const err = vi.spyOn(console, 'error').mockImplementation(() => {})
-    await expect(render(<DialogHeadline>Suelto</DialogHeadline>)).rejects.toThrow('DialogHeadline')
+    await expect(render(<DialogHeadline>Suelto</DialogHeadline>)).rejects.toMatchObject({ code: 'MK_PART_OUTSIDE_PARENT', details: { component: 'DialogHeadline', parent: 'Dialog' } })
     err.mockRestore()
   })
 })

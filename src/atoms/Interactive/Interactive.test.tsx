@@ -222,9 +222,12 @@ describe('Interactive: clases, precedencia e hijos de render', () => {
 
   test('render que no es un elemento: error claro', async () => {
     const bad = { render: FakeLink } as unknown as InteractiveProps
-    await expect(render(<Interactive {...bad}>A</Interactive>)).rejects.toThrow(
-      'Interactive espera en `render` un elemento, por ejemplo render={<Link href="/" />}.',
-    )
+    await expect(render(<Interactive {...bad}>A</Interactive>)).rejects.toMatchObject({
+      name: 'MatekitError',
+      code: 'MK_RENDER_NOT_ELEMENT',
+      details: { component: 'Interactive' },
+      message: expect.stringContaining('Fix: pass an element, for example render={<Link href="/" />}'),
+    })
   })
 })
 

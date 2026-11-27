@@ -19,6 +19,7 @@ import { FocusRing } from '../../atoms/FocusRing/FocusRing.tsx'
 import { Ripple } from '../../atoms/Ripple/Ripple.tsx'
 import { StateLayer } from '../../atoms/StateLayer/StateLayer.tsx'
 import { Badge, type BadgeProps } from '../../molecules/Badge/Badge.tsx'
+import { mkWarn } from '../../internal/diagnostics.ts'
 import { cx } from '../../internal/interactive.tsx'
 
 export interface TabLabelProps extends HTMLAttributes<HTMLSpanElement> {
@@ -120,12 +121,14 @@ export function tabContent(children: ReactNode): TabContent {
 /**
  * Una pestaña sin etiqueta visible (solo icono) necesita nombre accesible. No se puede pedir en los
  * tipos (los hijos no dicen si son un icono o un texto), así que se avisa por consola, como un aviso
- * de React: es un error de accesibilidad del uso, no del componente.
+ * de React: es un error de accesibilidad del uso, no del componente. Solo en desarrollo y una vez
+ * por componente (`MK_TAB_UNNAMED`; este módulo es universal: sin instancia, se deduplica por texto).
  */
 export function warnIfUnnamed(name: string, hasLabel: boolean, props: Record<string, unknown>) {
   if (hasLabel || props['aria-label'] || props['aria-labelledby']) return
-  console.error(
-    `${name}: una pestaña sin etiqueta visible (solo icono) necesita aria-label o aria-labelledby. ` +
-      'Si la etiqueta es un componente, envolverla en <TabLabel>.',
-  )
+  mkWarn('MK_TAB_UNNAMED', {
+    component: name,
+    problem: 'a tab without a visible label (icon only) has no accessible name',
+    fix: `add aria-label (<${name} aria-label="Home"><HomeIcon /></${name}>) or aria-labelledby; if the label is a component, wrap it in <TabLabel>`,
+  })
 }

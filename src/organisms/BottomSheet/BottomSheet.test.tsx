@@ -223,7 +223,7 @@ describe('BottomSheet: apertura, cierre y accesibilidad', () => {
 
   test('las partes fuera de un BottomSheet avisan con un error', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => {})
-    await expect(render(<BottomSheetHandle />)).rejects.toThrow('BottomSheetHandle tiene que estar dentro de un <BottomSheet>.')
+    await expect(render(<BottomSheetHandle />)).rejects.toMatchObject({ code: 'MK_PART_OUTSIDE_PARENT', details: { component: 'BottomSheetHandle', parent: 'BottomSheet' } })
   })
 })
 

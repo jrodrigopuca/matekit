@@ -7,6 +7,8 @@
 // la vez, en orden de llegada. Compose usa un Mutex (cola justa) y devuelve ActionPerformed o
 // Dismissed; acá el motivo distingue además el tiempo cumplido y la cancelación.
 
+import { mkError } from '../../internal/diagnostics.ts'
+
 /**
  * Cuánto queda visible: `short` 4 s y `long` 10 s (`SnackbarDuration.toMillis` de Compose), o
  * `indefinite` (hasta que se lo descarta o se usa la acción), o milisegundos. El tiempo se detiene
@@ -78,7 +80,17 @@ export interface SnackbarQueue {
 function toMillis(duration: SnackbarDuration): number {
   if (duration === 'indefinite') return Infinity
   if (typeof duration === 'number') {
-    if (!(duration > 0)) throw new Error(`Snackbar: duration tiene que ser positiva (llegó ${duration}).`)
+    if (!(duration > 0)) {
+      throw mkError(
+        'MK_SNACKBAR_DURATION_INVALID',
+        {
+          component: 'Snackbar',
+          problem: '`duration` in milliseconds must be a positive number',
+          fix: "pass milliseconds (duration: 4000), 'short', 'long' or 'indefinite'",
+        },
+        { duration },
+      )
+    }
     return duration
   }
   return SNACKBAR_DURATION_MS[duration]

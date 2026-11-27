@@ -7,7 +7,8 @@ Antes de decidir algo que cueste revertir, leer `docs/adr/README.md` y aplicar l
 
 - **No commitear ni pushear.** El autor hace los commits. Al terminar, listar los archivos
   cambiados y proponer un mensaje en Conventional Commits.
-- **Idioma:** documentación, comentarios y textos en español; nombres de código en inglés.
+- **Idioma:** documentación, comentarios y textos internos en español; nombres de código en inglés;
+  las salidas para quien usa la librería (mensajes de diagnóstico y su catálogo) en inglés (ADR-0028).
 - **Herramientas:** pnpm (no npm), Node 24 o superior, TypeScript 7 en modo estricto.
 - **Dependencias:** no agregar ninguna sin pedirlo. Si hace falta una, versión exacta con al
   menos dos semanas de publicada.
@@ -19,7 +20,7 @@ Antes de decidir algo que cueste revertir, leer `docs/adr/README.md` y aplicar l
 | `pnpm dev` | Playground en `http://localhost:5175` (usa `src/` directamente) |
 | `pnpm typecheck` | Verificación de tipos |
 | `pnpm lint:css` | Revisa que el CSS de componentes use tokens para color, movimiento, tipografía y espaciado (este último salvo en los archivos de `SPACING_PENDING`, ADR-0016) |
-| `pnpm test` | Pruebas de tokens (Node) y de componentes (Vitest en Chrome) |
+| `pnpm test` | Pruebas de tokens y diagnósticos (Node) y de componentes (Vitest en Chrome) |
 | `pnpm test:browser` | Solo las pruebas de componentes, en el Chrome del sistema; `MK_BROWSERS=firefox` o `webkit` (separados por coma) los corre en esos motores, que el CI prueba en cada push |
 | `pnpm tokens` | Regenera `src/tokens/*.css`, `src/tokens/palettes/*.css` y `src/tokens/space.ts` y `breakpoints.ts` desde `tokens/*.json` (paletas: ADR-0008; espaciado y cortes de ventana: ADR-0016) |
 | `pnpm icons` / `pnpm icons:fetch` | Regenera los iconos (ver ADR-0006) |
@@ -59,8 +60,10 @@ src/internal/    ayudas compartidas entre componentes, no exportadas (interactiv
                  itinerante de una sola parada de Tab de ChipGroup, Tabs y Toolbar, ADR-0023 y
                  ADR-0027; nearest-scroller.ts: el contenedor que se desplaza más cercano, de las
                  partes cliente de TopAppBar y Toolbar; dev.ts: isDevelopment, los avisos solo en
-                 desarrollo con `process.env.NODE_ENV` como React; settle-animations.ts: settleAnimations, la espera de la salida
-                 animada de Snackbar, Tooltip, Menu, Dialog y los sheets, que no se traba si una
+                 desarrollo con `process.env.NODE_ENV` como React; diagnostics.ts: mkWarn y mkError,
+                 los avisos y errores con formato único y código, y MatekitError con los tipos de
+                 código, que sí se reexportan desde src/index.ts (ADR-0028); settle-animations.ts:
+                 settleAnimations, la espera de la salida animada de Snackbar, Tooltip, Menu, Dialog y los sheets, que no se traba si una
                  transición se cancela; modal-dialog.ts: useModalDialog, el ciclo de vida modal
                  sobre `<dialog>` (showModal, foco inicial, Escape y scrim, vuelta de Tab, salida
                  y foco devuelto) de Dialog, BottomSheet y SideSheet modal, base del futuro
@@ -68,6 +71,7 @@ src/internal/    ayudas compartidas entre componentes, no exportadas (interactiv
 src/styles.css   hoja única: importa tokens, átomos y componentes
 playground/      páginas de prueba manual, una por componente
 docs/research/   datos extraídos del kit de Figma y de Jetpack Compose
+docs/diagnostics.md  catálogo de avisos y errores por código (en inglés: es salida de la librería)
 docs/adr/        decisiones de arquitectura
 ```
 
@@ -92,6 +96,17 @@ exporta desde el `index.ts` de su capa y su CSS se importa en `src/styles.css`.
   o el puntero están en otro elemento (por ejemplo un `<input>` oculto), activar con las
   variables `--mk-state-layer-opacity` y `--mk-focus-ring-visible`. Ejemplo completo:
   `src/molecules/Checkbox/`.
+- **Avisos y errores (ADR-0028):** todo aviso o error nuevo pasa por `mkWarn` o `mkError` de
+  `src/internal/diagnostics.ts` (`throw mkError(…)`; nunca `console.*` ni `throw new Error` sueltos),
+  con un código `MK_…` declarado ahí, un `fix` concreto (el texto sale como
+  `[matekit] <Component>: <what happened>. Fix: <how to fix it>. (<CODE>)`, en inglés) y su entrada
+  en `docs/diagnostics.md`. El código nombra la causa (`MK_PART_OUTSIDE_PARENT`), y el componente solo
+  si la causa existe en uno; un código publicado no se renombra. Error: un uso que no puede funcionar
+  (siempre). Aviso: funciona pero está mal (solo en desarrollo, una vez; `once` con un objeto por
+  instancia, o por texto: los valores variables van en los detalles, no en el texto).
+  `tests/diagnostics.test.ts` comprueba que el catálogo y los códigos de `src/` coincidan. Las
+  pruebas de los componentes comparan `code` (y si hace falta que el mensaje contenga `Fix:`), no el
+  texto.
 - **Iconos:** los de `src/icons/` o cualquier SVG dentro de `<Icon>`. El componente define
   `--mk-icon-size` para el tamaño. Un estado activo o seleccionado rellena el icono con
   `filled` (todos lo aceptan). El grado -25 en tema oscuro es automático (ADR-0006): no

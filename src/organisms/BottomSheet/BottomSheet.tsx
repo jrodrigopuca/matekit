@@ -33,6 +33,7 @@ import {
 } from 'react'
 import { FocusRing } from '../../atoms/FocusRing/FocusRing.tsx'
 import { onScrim, useModalDialog, useRegisteredId } from '../../internal/modal-dialog.ts'
+import { partOutsideParent } from '../../internal/diagnostics.ts'
 import { computeTarget, DRAG_SLOP, VelocityTracker, type Anchor } from './sheet-drag.ts'
 
 /** Estado del sheet abierto: parcial (la mitad de la ventana) o expandido (todo su alto). */
@@ -65,7 +66,7 @@ const BottomSheetContext = createContext<BottomSheetContextValue | null>(null)
 
 function useBottomSheet(part: string): BottomSheetContextValue {
   const ctx = use(BottomSheetContext)
-  if (!ctx) throw new Error(`${part} tiene que estar dentro de un <BottomSheet>.`)
+  if (!ctx) throw partOutsideParent(part, 'BottomSheet')
   return ctx
 }
 

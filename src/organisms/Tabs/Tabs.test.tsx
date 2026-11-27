@@ -118,7 +118,7 @@ describe('Tabs: roles y relaciones (APG)', () => {
   })
 
   test('solo icono: aria-label da el nombre; sin él, avisa por consola (también con fragmentos y TabLabel no)', async () => {
-    const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const c = await render(
       <Tabs defaultValue="a">
         <TabList>
@@ -130,14 +130,17 @@ describe('Tabs: roles y relaciones (APG)', () => {
     )
     expect(page.getByRole('tab', { name: 'Inicio' }).element()).toBe(tabs(c)[0])
     expect(q(tabs(c)[1]!, '.mk-tab-label').textContent).toBe('Favoritos')
-    expect(error).not.toHaveBeenCalled()
+    expect(warn).not.toHaveBeenCalled()
     await render(<Tabs defaultValue="a"><TabList><Tab value="a"><HomeIcon /></Tab></TabList></Tabs>)
-    expect(error).toHaveBeenCalledWith(expect.stringMatching(/necesita aria-label/))
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('(MK_TAB_UNNAMED)'), expect.objectContaining({ code: 'MK_TAB_UNNAMED', component: 'Tab' }))
+    // Una vez por componente: otra pestaña sin nombre no repite el aviso.
+    await render(<Tabs defaultValue="b"><TabList><Tab value="b"><StarIcon /></Tab></TabList></Tabs>)
+    expect(warn).toHaveBeenCalledTimes(1)
   })
 
   test('Tab, TabList o TabPanel fuera de Tabs fallan con un mensaje claro', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => {})
-    await expect(render(<Tab value="a">A</Tab>)).rejects.toThrow(/dentro de <Tabs>/)
+    await expect(render(<Tab value="a">A</Tab>)).rejects.toMatchObject({ code: 'MK_PART_OUTSIDE_PARENT', details: { component: 'Tab', parent: 'Tabs' } })
   })
 
   test('props nativas y ref llegan a cada elemento', async () => {

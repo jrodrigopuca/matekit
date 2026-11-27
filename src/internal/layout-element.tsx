@@ -13,6 +13,7 @@ import {
   type ReactNode,
   type Ref,
 } from 'react'
+import { renderNotElement } from './diagnostics.ts'
 import { cx } from './interactive.tsx'
 
 /** Props que el elemento de `render` recibe al clonarse. */
@@ -59,7 +60,7 @@ export function layoutElement(
     return createElement(tag, { ...rest, className, style }, children)
   }
   if (!isValidElement(render)) {
-    throw new Error(`${name} espera en \`render\` un elemento, por ejemplo render={<ul />}.`)
+    throw renderNotElement(name, render, 'render={<ul />}')
   }
   const own = render.props
   const mergedStyle = style || own.style ? { ...style, ...own.style } : undefined

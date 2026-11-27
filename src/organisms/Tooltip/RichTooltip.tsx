@@ -12,7 +12,6 @@
 //   Espacio) en el disparador, como el tooltip persistente de Compose y de material-components-web.
 
 import {
-  Children,
   cloneElement,
   createContext,
   isValidElement,
@@ -32,6 +31,7 @@ import {
   type RefObject,
 } from 'react'
 import { cx } from '../../internal/interactive.tsx'
+import { partOutsideParent, triggerNotElement } from '../../internal/diagnostics.ts'
 import { mergeRefs } from '../../internal/merge-refs.ts'
 import {
   anchorNameFor,
@@ -66,7 +66,7 @@ const RichTooltipContext = createContext<RichTooltipContextValue | null>(null)
 
 function useRichTooltip(part: string): RichTooltipContextValue {
   const ctx = use(RichTooltipContext)
-  if (!ctx) throw new Error(`${part} tiene que estar dentro de un <RichTooltip>.`)
+  if (!ctx) throw partOutsideParent(part, 'RichTooltip')
   return ctx
 }
 
@@ -260,9 +260,11 @@ export interface RichTooltipTriggerProps {
  */
 export function RichTooltipTrigger({ children }: RichTooltipTriggerProps) {
   const ctx = useRichTooltip('RichTooltipTrigger')
-  const child = Children.only(children)
+  // Sin Children.only: su error genérico de React taparía el de matekit (MK_TRIGGER_NOT_ELEMENT),
+  // que salta en los mismos casos (varios hijos, un texto, nada).
+  const child = children
   if (!isValidElement<TriggerChildProps>(child)) {
-    throw new Error('RichTooltipTrigger espera un único elemento hijo, por ejemplo un <IconButton>.')
+    throw triggerNotElement('RichTooltipTrigger', child)
   }
   const { id: ownId, style, ref } = child.props
   const id = ownId ?? ctx.generatedTriggerId

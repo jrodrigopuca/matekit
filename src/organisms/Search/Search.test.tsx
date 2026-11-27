@@ -905,7 +905,7 @@ describe('Search: props nativas y ref', () => {
 
   test('las partes fuera de <Search> avisan con un error claro', async () => {
     const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
-    await expect(render(<SearchBar label="Buscar" />)).rejects.toThrow('SearchBar tiene que estar dentro de un <Search>.')
+    await expect(render(<SearchBar label="Buscar" />)).rejects.toMatchObject({ code: 'MK_PART_OUTSIDE_PARENT', details: { component: 'SearchBar', parent: 'Search' } })
     spy.mockRestore()
   })
 

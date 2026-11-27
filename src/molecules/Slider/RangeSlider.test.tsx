@@ -84,7 +84,7 @@ describe('RangeSlider: estructura y accesibilidad', () => {
 
   test('las partes fuera de un RangeSlider avisan', async () => {
     const error = vi.spyOn(console, 'error').mockImplementation(() => {})
-    await expect(render(<RangeSliderStart aria-label="Suelto" />)).rejects.toThrow('va dentro de un RangeSlider')
+    await expect(render(<RangeSliderStart aria-label="Suelto" />)).rejects.toMatchObject({ code: 'MK_PART_OUTSIDE_PARENT', details: { component: 'RangeSliderStart', parent: 'RangeSlider' } })
     error.mockRestore()
   })
 })

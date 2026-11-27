@@ -128,7 +128,7 @@ describe('TextField: estructura y accesibilidad', () => {
     const prev = console.error
     console.error = () => {}
     try {
-      await expect(render(<TextFieldInput />)).rejects.toThrow('TextFieldInput tiene que estar dentro de un <TextField>.')
+      await expect(render(<TextFieldInput />)).rejects.toMatchObject({ code: 'MK_PART_OUTSIDE_PARENT', details: { component: 'TextFieldInput', parent: 'TextField' } })
     } finally {
       console.error = prev
     }

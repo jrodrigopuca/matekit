@@ -99,7 +99,9 @@ describe('createSnackbarQueue', () => {
     void queue.show({ message: 'En ms', duration: 2500, dismissible: true })
     expect(queue.current).toMatchObject({ duration: 2500, dismissible: true })
     queue.dismiss()
-    expect(() => queue.show({ message: 'x', duration: 0 })).toThrow(/positiva/)
+    expect(() => queue.show({ message: 'x', duration: 0 })).toThrow(
+      expect.objectContaining({ code: 'MK_SNACKBAR_DURATION_INVALID', details: expect.objectContaining({ duration: 0 }) }),
+    )
   })
 
   test('signal cancela en pantalla o en la cola; clear cancela todo; cerrar dos veces no hace nada', async () => {

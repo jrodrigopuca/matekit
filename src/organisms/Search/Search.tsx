@@ -47,6 +47,7 @@ import { IconButton } from '../../molecules/IconButton/IconButton.tsx'
 import { LinearProgressIndicator } from '../../molecules/ProgressIndicator/LinearProgressIndicator.tsx'
 import { ListItem, ListItemHeadline, type ListItemProps } from '../List/List.tsx'
 import type { AccessibleNameProps } from '../../internal/accessible-name.ts'
+import { partOutsideParent } from '../../internal/diagnostics.ts'
 import { followAnchor, placeNextTo, supportsAnchorPositioning } from '../../internal/anchor-position.ts'
 import { cx } from '../../internal/interactive.tsx'
 import { mergeRefs } from '../../internal/merge-refs.ts'
@@ -152,7 +153,7 @@ const SearchContext = createContext<SearchContextValue | null>(null)
 
 function useSearch(part: string): SearchContextValue {
   const ctx = use(SearchContext)
-  if (!ctx) throw new Error(`${part} tiene que estar dentro de un <Search>.`)
+  if (!ctx) throw partOutsideParent(part, 'Search')
   return ctx
 }
 

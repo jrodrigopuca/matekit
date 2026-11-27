@@ -146,7 +146,7 @@ describe('Tooltip: estructura y nombre accesible', () => {
           <button><EditIcon /></button>
         </Tooltip>,
       ),
-    ).rejects.toThrow(/Tooltip sin `text`/)
+    ).rejects.toMatchObject({ code: 'MK_TOOLTIP_NO_TEXT', message: expect.stringContaining('Fix:') })
     spy.mockRestore()
   })
 

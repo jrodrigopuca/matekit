@@ -4,3 +4,6 @@ export * from './organisms/index.ts'
 export * from './icons/index.ts'
 export { SPACE, type SpaceStep } from './tokens/space.ts'
 export { WINDOW_WIDTH, WINDOW_HEIGHT, type WindowWidthClass, type WindowHeightClass } from './tokens/breakpoints.ts'
+// Diagnósticos (ADR-0028): la clase y los códigos son públicos para que la app distinga los errores de
+// matekit (`instanceof MatekitError` o `error.code`); mkError y mkWarn siguen internos.
+export { MatekitError, type MatekitErrorCode, type MatekitWarningCode } from './internal/diagnostics.ts'

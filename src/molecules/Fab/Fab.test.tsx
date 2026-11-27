@@ -209,7 +209,7 @@ describe('Fab y ExtendedFab: como enlace (ADR-0010)', () => {
     await expect(
       // @ts-expect-error: render espera un elemento.
       render(<Fab label="x" render="no"><AddIcon /></Fab>),
-    ).rejects.toThrow(/Fab espera en `render` un elemento/)
+    ).rejects.toMatchObject({ code: 'MK_RENDER_NOT_ELEMENT', details: { component: 'Fab' } })
   })
 })
 

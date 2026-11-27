@@ -17,6 +17,8 @@
 // Las posiciones son desplazamientos hacia abajo en px desde el estado expandido (0): el parcial,
 // si existe, más abajo, y el oculto en el alto del sheet. Un dp de Compose es un px de CSS.
 
+import { mkError } from '../../internal/diagnostics.ts'
+
 /** Distancia desde el ancla de partida a partir de la cual, soltando despacio, se pasa a la siguiente. */
 export const POSITIONAL_THRESHOLD = 56
 /** Velocidad (px/s) a partir de la cual se pasa a la siguiente ancla en el sentido del gesto. */
@@ -63,7 +65,15 @@ export function computeTarget<T extends string>(
   positionalThreshold = POSITIONAL_THRESHOLD,
   velocityThreshold = VELOCITY_THRESHOLD,
 ): T {
-  if (anchors.length === 0) throw new Error('computeTarget: sin anclas')
+  if (anchors.length === 0) {
+    // Invariante: BottomSheet siempre arma al menos la ancla `hidden`. Llegar acá es una falla de
+    // matekit, no del uso.
+    throw mkError('MK_INTERNAL_INVARIANT', {
+      component: 'BottomSheet',
+      problem: 'the drag target computation (computeTarget) received an empty anchor list',
+      fix: 'this is a matekit bug, not a problem in your code: please report it with steps to reproduce',
+    }, { where: 'computeTarget' })
+  }
   if (velocity === 0) return closest(anchors, offset)
   const down = velocity > 0
   if (Math.abs(velocity) >= velocityThreshold) return closestToward(anchors, offset, down)[0]

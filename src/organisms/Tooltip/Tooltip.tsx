@@ -21,6 +21,7 @@ import {
   type ReactNode,
   type Ref,
 } from 'react'
+import { mkError, triggerNotElement } from '../../internal/diagnostics.ts'
 import { mergeRefs } from '../../internal/merge-refs.ts'
 import {
   anchorNameFor,
@@ -93,17 +94,21 @@ const isHandler = (key: string) => /^on[A-Z]/.test(key)
  *   puede anidar con `MenuTrigger`: `<MenuTrigger><Tooltip><IconButton … /></Tooltip></MenuTrigger>`.
  */
 export function Tooltip({ text, open, defaultOpen, onOpenChange, children, ref, ...outer }: TooltipProps) {
-  const child = Children.only(children)
+  // Sin Children.only: su error genérico de React taparía el de matekit (MK_TRIGGER_NOT_ELEMENT),
+  // que salta en los mismos casos (varios hijos, un texto, nada).
+  const child = children
   if (!isValidElement<TriggerProps>(child)) {
-    throw new Error('Tooltip espera un único elemento hijo, por ejemplo un <IconButton>.')
+    throw triggerNotElement('Tooltip', child)
   }
   const own = child.props
   const name = own.label ?? own['aria-label'] ?? (outer['aria-label'] as string | undefined) ?? plainText(own.children)
   const shown = text ?? name
   if (!shown) {
-    throw new Error(
-      'Tooltip sin `text` muestra el nombre del disparador, pero este no tiene `label`, `aria-label` ni texto propio. Pasá `text`, o el nombre al disparador.',
-    )
+    throw mkError('MK_TOOLTIP_NO_TEXT', {
+      component: 'Tooltip',
+      problem: 'without `text` it shows the trigger name, but the trigger has no `label`, `aria-label` or text of its own',
+      fix: 'pass `text` (<Tooltip text="Edit">) or name the trigger (<IconButton label="Edit">)',
+    })
   }
 
   const { isOpen, setOpen, isOpenNow } = useOpenState({ open, defaultOpen, onOpenChange })

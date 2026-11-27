@@ -144,7 +144,23 @@ describe('Menu: estructura y accesibilidad', () => {
 
   test('las partes fuera de un <Menu> avisan con un error claro', async () => {
     const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
-    await expect(render(<MenuItem>Suelto</MenuItem>)).rejects.toThrow('MenuItem tiene que estar dentro de un <Menu>.')
+    await expect(render(<MenuItem>Suelto</MenuItem>)).rejects.toMatchObject({ code: 'MK_PART_OUTSIDE_PARENT', details: { component: 'MenuItem', parent: 'Menu' } })
+    spy.mockRestore()
+  })
+
+  test('MenuTrigger con dos hijos falla con el error de matekit, no con el de Children.only', async () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    await expect(
+      render(
+        <Menu>
+          {/* @ts-expect-error los tipos piden un solo hijo; se prueba el error en tiempo de ejecución */}
+          <MenuTrigger>
+            <IconButton label="Más"><MoreVertIcon /></IconButton>
+            <span />
+          </MenuTrigger>
+        </Menu>,
+      ),
+    ).rejects.toMatchObject({ code: 'MK_TRIGGER_NOT_ELEMENT', details: { component: 'MenuTrigger', received: 'array' } })
     spy.mockRestore()
   })
 })

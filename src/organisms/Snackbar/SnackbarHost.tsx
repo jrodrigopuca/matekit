@@ -21,6 +21,7 @@ import {
   type ReactNode,
   type Ref,
 } from 'react'
+import { mkError } from '../../internal/diagnostics.ts'
 import { mergeRefs } from '../../internal/merge-refs.ts'
 import { settleAnimations } from '../../internal/settle-animations.ts'
 import { Snackbar, SnackbarAction, SnackbarClose, SnackbarMessage } from './Snackbar.tsx'
@@ -43,9 +44,11 @@ const SnackbarContext = createContext<SnackbarQueue | null>(null)
 export function useSnackbar(): SnackbarQueue {
   const queue = use(SnackbarContext)
   if (!queue) {
-    throw new Error(
-      'useSnackbar necesita un <SnackbarHost> que envuelva al componente. Si el host está en otro lado del árbol, creá la cola con createSnackbarQueue() y pasásela al host con `queue`.',
-    )
+    throw mkError('MK_SNACKBAR_HOST_MISSING', {
+      component: 'useSnackbar',
+      problem: 'found no <SnackbarHost> wrapping the component',
+      fix: 'wrap the app (or the section) in <SnackbarHost>; if the host lives elsewhere in the tree, create the queue with createSnackbarQueue(), pass it to the host with `queue` and use it directly instead of useSnackbar()',
+    })
   }
   return queue
 }

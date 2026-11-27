@@ -23,6 +23,7 @@ import {
   type TextareaHTMLAttributes,
 } from 'react'
 import { StateLayer } from '../../atoms/StateLayer/StateLayer.tsx'
+import { partOutsideParent } from '../../internal/diagnostics.ts'
 
 export type TextFieldVariant = 'filled' | 'outlined'
 
@@ -40,7 +41,7 @@ const TextFieldContext = createContext<TextFieldContextValue | null>(null)
 
 function useTextField(part: string): TextFieldContextValue {
   const ctx = use(TextFieldContext)
-  if (!ctx) throw new Error(`${part} tiene que estar dentro de un <TextField>.`)
+  if (!ctx) throw partOutsideParent(part, 'TextField')
   return ctx
 }
 

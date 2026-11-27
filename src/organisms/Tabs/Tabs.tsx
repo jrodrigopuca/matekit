@@ -40,6 +40,7 @@ import {
   type Ref,
 } from 'react'
 import { cx } from '../../internal/interactive.tsx'
+import { partOutsideParent } from '../../internal/diagnostics.ts'
 import { mergeRefs } from '../../internal/merge-refs.ts'
 import { useRovingFocus, type RovingFocusOptions } from '../../internal/roving-focus.ts'
 import { tabContent, warnIfUnnamed } from './tab-content.tsx'
@@ -62,7 +63,7 @@ const TabsContext = createContext<TabsContextValue | null>(null)
 
 function useTabsContext(name: string): TabsContextValue {
   const ctx = use(TabsContext)
-  if (!ctx) throw new Error(`${name} tiene que estar dentro de <Tabs>.`)
+  if (!ctx) throw partOutsideParent(name, 'Tabs')
   return ctx
 }
 

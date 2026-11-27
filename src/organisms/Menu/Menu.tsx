@@ -11,7 +11,6 @@
 // no lo tienen (ADR-0007), compartido con Tooltip en src/internal/anchor-position.ts.
 
 import {
-  Children,
   cloneElement,
   createContext,
   isValidElement,
@@ -37,6 +36,7 @@ import { FocusRing } from '../../atoms/FocusRing/FocusRing.tsx'
 import { Ripple } from '../../atoms/Ripple/Ripple.tsx'
 import { StateLayer } from '../../atoms/StateLayer/StateLayer.tsx'
 import { mergeRefs } from '../../internal/merge-refs.ts'
+import { partOutsideParent, triggerNotElement } from '../../internal/diagnostics.ts'
 import { settleAnimations } from '../../internal/settle-animations.ts'
 import { followAnchor, placeNextTo } from '../../internal/anchor-position.ts'
 
@@ -68,7 +68,7 @@ const MenuContext = createContext<MenuContextValue | null>(null)
 
 function useMenu(part: string): MenuContextValue {
   const ctx = use(MenuContext)
-  if (!ctx) throw new Error(`${part} tiene que estar dentro de un <Menu>.`)
+  if (!ctx) throw partOutsideParent(part, 'Menu')
   return ctx
 }
 
@@ -213,9 +213,11 @@ export interface MenuTriggerProps {
  */
 export function MenuTrigger({ children }: MenuTriggerProps) {
   const ctx = useMenu('MenuTrigger')
-  const child = Children.only(children)
+  // Sin Children.only: su error genérico de React taparía el de matekit (MK_TRIGGER_NOT_ELEMENT),
+  // que salta en los mismos casos (varios hijos, un texto, nada).
+  const child = children
   if (!isValidElement<TriggerChildProps>(child)) {
-    throw new Error('MenuTrigger espera un único elemento hijo, por ejemplo un <IconButton>.')
+    throw triggerNotElement('MenuTrigger', child)
   }
   const { id: ownId, style, onClick, onKeyDown, ref } = child.props
   const id = ownId ?? ctx.generatedTriggerId
