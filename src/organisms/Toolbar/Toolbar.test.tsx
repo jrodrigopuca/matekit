@@ -8,7 +8,7 @@ import { IconButton } from '../../molecules/IconButton/IconButton.tsx'
 import { render, roleColor, style, withMotion } from '../../test/render.tsx'
 import { Menu, MenuContent, MenuItem, MenuTrigger } from '../Menu/Menu.tsx'
 import { Toolbar, type ToolbarProps } from './Toolbar.tsx'
-import { ToolbarLayout } from './ToolbarLayout.tsx'
+import { ToolbarLayout, type ToolbarLayoutProps } from './ToolbarLayout.tsx'
 
 const q = <T extends Element = HTMLElement>(c: ParentNode, sel: string) => {
   const el = c.querySelector<T>(sel)
@@ -585,5 +585,229 @@ describe('ocultar al desplazar (exit-always)', () => {
     })
     await commands.reduceMotion(true)
     withMotion(() => expect(style(bar).transitionDuration).toBe('0s'))
+  })
+})
+
+/** Valor en px de un token de forma. */
+function cornerPx(name: string): string {
+  const probe = document.createElement('div')
+  probe.style.borderTopLeftRadius = `var(--md-sys-shape-corner-${name})`
+  document.body.append(probe)
+  const value = getComputedStyle(probe).borderTopLeftRadius
+  probe.remove()
+  return value
+}
+
+describe('forma de los seleccionados (kit: radio completo)', () => {
+  test('el icon button y el Button seleccionados de la barra quedan redondos; fuera de la barra, cuadrados', async () => {
+    const c = await render(
+      <>
+        <Bar>
+          <IconButton className="on" label="Favorito" selected><StarIcon filled /></IconButton>
+          <IconButton className="off" label="Guardar" selected={false}><BookmarkIcon /></IconButton>
+          <Button className="t-on" selected>Vista</Button>
+        </Bar>
+        <IconButton className="out" label="Fuera" selected><StarIcon filled /></IconButton>
+        <Button className="t-out" selected>Fuera</Button>
+      </>,
+    )
+    for (const sel of ['.on', '.off', '.t-on']) expect(style(q(c, sel)).borderTopLeftRadius, sel).toBe('20px')
+    expect(style(q(c, '.out')).borderTopLeftRadius).toBe(cornerPx('medium'))
+    expect(style(q(c, '.t-out')).borderTopLeftRadius).toBe(cornerPx('medium'))
+  })
+
+  test('al presionar el seleccionado, pasa a la forma presionada (como fuera de la barra)', async () => {
+    const c = await render(<Bar><IconButton className="on" label="Favorito" selected><StarIcon filled /></IconButton></Bar>)
+    await commands.pressDown('.mk-toolbar .on')
+    await expect.poll(() => style(q(c, '.on')).borderTopLeftRadius).toBe(cornerPx('small'))
+    await commands.pressUp()
+  })
+})
+
+describe('contraer hacia el FAB (expanded)', () => {
+  afterEach(() => commands.reduceMotion(false))
+
+  function WithFab(props: { layout?: Partial<ToolbarLayoutProps>; bar?: BarProps; fabFirst?: boolean }) {
+    const fab = <Fab className="fab" label="Nuevo"><AddIcon /></Fab>
+    return (
+      <ToolbarLayout className="lay" {...props.layout}>
+        {props.fabFirst && fab}
+        <Bar {...props.bar} />
+        {!props.fabFirst && fab}
+      </ToolbarLayout>
+    )
+  }
+
+  test('contraída: la barra queda inerte (sin paradas ni lectura), recortada hacia el FAB, y el FAB crece a 80', async () => {
+    const c = await render(<div style={{ padding: 40 }}><WithFab layout={{ defaultExpanded: false }} /></div>)
+    const bar = q(c, '.mk-toolbar')
+    expect(bar.inert).toBe(true)
+    expect(q(c, '.lay').dataset['collapsed']).toBe('')
+    q(c, '.b0').focus()
+    expect(document.activeElement).not.toBe(q(c, '.b0'))
+    expect(rect(q(c, '.fab')).width).toBeCloseTo(80, 1)
+    // Inerte: el puntero no la alcanza.
+    const b = rect(bar)
+    const hit = document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2)
+    expect(bar.contains(hit)).toBe(false)
+  })
+
+  // inset(arriba derecha abajo izquierda): el 100 % va del lado opuesto al FAB, que en RTL se invierte.
+  const insetSides = (el: HTMLElement) => {
+    const clip = style(el).clipPath
+    return clip.slice(clip.indexOf('(') + 1).split(' round')[0]!.match(/calc\([^)]*\)|-?[\d.]+px/g) ?? []
+  }
+
+  test('horizontal: se cierra del lado opuesto al FAB (FAB al final o al principio, LTR y RTL)', async () => {
+    const cases = [
+      { dir: 'ltr', fabFirst: false, side: 3 },
+      { dir: 'rtl', fabFirst: false, side: 1 },
+      { dir: 'ltr', fabFirst: true, side: 1 },
+      { dir: 'rtl', fabFirst: true, side: 3 },
+    ] as const
+    for (const k of cases) {
+      const c = await render(<div dir={k.dir}><WithFab fabFirst={k.fabFirst} layout={{ defaultExpanded: false }} /></div>)
+      const sides = insetSides(q(c, '.mk-toolbar'))
+      expect(sides[k.side], JSON.stringify(k)).toBe('calc(100% + 24px)')
+      expect(sides.filter((v) => v === '-24px'), JSON.stringify(k)).toHaveLength(3)
+    }
+    const c = await render(<WithFab />)
+    expect(insetSides(q(c, '.mk-toolbar'))).toEqual(['-24px'])
+  })
+
+  test('expandida: la barra se ve entera y el FAB mide 56; el FAB no se mueve al contraer', async () => {
+    const c = await render(<div style={{ padding: 40 }}><WithFab /></div>)
+    expect(q(c, '.mk-toolbar').inert).toBe(false)
+    const fab = rect(q(c, '.fab'))
+    expect(fab.width).toBeCloseTo(56, 1)
+    const bar = q(c, '.mk-toolbar')
+    const b = rect(bar)
+    expect(bar.contains(document.elementFromPoint(b.left + 20, b.top + b.height / 2))).toBe(true)
+  })
+
+  test('el foco de teclado que llega al FAB la expande (no controlado) y avisa con "focus"', async () => {
+    const onExpandedChange = vi.fn()
+    const c = await render(<WithFab layout={{ defaultExpanded: false, onExpandedChange }} />)
+    focusKeyboard(q(c, '.fab'))
+    await expect.poll(() => q(c, '.mk-toolbar').inert).toBe(false)
+    expect(onExpandedChange).toHaveBeenCalledWith(true, 'focus')
+  })
+
+  test('controlado: pide el cambio y espera a la app', async () => {
+    const onExpandedChange = vi.fn()
+    const c = await render(<WithFab layout={{ expanded: false, onExpandedChange }} />)
+    focusKeyboard(q(c, '.fab'))
+    await expect.poll(() => onExpandedChange.mock.calls.length).toBe(1)
+    expect(q(c, '.mk-toolbar').inert).toBe(true)
+  })
+
+  test('scrollBehavior="collapse": se contrae al bajar 40 y se expande al subir 40', async () => {
+    const onExpandedChange = vi.fn()
+    const { c, scroller } = await renderScrolling(<WithFab layout={{ onExpandedChange }} bar={{ scrollBehavior: 'collapse' }} />)
+    const bar = q(c, '.mk-toolbar')
+    scroller.scrollTop = 20
+    await frames()
+    expect(bar.inert).toBe(false)
+    scroller.scrollTop = 60
+    await frames()
+    await expect.poll(() => bar.inert).toBe(true)
+    expect(onExpandedChange).toHaveBeenLastCalledWith(false, 'scroll')
+    scroller.scrollTop = 40
+    await frames()
+    expect(bar.inert).toBe(true)
+    scroller.scrollTop = 10
+    await frames()
+    await expect.poll(() => bar.inert).toBe(false)
+    expect(onExpandedChange).toHaveBeenLastCalledWith(true, 'scroll')
+    // Un salto grande de una vez también la contrae (el umbral se ancla al montar).
+    const jump = await renderScrolling(<WithFab bar={{ scrollBehavior: 'collapse' }} />)
+    jump.scroller.scrollTop = 200
+    await frames()
+    await expect.poll(() => q(jump.c, '.mk-toolbar').inert).toBe(true)
+  })
+
+  test('vertical con el FAB abajo: se cierra hacia abajo; el FAB arriba, hacia arriba', async () => {
+    for (const fabFirst of [false, true]) {
+      const { c } = await renderScrolling(
+        <WithFab fabFirst={fabFirst} layout={{ defaultExpanded: false }} bar={{ orientation: 'vertical' }} />,
+        { first: true },
+      )
+      const bar = q(c, '.mk-toolbar')
+      const clip = style(bar).clipPath
+      // inset(arriba derecha abajo izquierda): el 100 % va del lado opuesto al FAB.
+      const sides = clip.slice(clip.indexOf('(') + 1).split(' round')[0]!
+      expect(sides.startsWith('calc(100% + 24px)'), clip).toBe(!fabFirst)
+    }
+  })
+
+  test('con movimiento: recorte y FAB con FastSpatial; con movimiento reducido, sin transición', async () => {
+    const c = await render(<WithFab />)
+    withMotion(() => {
+      expect(style(q(c, '.mk-toolbar')).transitionProperty).toContain('clip-path')
+      expect(style(q(c, '.fab')).transitionProperty).toContain('scale')
+    })
+    await commands.reduceMotion(true)
+    withMotion(() => {
+      expect(style(q(c, '.mk-toolbar')).transitionProperty).not.toContain('clip-path')
+      expect(style(q(c, '.fab')).transitionProperty).not.toContain('scale')
+    })
+  })
+})
+
+describe('vertical al principio de la línea (side="start")', () => {
+  test('a 24 del principio (izquierda en LTR, derecha en RTL) y se esconde hacia ese costado', async () => {
+    for (const dir of ['ltr', 'rtl'] as const) {
+      const c = await render(
+        <div dir={dir} className="scroller" style={{ width: 360, height: 300, overflow: 'auto' }}>
+          <Bar orientation="vertical" side="start" scrollBehavior="exit-always" />
+          <div style={{ height: 2000 }} />
+        </div>,
+      )
+      const scroller = q(c, '.scroller')
+      const bar = q(c, '.mk-toolbar')
+      const s = rect(scroller)
+      const b = rect(bar)
+      const gap = dir === 'ltr' ? b.left - s.left : s.left + scroller.clientWidth - b.right
+      expect(gap, dir).toBeCloseTo(24, 1)
+      scroller.scrollTop = 40
+      await frames()
+      scroller.scrollTop = 240
+      await frames()
+      await expect.poll(() => Number(style(bar).opacity)).toBe(0)
+      expect((rect(bar).left - b.left) * (dir === 'ltr' ? -1 : 1), dir).toBeCloseTo(24, 1)
+      expect(scroller.scrollWidth).toBe(scroller.clientWidth)
+    }
+  })
+})
+
+describe('alto de la vertical: lo visible del contenedor, no la ventana', () => {
+  const many = Array.from({ length: 12 }, (_, i) => <IconButton key={i} label={`Acción ${i}`}><EditIcon /></IconButton>)
+
+  test('en un panel de 400, la barra mide como mucho 400 − 2 × 24 y se desplaza adentro', async () => {
+    const c = await render(
+      <div className="scroller" style={{ width: 360, height: 400, overflow: 'auto' }}>
+        <Toolbar label="Herramientas" orientation="vertical">{many}</Toolbar>
+        <div style={{ height: 2000 }} />
+      </div>,
+    )
+    const bar = q(c, '.mk-toolbar')
+    await expect.poll(() => rect(bar).height).toBeCloseTo(352, 1)
+    expect(bar.scrollHeight).toBeGreaterThan(bar.clientHeight)
+    expect(rect(bar).top - rect(q(c, '.scroller')).top).toBeCloseTo(24, 1)
+  })
+
+  test('con FAB: el conjunto entra en el panel y la barra se achica', async () => {
+    const c = await render(
+      <div className="scroller" style={{ width: 360, height: 400, overflow: 'auto' }}>
+        <ToolbarLayout className="lay">
+          <Toolbar label="Herramientas" orientation="vertical">{many}</Toolbar>
+          <Fab className="fab" label="Nuevo"><AddIcon /></Fab>
+        </ToolbarLayout>
+        <div style={{ height: 2000 }} />
+      </div>,
+    )
+    await expect.poll(() => rect(q(c, '.lay')).height).toBeCloseTo(352, 1)
+    const s = rect(q(c, '.scroller'))
+    expect(rect(q(c, '.fab')).bottom).toBeLessThanOrEqual(s.bottom - 24 + 0.5)
   })
 })

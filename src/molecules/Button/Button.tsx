@@ -54,7 +54,8 @@ export type ButtonProps = ToggleButtonOrLinkProps<ButtonOwnProps>
  * `--mk-button-unselected-container`, `--mk-button-unselected-color`,
  * `--mk-button-selected-container` y `--mk-button-selected-color` cambian los colores del toggle
  * del estilo `filled` (el de por defecto) sin seleccionar y seleccionado. Deshabilitado conserva
- * los suyos.
+ * los suyos. `--mk-button-selected-round: 1` deja redondo al toggle seleccionado (de cualquier
+ * estilo; por defecto pasa a cuadrado).
  *
  * ```tsx
  * <Button>Guardar</Button>

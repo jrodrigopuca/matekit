@@ -51,20 +51,52 @@
     `--mk-button-selected-container` y `--mk-button-selected-color` (Button `filled` toggle). Sin las
     variables, los botones conservan sus colores (los respaldos son los anteriores). Deshabilitado
     gana por orden, como antes.
-  - **FAB acompañante**: `ToolbarLayout` (universal) contiene la barra y un `Fab` como hermanos, a 8,
+  - **Forma de los seleccionados**: redonda, como el kit (radio completo en el icon button y el
+    button seleccionables de la barra). La barra define `--mk-icon-button-selected-round: 1` y
+    `--mk-button-selected-round: 1`, que el IconButton y el Button leen para su radio seleccionado
+    (un `calc` entre el cuadrado y el redondo, así el cambio de forma sigue animando); sin ellas, el
+    toggle pasa a cuadrado como siempre. Al presionar, el seleccionado pasa a la forma presionada y
+    vuelve a redondo. Compose coincide en el icon button (`IconToggleButton` es redondo) y choca en el
+    Button (`ToggleButton` pasa a cuadrado): gana el kit (`07-jetpack-compose.md`).
+  - **FAB acompañante**: `ToolbarLayout` contiene la barra y un `Fab` como hermanos, a 8,
     centrados en el otro eje; el FAB va donde se lo escriba (al final, lo que Compose hace por
     defecto, o al principio). El FAB queda fuera del `role="toolbar"`: es su propia parada de Tab,
     como en Compose, que lo deja fuera de la fila. La posición, el margen, las zonas seguras y el
     ocultar al desplazar pasan al conjunto. El color del FAB lo elige el uso (los tokens dicen
     Secondary Container con la Standard y Tertiary Container con la Vibrant; ver
-    `07-jetpack-compose.md`). La variante de Compose que contrae la barra y agranda el FAB
-    (`expanded`) no se hace todavía.
+    `07-jetpack-compose.md`).
+  - **Contraer hacia el FAB**: `ToolbarLayout` lleva `expanded`/`defaultExpanded` (por defecto
+    `true`) y `onExpandedChange(expanded, reason)`, como el resto de la librería, y por eso es
+    cliente. Contraída, la barra se cierra hacia el FAB con un `clip-path: inset()` que pasa de
+    abarcar la barra y su sombra (24 más afuera, con el radio concéntrico) a cerrarse del lado
+    opuesto al FAB, y el FAB crece de 56 a 80 con `scale` anclado en su extremo exterior; las dos
+    cosas con FastSpatial (sin transición con movimiento reducido). El conjunto conserva su tamaño,
+    así el FAB no se mueve (como Compose). Se eligió el recorte y no animar el ancho porque el ancho
+    `fit-content` no se puede animar sin medir, y con el ancho cambiaría el centrado. La caja del
+    conjunto no recibe el puntero (sí sus hijos), así el lugar vacío no tapa el contenido.
+    - Accesibilidad: contraída, la Toolbar (que lee el estado por contexto) queda `inert`: sin paradas
+      de Tab ni lectura; el FAB sigue accesible. El foco de teclado que llega al FAB pide expandir
+      (`'focus'`), así los botones quedan a un Mayús+Tab (Compose ofrece acciones de accesibilidad para
+      expandir y contraer, que la web no tiene).
+    - Qué dispara el cambio: por defecto, nada (queda expandida y la app decide, como Compose sin
+      modificador). `scrollBehavior="collapse"` en la Toolbar lo ata al desplazamiento: contrae al bajar
+      40 px y expande al subir 40 px desde el último cambio (`floatingToolbarVerticalNestedScroll`,
+      `ScrollDistanceThreshold`); no contrae con el foco adentro de la barra. Es lo que Compose
+      recomienda para la barra a un costado; para la centrada, `exit-always`.
+  - **Docked con FAB**: no se hace. Ni el kit ni `FlexibleBottomAppBar` lo definen (el `BottomAppBar`
+    de Compose con `floatingActionButton` es el que la docked reemplaza). Para una barra con FAB, la
+    floating dentro de `ToolbarLayout`; si hace falta la docked, el FAB suelto encima, como sobre una
+    NavigationBar. Documentado en el JSDoc de Toolbar y ToolbarLayout.
   - **Posición**: como el TopAppBar, `position: sticky` en el contenedor que se desplaza más cercano
     (la ventana o un panel), sin `ref` que conectar. La docked y la floating horizontal van como
     último hijo (abajo, `bottom` 0 o 16 más la zona segura); la floating horizontal centrada con
     `margin-inline: auto` y como mucho el ancho del contenedor menos 16 a cada lado. La vertical va
-    como primer hijo: un `float` al final de la línea, sticky al 50 % del alto visible y con un margen
-    inferior negativo que anula su alto (el texto no la rodea), a 24 del costado. Zonas seguras con
+    como primer hijo: un `float` al final de la línea (o al principio, con `side="start"`; en RTL se
+    invierten), sticky al 50 % del alto visible y con un margen inferior negativo que anula su alto
+    (el texto no la rodea), a 24 del costado. Su alto máximo es lo visible del contenedor menos 24
+    arriba y abajo: la parte cliente lo mide (`clientHeight` del contenedor, o de la ventana) y lo
+    escribe en `--_scrollport`; antes de hidratar vale `100dvh`. No se usan unidades de contenedor
+    porque exigirían `container-type` en el contenedor que se desplaza, que es de la app. Zonas seguras con
     `env(safe-area-inset-*)`: abajo y a los costados en la docked, abajo en la horizontal, el costado
     en la vertical.
   - **Ventanas chicas**: la docked reparte los botones (`space-between`, como `FlexibleBottomAppBar`)
@@ -93,7 +125,8 @@
     foco itinerante necesita un efecto y manejadores de teclado en la raíz. Aislarlo en una hija con
     `addEventListener` haría que el teclado de la barra corra antes que los manejadores de React de los
     hijos (el `MenuTrigger` cancela las flechas para abrir) y el orden quedaría al revés.
-    `ToolbarLayout` es universal; `ToolbarScroll` es la única parte con desplazamiento.
+    `ToolbarLayout` también, por `expanded`; `ToolbarScroll` es la única parte con desplazamiento y
+    medida (`exit-always`, `collapse` y el alto de la vertical).
   - **Medidas**: el IconButton de matekit mide 40 (el área de 48 es un `::before`); dentro de la barra
     lleva 4 de margen en el eje de la barra, así rellenos y separaciones son los de Compose medidos
     hasta el área de 48 (12 del borde a cada icono visible, 12 entre iconos). El Button mide su ancho.
@@ -107,11 +140,15 @@
     un contenedor flex o grid (ahí ocupa lugar). Para otra disposición, el uso pisa `position`.
   - La vertical no sale del todo por el costado: se desvanece en su lugar, corrida 24.
   - La docked con `exit-always` aparece al final del contenido aunque se siga bajando.
-  - `ToolbarLayout` es para la floating; una docked con FAB no está diseñada.
-  - La floating vertical usa `100dvh` para limitar su alto: dentro de un panel más bajo que la ventana
-    puede quedar más alta que lo visible (se desplaza adentro).
-- Revisit if: aparece la consulta de dirección (`scroll-state(scrolled)`) en los tres motores (el
-  ocultar podría ser CSS); hace falta la variante de Compose que contrae la barra hacia el FAB
-  (`expanded`); el scaffold de paneles (ítem 24) necesita la barra fuera del contenedor que se
+  - `ToolbarLayout` es para la floating; la docked no tiene FAB acompañante.
+  - Antes de hidratar, la vertical se limita con `100dvh`: dentro de un panel más bajo que la ventana
+    puede quedar más alta que lo visible hasta que la parte cliente mide.
+  - Contraída, la caja de la barra sigue ocupando su lugar (transparente y sin puntero); el FAB crecido
+    con `scale` sobresale 12 de la caja del conjunto.
+  - El foco de teclado que llega al FAB expande la barra: si la app la quería contraída (controlada),
+    recibe el pedido y decide.
+- Revisit if: `interpolate-size` llega a los tres motores (el ancho de la barra se podría animar en
+  lugar de recortar); aparece la consulta de dirección (`scroll-state(scrolled)`) en los tres motores (el
+  ocultar podría ser CSS); el scaffold de paneles (ítem 24) necesita la barra fuera del contenedor que se
   desplaza o una docked con FAB; o un lector de pantalla anuncia mal los toggles o las paradas
   `aria-disabled` de la barra (VoiceOver y NVDA, pendiente).

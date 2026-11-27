@@ -1155,9 +1155,22 @@ y `tokens/FloatingToolbarFabTokens.kt`. Kit: `05-medidas.md` § Toolbars. Decisi
   `PrimaryContainer` con la Standard (con un `TODO load colors from the toolbar tokens`). El kit no lo
   trae. La librería no fuerza el color del FAB (es un `Fab` del uso); el playground y la documentación
   usan los tokens.
-- **Forma del icon button seleccionado**: el kit muestra un fondo de 40 sin decir la forma; matekit
-  conserva la del IconButton (redondo que pasa a cuadrado al seleccionar, Expressive). Pendiente de
-  confirmar contra el kit.
+- **Forma de los seleccionados**: el kit dibuja el icon button y el button seleccionables de la barra
+  con radio completo (fondo de 40 × 40 con radio 100 en el icon button). Compose: `IconToggleButton`
+  usa `IconButtonDefaults.standardShape` (redonda) con y sin seleccionar (IconButton.kt, commit
+  `21843a1225`), así que coincide; `ToggleButton` pasa a `SelectedContainerShapeSquare` al
+  seleccionar (`ToggleButtonDefaults.shapesFor`, ToggleButton.kt), que choca con el kit. Las muestras
+  de Compose (`FloatingToolbarSamples.kt`, commit `43fe84dbc1`) solo usan `IconButton` y
+  `FilledIconButton`, sin toggles. Gana el kit: dentro de la barra, los dos seleccionados quedan
+  redondos (`--mk-icon-button-selected-round` y `--mk-button-selected-round`, ADR-0027); al presionar
+  siguen pasando a la forma presionada, como los de Compose (`pressedShape`).
+- **Docked con FAB**: ni el kit (configuraciones Docked y Floating, el FAB solo junto a la floating)
+  ni `FlexibleBottomAppBar` (AppBar.kt, sin parámetro de FAB) lo definen; el `BottomAppBar` con
+  `floatingActionButton` es el Bottom app bar que la docked reemplaza. No se hace (ADR-0027).
+- **Contraer hacia el FAB**: `HorizontalFloatingToolbarWithFabLayout` encoge el ancho de la barra
+  con el avance (`targetWidth = ancho máximo × progreso`) dejando el ancho total y el FAB en su lugar, y
+  el FAB va de 56 a 80 (`FabSizeRange`); el umbral del desplazamiento es 40 dp
+  (`ScrollDistanceThreshold`, `VerticalNestedScrollExpansionNode`).
 
 ## No revisado
 

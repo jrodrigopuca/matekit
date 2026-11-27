@@ -27,6 +27,12 @@
     --_width: calc(var(--_icon-size) + 2 * var(--_space));
     /* "Completo" = mitad del lado más corto: en Narrow el ancho es menor que el alto. */
     --_radius-round: calc(min(var(--_height), var(--_width)) / 2);
+    /* Toggle seleccionado: cuadrado (la redonda pasa a cuadrada, como el Button); un contenedor (la
+       Toolbar, ADR-0027) lo deja redondo con --mk-icon-button-selected-round: 1 (pública, se hereda).
+       La forma square seleccionada sigue pasando a redonda (más abajo). */
+    --_radius-selected: calc(
+      var(--_radius-square) + (var(--_radius-round) - var(--_radius-square)) * var(--mk-icon-button-selected-round, 0)
+    );
     /* Los icon buttons no se elevan con el puntero (no hay tokens de elevación). */
     --_elevation-hover: var(--md-sys-elevation-level0);
 

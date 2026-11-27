@@ -15,14 +15,17 @@
 // - Colores de los hijos: la barra define las variables públicas que leen IconButton y Button
 //   (`--mk-icon-button-*`, `--mk-button-*`), con los colores Standard o Vibrant del kit.
 // - Posición: `position: sticky` en el contenedor que se desplaza (como TopAppBar, ADR-0024): la
-//   docked abajo a todo el ancho, la floating abajo y centrada o, vertical, a un costado. Ocultarse
-//   al desplazar (`exit-always`) es la parte cliente ToolbarScroll.
+//   docked abajo a todo el ancho, la floating abajo y centrada o, vertical, a un costado (`side`).
+//   Ocultarse al desplazar (`exit-always`), contraerse hacia el FAB al desplazar (`collapse`) y el
+//   alto máximo de la vertical (lo visible del contenedor) son la parte cliente ToolbarScroll.
+// - Dentro de un ToolbarLayout contraído, la barra queda `inert` (lee el estado por contexto).
 
-import { useMemo, useRef, type FocusEvent, type HTMLAttributes, type KeyboardEvent, type ReactNode, type Ref } from 'react'
+import { use, useMemo, useRef, type FocusEvent, type HTMLAttributes, type KeyboardEvent, type ReactNode, type Ref } from 'react'
 import type { AccessibleNameProps } from '../../internal/accessible-name.ts'
 import { cx } from '../../internal/interactive.tsx'
 import { mergeRefs } from '../../internal/merge-refs.ts'
 import { useRovingFocus } from '../../internal/roving-focus.ts'
+import { ToolbarLayoutContext } from './ToolbarLayout.tsx'
 import { ToolbarScroll } from './ToolbarScroll.tsx'
 
 /** `docked`: abajo, a todo el ancho (reemplaza al Bottom app bar). `floating`: una píldora que flota. */
@@ -30,14 +33,20 @@ export type ToolbarVariant = 'docked' | 'floating'
 /** Colores del kit: `standard` (Surface Container) o `vibrant` (Primary Container). */
 export type ToolbarColor = 'standard' | 'vibrant'
 export type ToolbarOrientation = 'horizontal' | 'vertical'
+/** Costado de la floating vertical: al principio o al final de la línea (izquierda o derecha en LTR). */
+export type ToolbarSide = 'start' | 'end'
 /**
  * Qué hace la barra cuando se desplaza su contenedor:
  * - `none` (por defecto): queda siempre a la vista.
  * - `exit-always`: se va al bajar y vuelve apenas se sube, como `exitAlwaysScrollBehavior` de
  *   Compose (`FloatingToolbarDefaults` y `BottomAppBarDefaults`). Vuelve también cuando el foco
  *   entra a la barra. Necesita JavaScript (la dirección del desplazamiento).
+ * - `collapse`: dentro de un `ToolbarLayout`, la barra se contrae hacia su FAB al bajar 40 px y se
+ *   expande al subir 40 px, como `floatingToolbarVerticalNestedScroll` de Compose
+ *   (`ScrollDistanceThreshold`). Pide el cambio al `ToolbarLayout` (`onExpandedChange` con
+ *   `'scroll'`). Fuera de un `ToolbarLayout` no hace nada.
  */
-export type ToolbarScrollBehavior = 'none' | 'exit-always'
+export type ToolbarScrollBehavior = 'none' | 'exit-always' | 'collapse'
 
 interface ToolbarBaseProps
   extends Omit<HTMLAttributes<HTMLDivElement>, 'role' | 'color' | 'aria-label' | 'aria-labelledby' | 'aria-orientation'> {
@@ -51,17 +60,24 @@ interface ToolbarBaseProps
   ref?: Ref<HTMLDivElement> | undefined
 }
 
-/** La vertical existe solo en la floating (el kit y Compose no tienen docked vertical). */
+/**
+ * La vertical existe solo en la floating (el kit y Compose no tienen docked vertical), y `side` solo
+ * en la vertical. La docked no tiene FAB acompañante (ni el kit ni `FlexibleBottomAppBar` de Compose
+ * lo definen; ver `ToolbarLayout`).
+ */
 type ToolbarShapeProps =
   | {
-      variant: 'docked'
+      /** Por defecto `floating`. */
+      variant?: ToolbarVariant | undefined
+      /** `horizontal` (por defecto): abajo y centrada. `vertical` (solo floating): a un costado. */
       orientation?: 'horizontal' | undefined
+      side?: undefined
     }
   | {
-      /** Por defecto `floating`. */
       variant?: 'floating' | undefined
-      /** `horizontal` (por defecto): abajo y centrada. `vertical`: a un costado (al final de la línea). */
-      orientation?: ToolbarOrientation | undefined
+      orientation: 'vertical'
+      /** Costado: `end` (por defecto, a la derecha en LTR) o `start`. */
+      side?: ToolbarSide | undefined
     }
 
 export type ToolbarProps = ToolbarBaseProps & ToolbarShapeProps & AccessibleNameProps
@@ -90,13 +106,14 @@ const SCOPE = '.mk-toolbar, [role="toolbar"], [role="menu"], [popover], dialog'
  * </Toolbar>
  * ```
  *
- * Con un FAB al lado, las dos piezas van dentro de `ToolbarLayout`.
+ * Con un FAB al lado, las dos piezas van dentro de `ToolbarLayout` (solo la floating).
  */
 export function Toolbar(props: ToolbarProps) {
   const {
     variant = 'floating',
     color = 'standard',
     orientation = 'horizontal',
+    side = 'end',
     scrollBehavior = 'none',
     label,
     'aria-label': ariaLabel,
@@ -111,6 +128,10 @@ export function Toolbar(props: ToolbarProps) {
   const rootRef = useRef<HTMLDivElement>(null)
   const mergedRef = useMemo(() => mergeRefs<HTMLDivElement>(ref, rootRef), [ref])
   const vertical = variant === 'floating' && orientation === 'vertical'
+  // Dentro de un ToolbarLayout contraído, la barra no se ve: inerte (sin paradas de Tab ni lectura);
+  // el FAB sigue accesible.
+  const layout = use(ToolbarLayoutContext)
+  const collapsed = layout !== null && !layout.expanded
   const roving = useRovingFocus(rootRef, { stop: STOP, scope: SCOPE, orientation: vertical ? 'vertical' : 'horizontal' })
 
   const handleFocus = (event: FocusEvent<HTMLDivElement>) => {
@@ -141,13 +162,21 @@ export function Toolbar(props: ToolbarProps) {
       aria-orientation={vertical ? 'vertical' : 'horizontal'}
       data-variant={variant}
       data-color={color}
+      data-side={vertical ? side : undefined}
+      inert={collapsed || undefined}
       className={cx('mk-toolbar', className)}
       onKeyDown={handleKeyDown}
       onKeyDownCapture={handleKeyDownCapture}
       onFocus={handleFocus}
     >
       {children}
-      {scrollBehavior === 'exit-always' && <ToolbarScroll />}
+      {(scrollBehavior !== 'none' || vertical) && (
+        <ToolbarScroll
+          hide={scrollBehavior === 'exit-always'}
+          collapse={scrollBehavior === 'collapse' ? layout : null}
+          measure={vertical}
+        />
+      )}
     </div>
   )
 }

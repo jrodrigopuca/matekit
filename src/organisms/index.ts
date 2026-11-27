@@ -179,9 +179,14 @@ export {
   type ToolbarOrientation,
   type ToolbarProps,
   type ToolbarScrollBehavior,
+  type ToolbarSide,
   type ToolbarVariant,
 } from './Toolbar/Toolbar.tsx'
-export { ToolbarLayout, type ToolbarLayoutProps } from './Toolbar/ToolbarLayout.tsx'
+export {
+  ToolbarLayout,
+  type ToolbarLayoutExpandReason,
+  type ToolbarLayoutProps,
+} from './Toolbar/ToolbarLayout.tsx'
 export {
   Search,
   SearchBar,

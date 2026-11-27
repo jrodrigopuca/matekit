@@ -36,8 +36,12 @@
 
     /* Redondo = la mitad del alto (no 9999px), para que el cambio de forma se anime bien. */
     --_radius-round: calc(var(--_height) / 2);
-    /* Forma del toggle seleccionado: cuadrada en el Button; el IconButton la cambia. */
-    --_radius-selected: var(--_radius-square);
+    /* Forma del toggle seleccionado: cuadrada en el Button; el IconButton la cambia. Un contenedor
+       (la Toolbar, ADR-0027) la vuelve redonda con --mk-button-selected-round: 1 (pública, se
+       hereda; 0 o sin definir, cuadrada). */
+    --_radius-selected: calc(
+      var(--_radius-square) + (var(--_radius-round) - var(--_radius-square)) * var(--mk-button-selected-round, 0)
+    );
     --_radius: var(--_radius-round);
 
     /* Colores (filled por defecto); cada data-variant los cambia. */

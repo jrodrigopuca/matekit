@@ -50,6 +50,10 @@
     --mk-button-unselected-color: var(--_content);
     --mk-button-selected-container: var(--_selected-container);
     --mk-button-selected-color: var(--_selected-content);
+    /* Forma: los seleccionados del kit son redondos (radio completo, el icon button y el button
+       seleccionables); fuera de la barra, el toggle pasa a cuadrado (Expressive). */
+    --mk-icon-button-selected-round: 1;
+    --mk-button-selected-round: 1;
 
     box-sizing: border-box;
     display: flex;
@@ -125,33 +129,49 @@
     padding-inline: var(--md-sys-space-100);
   }
 
-  /* Vertical: al final de la línea (a la derecha en LTR), centrada en lo que se ve del contenedor.
-     Va como primer hijo: un float que no ocupa lugar (el margen negativo deja su caja sin alto, así
-     el texto no lo rodea) y sticky al 50 % del alto visible. */
+  /* Vertical: a un costado, centrada en lo que se ve del contenedor. Va como primer hijo: un float
+     que no ocupa lugar (el margen negativo deja su caja sin alto, así el texto no lo rodea) y sticky
+     al 50 % del alto visible. --_dir es el sentido físico hacia su costado (1 derecha, -1 izquierda),
+     por donde se esconde; las zonas seguras son físicas. */
   .mk-toolbar[data-variant='floating'][aria-orientation='vertical'],
   .mk-toolbar-layout:has(> .mk-toolbar[aria-orientation='vertical']) {
     --_side: var(--md-sys-space-300);
+    --_dir: 1;
     position: sticky;
     float: inline-end;
     inset-block: 50% auto;
     inline-size: auto;
+    /* Como mucho, lo visible del contenedor (lo mide ToolbarScroll; antes, la ventana) menos 24
+       arriba y abajo: se desplaza adentro si no entra. */
+    max-block-size: calc(var(--_scrollport, 100dvh) - 2 * var(--_side));
     max-inline-size: none;
     /* Un float con el margen inferior más negativo que su alto no empuja nada (ver ADR-0027). */
     margin-block: 0 -100vh; /* lint-css-allow: margen que anula el alto del float, no es espaciado */
     margin-inline: 0 calc(var(--_side) + env(safe-area-inset-right, 0px));
     /* Se esconde hacia el costado hasta el borde y se desvanece (ToolbarScroll). */
-    translate: calc(var(--_progress, 0) * var(--_side)) -50%;
+    translate: calc(var(--_dir) * var(--_progress, 0) * var(--_side)) -50%;
     opacity: calc(1 - var(--_progress, 0));
   }
   .mk-toolbar[data-variant='floating'][aria-orientation='vertical']:dir(rtl),
   .mk-toolbar-layout:has(> .mk-toolbar[aria-orientation='vertical']):dir(rtl) {
+    --_dir: -1;
     margin-inline: 0 calc(var(--_side) + env(safe-area-inset-left, 0px));
-    translate: calc(-1 * var(--_progress, 0) * var(--_side)) -50%;
+  }
+  /* Al principio de la línea (izquierda en LTR, derecha en RTL). */
+  .mk-toolbar[data-variant='floating'][aria-orientation='vertical'][data-side='start'],
+  .mk-toolbar-layout:has(> .mk-toolbar[aria-orientation='vertical'][data-side='start']) {
+    --_dir: -1;
+    float: inline-start;
+    margin-inline: calc(var(--_side) + env(safe-area-inset-left, 0px)) 0;
+  }
+  .mk-toolbar[data-variant='floating'][aria-orientation='vertical'][data-side='start']:dir(rtl),
+  .mk-toolbar-layout:has(> .mk-toolbar[aria-orientation='vertical'][data-side='start']):dir(rtl) {
+    --_dir: 1;
+    margin-inline: calc(var(--_side) + env(safe-area-inset-right, 0px)) 0;
   }
   .mk-toolbar[data-variant='floating'][aria-orientation='vertical'] {
     flex-direction: column;
     inline-size: var(--_size);
-    max-block-size: calc(100dvh - 2 * var(--_side));
     padding-inline: var(--md-sys-space-150);
     padding-block: var(--md-sys-space-100);
     overflow-x: hidden;
@@ -161,31 +181,87 @@
 
   /* --- Con FAB al lado (ToolbarLayout): el conjunto se ubica; la barra queda adentro --- */
   .mk-toolbar-layout {
+    /* Lo que la sombra sobresale de la barra: el recorte de la barra contraída lo deja ver. */
+    --_reach: var(--md-sys-space-300);
     box-sizing: border-box;
     display: flex;
     align-items: center;
     gap: var(--md-sys-space-100);
     z-index: 1;
+    /* La caja del conjunto no tapa el contenido: con la barra contraída, su lugar queda vacío. */
+    pointer-events: none;
+  }
+  .mk-toolbar-layout > * {
+    pointer-events: auto;
   }
   .mk-toolbar-layout:has(> .mk-toolbar[aria-orientation='vertical']) {
     flex-direction: column;
   }
   .mk-toolbar-layout > .mk-toolbar.mk-toolbar[data-variant][aria-orientation] {
+    /* Radio del recorte: concéntrico con el extremo redondo de la barra, --_reach más afuera. */
+    --_clip-radius: calc(var(--_size) / 2 + var(--_reach));
     position: static;
     float: none;
     flex: 0 1 auto;
     min-inline-size: 0;
+    min-block-size: 0;
     max-inline-size: none;
+    max-block-size: none;
     margin: 0;
     translate: none;
     opacity: 1;
+    /* Expandida, el recorte abarca la barra y su sombra; contraída, se cierra hacia el FAB. */
+    clip-path: inset(calc(-1 * var(--_reach)) round var(--_clip-radius));
+  }
+  .mk-toolbar-layout > .mk-fab {
+    transition: box-shadow var(--md-sys-motion-spring-default-effects-duration)
+      var(--md-sys-motion-spring-default-effects-easing);
   }
   .mk-toolbar-layout > :not(.mk-toolbar) {
     flex: none;
   }
 
+  /* Contraída (expanded={false}): la barra se cierra hacia el FAB, que crece de 56 a 80
+     (FabSizeRange de Compose) anclado en su extremo exterior. El lado que se cierra depende de dónde
+     esté el FAB (después de la barra o antes) y de la dirección; inset() es físico. */
+  .mk-toolbar-layout[data-collapsed] > .mk-toolbar.mk-toolbar[data-variant][aria-orientation]:first-child {
+    clip-path: inset(calc(-1 * var(--_reach)) calc(-1 * var(--_reach)) calc(-1 * var(--_reach)) calc(100% + var(--_reach)) round var(--_clip-radius));
+  }
+  .mk-toolbar-layout[data-collapsed] > .mk-toolbar.mk-toolbar[data-variant][aria-orientation]:first-child:dir(rtl),
+  .mk-toolbar-layout[data-collapsed] > .mk-toolbar.mk-toolbar[data-variant][aria-orientation='horizontal']:not(:first-child):dir(ltr) {
+    clip-path: inset(calc(-1 * var(--_reach)) calc(100% + var(--_reach)) calc(-1 * var(--_reach)) calc(-1 * var(--_reach)) round var(--_clip-radius));
+  }
+  .mk-toolbar-layout[data-collapsed] > .mk-toolbar.mk-toolbar[data-variant][aria-orientation='horizontal']:not(:first-child):dir(rtl) {
+    clip-path: inset(calc(-1 * var(--_reach)) calc(-1 * var(--_reach)) calc(-1 * var(--_reach)) calc(100% + var(--_reach)) round var(--_clip-radius));
+  }
+  .mk-toolbar-layout[data-collapsed] > .mk-toolbar.mk-toolbar[data-variant][aria-orientation='vertical']:first-child {
+    clip-path: inset(calc(100% + var(--_reach)) calc(-1 * var(--_reach)) calc(-1 * var(--_reach)) calc(-1 * var(--_reach)) round var(--_clip-radius));
+  }
+  .mk-toolbar-layout[data-collapsed] > .mk-toolbar.mk-toolbar[data-variant][aria-orientation='vertical']:not(:first-child) {
+    clip-path: inset(calc(-1 * var(--_reach)) calc(-1 * var(--_reach)) calc(100% + var(--_reach)) calc(-1 * var(--_reach)) round var(--_clip-radius));
+  }
+  .mk-toolbar-layout[data-collapsed] > .mk-fab {
+    /* 80 / 56: el FAB medium de Compose (FabMediumTokens.ContainerWidth). */
+    scale: calc(80 / 56);
+    transform-origin: right center;
+  }
+  .mk-toolbar-layout[data-collapsed] > .mk-fab:dir(rtl),
+  .mk-toolbar-layout[data-collapsed] > .mk-fab:has(~ .mk-toolbar):dir(ltr) {
+    transform-origin: left center;
+  }
+  .mk-toolbar-layout[data-collapsed] > .mk-fab:has(~ .mk-toolbar):dir(rtl) {
+    transform-origin: right center;
+  }
+  .mk-toolbar-layout[data-collapsed]:has(> .mk-toolbar[aria-orientation='vertical']) > .mk-fab {
+    transform-origin: center bottom;
+  }
+  .mk-toolbar-layout[data-collapsed]:has(> .mk-toolbar[aria-orientation='vertical']) > .mk-fab:has(~ .mk-toolbar) {
+    transform-origin: center top;
+  }
+
   /* Escondida del todo: sin puntero (la vertical queda transparente en su lugar). */
-  :is(.mk-toolbar, .mk-toolbar-layout)[data-hidden] {
+  :is(.mk-toolbar, .mk-toolbar-layout)[data-hidden],
+  .mk-toolbar-layout[data-hidden] > * {
     pointer-events: none;
   }
 
@@ -197,6 +273,15 @@
         inset-block-end var(--md-sys-motion-spring-fast-spatial-duration) var(--md-sys-motion-spring-fast-spatial-easing),
         translate var(--md-sys-motion-spring-fast-spatial-duration) var(--md-sys-motion-spring-fast-spatial-easing),
         opacity var(--md-sys-motion-spring-fast-effects-duration) var(--md-sys-motion-spring-fast-effects-easing);
+    }
+    /* Contraer y expandir hacia el FAB: FastSpatial, como FloatingToolbarDefaults.animationSpec. */
+    .mk-toolbar-layout > .mk-toolbar.mk-toolbar[data-variant][aria-orientation] {
+      transition: clip-path var(--md-sys-motion-spring-fast-spatial-duration) var(--md-sys-motion-spring-fast-spatial-easing);
+    }
+    .mk-toolbar-layout > .mk-fab {
+      transition:
+        box-shadow var(--md-sys-motion-spring-default-effects-duration) var(--md-sys-motion-spring-default-effects-easing),
+        scale var(--md-sys-motion-spring-fast-spatial-duration) var(--md-sys-motion-spring-fast-spatial-easing);
     }
   }
 

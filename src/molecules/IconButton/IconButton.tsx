@@ -62,6 +62,8 @@ export type IconButtonProps = ToggleButtonOrLinkProps<IconButtonOwnProps>
  * - `--mk-icon-button-selected-container` y `--mk-icon-button-selected-color`: fondo (por defecto,
  *   ninguno) y color del icono (`primary`) del toggle `standard` seleccionado. También se heredan;
  *   la Toolbar las define para sus botones.
+ * - `--mk-icon-button-selected-round`: `1` deja redondo al toggle seleccionado (por defecto pasa a
+ *   cuadrado); la Toolbar lo usa, como el kit.
  *
  * ```tsx
  * <IconButton label="Buscar"><SearchIcon /></IconButton>

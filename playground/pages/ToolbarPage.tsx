@@ -24,6 +24,7 @@ import {
   Tooltip,
   type ToolbarColor,
   type ToolbarScrollBehavior,
+  type ToolbarSide,
 } from '../../src/index.ts'
 
 type Kind = 'docked' | 'floating' | 'vertical'
@@ -96,19 +97,31 @@ export function ToolbarPage() {
   const [rtl, setRtl] = useState(false)
   const [favorite, setFavorite] = useState(true)
   const [view, setView] = useState<'grid' | 'list'>('grid')
+  const [side, setSide] = useState<ToolbarSide>('end')
+  const [expanded, setExpanded] = useState(true)
+  const [lastChange, setLastChange] = useState('')
 
   const shape =
     kind === 'docked'
       ? ({ variant: 'docked' } as const)
-      : ({ variant: 'floating', orientation: kind === 'vertical' ? 'vertical' : 'horizontal' } as const)
+      : kind === 'vertical'
+        ? ({ variant: 'floating', orientation: 'vertical', side } as const)
+        : ({ variant: 'floating', orientation: 'horizontal' } as const)
   const bar = (
-    <Toolbar key={`${kind}-${behavior}-${fab}`} label="Acciones de la nota" color={color} scrollBehavior={behavior} {...shape}>
+    <Toolbar key={`${kind}-${behavior}-${fab}-${side}`} label="Acciones de la nota" color={color} scrollBehavior={behavior} {...shape}>
       <Actions favorite={favorite} onFavorite={() => setFavorite(!favorite)} disabled={disabled} />
     </Toolbar>
   )
   const withFab = fab && kind !== 'docked'
   const toolbar = withFab ? (
-    <ToolbarLayout key={`layout-${kind}-${behavior}`}>
+    <ToolbarLayout
+      key={`layout-${kind}-${behavior}-${side}`}
+      expanded={expanded}
+      onExpandedChange={(next, reason) => {
+        setExpanded(next)
+        setLastChange(`${next ? 'expandir' : 'contraer'} (${reason})`)
+      }}
+    >
       {bar}
       <Fab label="Nueva nota" variant={color === 'vibrant' ? 'tertiary-container' : 'secondary-container'}>
         <AddIcon />
@@ -142,12 +155,24 @@ export function ToolbarPage() {
             Al desplazar
             <select value={behavior} onChange={(e) => setBehavior(e.target.value as ToolbarScrollBehavior)}>
               <option value="exit-always">exit-always</option>
+              <option value="collapse">collapse (con FAB)</option>
               <option value="none">none</option>
+            </select>
+          </label>
+          <label className="pg-field">
+            Costado (vertical)
+            <select value={side} disabled={kind !== 'vertical'} onChange={(e) => setSide(e.target.value as ToolbarSide)}>
+              <option value="end">end</option>
+              <option value="start">start</option>
             </select>
           </label>
           <label className="pg-check">
             <input type="checkbox" checked={fab} disabled={kind === 'docked'} onChange={(e) => setFab(e.target.checked)} />
             FAB al lado
+          </label>
+          <label className="pg-check">
+            <input type="checkbox" checked={expanded} disabled={!withFab} onChange={(e) => setExpanded(e.target.checked)} />
+            Expandida (con FAB)
           </label>
           <label className="pg-check">
             <input type="checkbox" checked={disabled} onChange={(e) => setDisabled(e.target.checked)} />
@@ -161,12 +186,29 @@ export function ToolbarPage() {
         <p className="pg-hint">
           La barra es el último hijo del contenedor que se desplaza (este recuadro); la vertical, el
           primero. Tab entra a la barra una sola vez; las flechas recorren los botones (también el
-          deshabilitado con aria-disabled) e Inicio y Fin van a los extremos.
+          deshabilitado con aria-disabled) e Inicio y Fin van a los extremos. La docked no tiene FAB
+          acompañante (ni el kit ni Compose lo definen): para una barra con FAB, la floating.
+          {withFab && ` Último cambio pedido: ${lastChange || 'ninguno'}.`}
         </p>
         <div style={frame} dir={rtl ? 'rtl' : undefined}>
           {kind === 'vertical' && toolbar}
           <LongContent />
           {kind !== 'vertical' && toolbar}
+        </div>
+      </section>
+
+      <section className="pg-section">
+        <h2>Vertical en un panel de 400 px</h2>
+        <p className="pg-hint">
+          La barra no pasa de lo visible del panel (menos 24 arriba y abajo) y se desplaza adentro.
+        </p>
+        <div style={{ ...frame, height: 400 }}>
+          <Toolbar label="Herramientas del panel" orientation="vertical" side="start">
+            {[HomeIcon, SearchIcon, StarIcon, EditIcon, ShareIcon, BookmarkIcon, DownloadIcon, SettingsIcon, FavoriteIcon, DeleteIcon].map((I, i) => (
+              <Action key={i} label={`Herramienta ${i + 1}`}><I /></Action>
+            ))}
+          </Toolbar>
+          <LongContent />
         </div>
       </section>
 

@@ -622,6 +622,16 @@ const GALLERIES: Record<string, ReactNode> = {
         <IconButton label="Lápiz" selected><EditIcon /></IconButton>
         <IconButton label="Goma"><StarIcon /></IconButton>
       </Toolbar>
+      <Toolbar label="Capas" orientation="vertical" side="start">
+        <IconButton label="Mostrar"><EditIcon /></IconButton>
+      </Toolbar>
+      {/* Contraída hacia el FAB: la barra queda inerte y el FAB, accesible. */}
+      <ToolbarLayout defaultExpanded={false}>
+        <Toolbar label="Edición contraída">
+          <IconButton label="Copiar"><EditIcon /></IconButton>
+        </Toolbar>
+        <Fab label="Redactar" variant="secondary-container"><EditIcon /></Fab>
+      </ToolbarLayout>
     </>
   ),
   // Stack y Group no agregan roles: la semántica la da el elemento de render (lista) o el rol y el
