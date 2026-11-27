@@ -23,6 +23,11 @@ import {
   NavigationRailItem,
   NavigationRailItemIcon,
   NavigationRailItemLabel,
+  ModalNavigationRail,
+  NavigationSuite,
+  NavigationSuiteItem,
+  NavigationSuiteItemIcon,
+  NavigationSuiteItemLabel,
   Checkbox,
   Divider,
   DividerSubhead,
@@ -581,6 +586,68 @@ describe('NavigationRail', () => {
     }
     expect(style(q(c, '.on .mk-badge')).color).toBe(systemColor('Canvas'))
   })
+})
+
+describe('ModalNavigationRail', () => {
+  test('el diálogo se marca con un contorno CanvasText (uno solo) y el activo usa Highlight', async () => {
+    const c = await render(
+      <ModalNavigationRail open>
+        <NavigationRailItem href="#" active className="on">
+          <NavigationRailItemIcon><StarIcon filled /></NavigationRailItemIcon>
+          <NavigationRailItemLabel>Favoritos</NavigationRailItemLabel>
+        </NavigationRailItem>
+      </ModalNavigationRail>,
+    )
+    const dialog = style(q(c, '.mk-navigation-rail-modal'))
+    expect(dialog.outlineStyle).toBe('solid')
+    expect(dialog.outlineColor).toBe(systemColor('CanvasText'))
+    expect(style(q(c, '.mk-navigation-rail')).outlineStyle).toBe('none')
+    expect(style(q(c, '.on > .mk-navigation-rail-item-indicator')).backgroundColor).toBe(systemColor('Highlight'))
+    expect(style(q(c, '.on .mk-navigation-rail-item-label')).color).toBe(systemColor('HighlightText'))
+  })
+})
+
+describe('NavigationSuite', () => {
+  // La ventana de las pruebas (414) es compact: auto es la barra con destinos verticales.
+  const suite = (layout: 'auto' | 'rail') => (
+    <div style={{ height: 400, display: 'flex' }}>
+      <NavigationSuite layout={layout} style={{ flex: layout === 'auto' ? '1' : undefined }}>
+        <NavigationSuiteItem href="#" className="plain">
+          <NavigationSuiteItemIcon><HomeIcon /></NavigationSuiteItemIcon>
+          <NavigationSuiteItemLabel>Inicio</NavigationSuiteItemLabel>
+        </NavigationSuiteItem>
+        <NavigationSuiteItem href="#" active className="on">
+          <NavigationSuiteItemIcon><StarIcon filled /></NavigationSuiteItemIcon>
+          <NavigationSuiteItemLabel>Favoritos</NavigationSuiteItemLabel>
+        </NavigationSuiteItem>
+      </NavigationSuite>
+    </div>
+  )
+
+  test('barra: borde CanvasText arriba, sin contorno', async () => {
+    const c = await render(suite('auto'))
+    const nav = style(q(c, 'nav'))
+    expect(nav.borderTopStyle).toBe('solid')
+    expect(nav.borderTopColor).toBe(systemColor('CanvasText'))
+    expect(nav.outlineStyle).toBe('none')
+  })
+
+  test('rail: contorno CanvasText, sin borde', async () => {
+    const c = await render(suite('rail'))
+    const nav = style(q(c, 'nav'))
+    expect(nav.outlineStyle).toBe('solid')
+    expect(nav.outlineColor).toBe(systemColor('CanvasText'))
+    expect(nav.borderTopStyle).toBe('none')
+  })
+
+  for (const layout of ['auto', 'rail'] as const) {
+    test(`activo (${layout}): indicador en Highlight, icono en HighlightText y etiqueta en Highlight`, async () => {
+      const c = await render(suite(layout))
+      expect(style(q(c, '.on > .mk-navigation-bar-item-indicator')).backgroundColor).toBe(systemColor('Highlight'))
+      expect(style(q(c, '.on .mk-navigation-bar-item-icon')).color).toBe(systemColor('HighlightText'))
+      expect(style(q(c, '.on .mk-navigation-bar-item-label')).color).toBe(systemColor('Highlight'))
+    })
+  }
 })
 
 describe('Shape', () => {

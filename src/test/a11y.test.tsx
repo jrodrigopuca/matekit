@@ -23,6 +23,13 @@ import {
   NavigationRailItem,
   NavigationRailItemIcon,
   NavigationRailItemLabel,
+  ModalNavigationRail,
+  ModalNavigationRailClose,
+  NavigationSuite,
+  NavigationSuiteHeader,
+  NavigationSuiteItem,
+  NavigationSuiteItemIcon,
+  NavigationSuiteItemLabel,
   MenuIcon,
   SettingsIcon,
   Button,
@@ -348,6 +355,32 @@ const GALLERIES: Record<string, ReactNode> = {
               <NavigationRailItemIcon><SettingsIcon /></NavigationRailItemIcon>
             </NavigationRailItem>
           </NavigationRail>
+        </div>
+      ))}
+    </div>
+  ),
+  // En columna: la ventana de las pruebas (414) es compact, así que auto y bar son barras.
+  NavigationSuite: (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      {(['auto', 'bar', 'rail'] as const).map((layout) => (
+        <div key={layout} style={{ height: 400, display: 'flex', alignItems: 'flex-end' }}>
+          <NavigationSuite aria-label={`Suite ${layout}`} layout={layout} style={{ flex: layout === 'rail' ? undefined : '1' }}>
+            <NavigationSuiteHeader>
+              <IconButton label={`Menú ${layout}`} size="md" shape="square"><MenuIcon /></IconButton>
+            </NavigationSuiteHeader>
+            <NavigationSuiteItem href="#inicio" active>
+              <NavigationSuiteItemIcon><HomeIcon filled /></NavigationSuiteItemIcon>
+              <NavigationSuiteItemLabel>Inicio</NavigationSuiteItemLabel>
+            </NavigationSuiteItem>
+            <NavigationSuiteItem href="#favoritos">
+              <NavigationSuiteItemIcon><StarIcon /></NavigationSuiteItemIcon>
+              <NavigationSuiteItemLabel>Favoritos</NavigationSuiteItemLabel>
+              <Badge label="3 nuevos">3</Badge>
+            </NavigationSuiteItem>
+            <NavigationSuiteItem aria-label="Ajustes">
+              <NavigationSuiteItemIcon><SettingsIcon /></NavigationSuiteItemIcon>
+            </NavigationSuiteItem>
+          </NavigationSuite>
         </div>
       ))}
     </div>
@@ -691,6 +724,28 @@ describe('Accesibilidad automática (axe-core)', () => {
         expect(await a11yViolations(c)).toEqual([])
       })
     }
+  }
+
+  for (const theme of THEMES) {
+    test(`ModalNavigationRail, tema ${theme === 'light' ? 'claro' : 'oscuro'}`, async () => {
+      const c = await render(
+        <Themed theme={theme}>
+          <ModalNavigationRail open>
+            <NavigationRailHeader><ModalNavigationRailClose /></NavigationRailHeader>
+            <NavigationRailItem href="#inicio" active>
+              <NavigationRailItemIcon><HomeIcon filled /></NavigationRailItemIcon>
+              <NavigationRailItemLabel>Inicio</NavigationRailItemLabel>
+            </NavigationRailItem>
+            <NavigationRailItem href="#favoritos">
+              <NavigationRailItemIcon><StarIcon /></NavigationRailItemIcon>
+              <NavigationRailItemLabel>Favoritos</NavigationRailItemLabel>
+              <Badge label="3 nuevos">3</Badge>
+            </NavigationRailItem>
+          </ModalNavigationRail>
+        </Themed>,
+      )
+      expect(await a11yViolations(c)).toEqual([])
+    })
   }
 
   for (const theme of THEMES) {

@@ -1,0 +1,180 @@
+/* NavigationSuite: navegación adaptable, barra o rail contraído según la ventana. ADR-0029.
+
+   Fuentes:
+   - La regla: Jetpack Compose, compose/material3/material3-adaptive-navigation-suite/src/
+     commonMain/kotlin/androidx/compose/material3/adaptive/navigationsuite/
+     NavigationSuiteScaffold.kt (commit 85f242ae80, 2026-11-05),
+     NavigationSuiteScaffoldDefaults.navigationSuiteType: ancho compact → ShortNavigationBarCompact
+     (destinos verticales); si no, alto compact (o modo mesa, que la web no tiene) →
+     ShortNavigationBarMedium (destinos horizontales); si no, WideNavigationRailCollapsed. Nunca
+     elige solo WideNavigationRailExpanded. El default usa currentWindowAdaptiveInfo() (V1, sin
+     large), así que desde 1200 sigue el rail contraído.
+   - Las medidas: las de la barra y el rail (navigation-bar.css y navigation-rail.css, del kit y
+     Compose). El destino es el de la barra (mk-navigation-bar-item): su base común de colores,
+     átomos, indicador, insignia y alto contraste vale tal cual. Contraído, el destino del rail
+     es el vertical de la barra en una columna de 96 (kit: "igual que el elemento vertical de la
+     barra"): con 96 de ancho, las columnas 1fr de la barra miden 20, como el relleno del rail.
+   - Zonas seguras: la barra abajo y a los costados (ShortNavigationBar, systemBarsForVisual
+     Components Horizontal + Bottom), el rail arriba, abajo y al inicio
+     (WideNavigationRailDefaults.windowInsets, Vertical + Start).
+
+   Cómo elige sin JavaScript (sonda en Chrome, Firefox y WebKit, ADR-0029): cada presentación es
+   un juego de variables que el contenedor fija y que leen él y sus destinos; sin variables, es el
+   rail. CSS no puede unir una media query con un selector de atributo (`auto` con la ventana chica,
+   o `bar` fijo), así que los juegos de la barra se escriben dos veces: una por media query para
+   `auto` y otra para `bar`. Los cortes van escritos en rem (en @media no se pueden usar variables,
+   ADR-0016): 37.5rem = 600 (WINDOW_WIDTH.medium) y 30rem = 480 (WINDOW_HEIGHT.medium). */
+
+@layer matekit.components {
+  .mk-navigation-suite {
+    /* Rail: 44 arriba y 56 abajo, más las zonas seguras; al inicio, la del borde. */
+    --_rail-padding: calc(var(--md-sys-space-500) + var(--md-sys-space-50) + env(safe-area-inset-top, 0px)) 0
+      calc(var(--md-sys-space-700) + env(safe-area-inset-bottom, 0px)) env(safe-area-inset-left, 0px);
+
+    display: flex;
+    flex-direction: var(--_direction, column);
+    align-items: var(--_align, flex-start);
+    box-sizing: var(--_box-sizing, border-box);
+    flex-shrink: 0;
+    inline-size: var(--_inline-size, 96px);
+    block-size: var(--_block-size, 100%);
+    min-block-size: var(--_min-block-size, 0);
+    margin: 0;
+    padding: var(--_padding, var(--_rail-padding));
+    /* Rail: si los destinos no entran, se desplaza en vertical, como NavigationRail. */
+    overflow-x: var(--_overflow-x, hidden);
+    overflow-y: var(--_overflow-y, auto);
+    background-color: var(--_background, transparent);
+  }
+  .mk-navigation-suite:dir(rtl) {
+    --_rail-padding: calc(var(--md-sys-space-500) + var(--md-sys-space-50) + env(safe-area-inset-top, 0px)) 0
+      calc(var(--md-sys-space-700) + env(safe-area-inset-bottom, 0px)) env(safe-area-inset-right, 0px);
+  }
+
+  /* Bloque superior: el de NavigationRailHeader (navigation-rail.css); solo en el rail. */
+  .mk-navigation-suite > .mk-navigation-suite-header {
+    display: var(--_header-display, flex);
+  }
+
+  /* --- Destinos: los de la barra (navigation-bar.css), con la columna de 96 del rail por defecto
+     y los cambios de cada presentación en variables. --- */
+  .mk-navigation-suite > .mk-navigation-bar-item {
+    --_indicator-radius: var(--_item-radius, var(--md-sys-shape-corner-large));
+
+    flex: var(--_item-flex, none);
+    inline-size: var(--_item-inline-size, 96px);
+    grid-template-columns: var(--_item-columns, minmax(0, 1fr) 16px 24px 16px minmax(0, 1fr));
+    grid-template-rows: var(--_item-rows, 4px 24px 4px 4px auto);
+    padding: var(--_item-padding, var(--md-sys-space-75) 0);
+  }
+  /* Rail: 4 entre destinos (NavigationRailCollapsedTokens.ItemVerticalSpace). */
+  .mk-navigation-suite > .mk-navigation-bar-item + .mk-navigation-bar-item {
+    margin-block-start: var(--_item-gap, var(--md-sys-space-50));
+  }
+  .mk-navigation-suite
+    > .mk-navigation-bar-item
+    > :is(.mk-navigation-bar-item-indicator, .mk-state-layer, .mk-ripple, .mk-focus-ring) {
+    grid-column: var(--_item-indicator-columns, 2 / 5);
+  }
+  .mk-navigation-suite > .mk-navigation-bar-item > .mk-navigation-bar-item-label {
+    grid-column: var(--_label-column, 1 / -1);
+    grid-row: var(--_label-row, 5);
+    align-self: var(--_label-align, auto);
+    padding-inline: var(--_label-padding, var(--md-sys-space-50));
+  }
+  .mk-navigation-suite > .mk-navigation-bar-item:is([aria-current]:not([aria-current='false'])) {
+    --_label: var(--_active-label, var(--md-sys-color-secondary));
+  }
+
+  /* --- Barra (juego de variables del contenedor): 64 de alto en surface-container, destinos
+     repartidos, zona segura abajo y a los costados. --- */
+  @media (width < 37.5rem), (height < 30rem) {
+    .mk-navigation-suite[data-layout='auto'] {
+      --_direction: row;
+      --_align: stretch;
+      --_box-sizing: content-box;
+      --_inline-size: auto;
+      --_block-size: auto;
+      --_min-block-size: 64px;
+      --_padding: 0 env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+      --_overflow-x: visible;
+      --_overflow-y: visible;
+      --_background: var(--md-sys-color-surface-container);
+      --_header-display: none;
+      --_item-flex: 1 1 0;
+      --_item-inline-size: auto;
+      --_item-gap: 0;
+      --_forced-border: 1px solid CanvasText;
+      --_forced-outline: none;
+    }
+  }
+  .mk-navigation-suite[data-layout='bar'] {
+    --_direction: row;
+    --_align: stretch;
+    --_box-sizing: content-box;
+    --_inline-size: auto;
+    --_block-size: auto;
+    --_min-block-size: 64px;
+    --_padding: 0 env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+    --_overflow-x: visible;
+    --_overflow-y: visible;
+    --_background: var(--md-sys-color-surface-container);
+    --_header-display: none;
+    --_item-flex: 1 1 0;
+    --_item-inline-size: auto;
+    --_item-gap: 0;
+    --_forced-border: 1px solid CanvasText;
+    --_forced-outline: none;
+  }
+
+  /* --- Barra con destinos horizontales (alto compact, o `bar` desde 600 de ancho): indicador de
+     40 con icono, 4 y etiqueta adentro, 16 a cada lado, radio 20; etiqueta activa en
+     on-secondary-container. Igual que .mk-navigation-bar[data-layout='horizontal']. --- */
+  @media (width >= 37.5rem) and (height < 30rem) {
+    .mk-navigation-suite[data-layout='auto'] {
+      --_item-radius: var(--md-sys-shape-corner-large-increased);
+      --_item-columns: minmax(0, 1fr) 16px 24px 4px minmax(0, max-content) 16px minmax(0, 1fr);
+      --_item-rows: 8px 24px 8px;
+      --_item-padding: 0;
+      --_item-indicator-columns: 2 / 7;
+      --_label-column: 5;
+      --_label-row: 2;
+      --_label-align: center;
+      --_label-padding: 0;
+      --_active-label: var(--md-sys-color-on-secondary-container);
+      --_forced-active-label: HighlightText;
+    }
+  }
+  @media (width >= 37.5rem) {
+    .mk-navigation-suite[data-layout='bar'] {
+      --_item-radius: var(--md-sys-shape-corner-large-increased);
+      --_item-columns: minmax(0, 1fr) 16px 24px 4px minmax(0, max-content) 16px minmax(0, 1fr);
+      --_item-rows: 8px 24px 8px;
+      --_item-padding: 0;
+      --_item-indicator-columns: 2 / 7;
+      --_label-column: 5;
+      --_label-row: 2;
+      --_label-align: center;
+      --_label-padding: 0;
+      --_active-label: var(--md-sys-color-on-secondary-container);
+      --_forced-active-label: HighlightText;
+    }
+  }
+
+  /* --- Alto contraste (forced-colors) ---
+     La base común de los destinos (navigation-bar.css) dibuja el activo en Highlight. El contenedor
+     se marca como la barra (borde arriba) o como el rail (contorno interior); la etiqueta activa
+     dentro del indicador (destinos horizontales) va en HighlightText. */
+  @media (forced-colors: active) {
+    .mk-navigation-suite {
+      border-block-start: var(--_forced-border, none);
+      outline: var(--_forced-outline, 1px solid CanvasText);
+      outline-offset: -1px;
+    }
+    .mk-navigation-suite
+      > .mk-navigation-bar-item:is([aria-current]:not([aria-current='false']))
+      > .mk-navigation-bar-item-label {
+      color: var(--_forced-active-label, Highlight);
+    }
+  }
+}

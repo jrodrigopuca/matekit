@@ -24,6 +24,13 @@ import {
   NavigationRailItem,
   NavigationRailItemIcon,
   NavigationRailItemLabel,
+  NavigationRailHeader,
+  ModalNavigationRail,
+  ModalNavigationRailClose,
+  NavigationSuite,
+  NavigationSuiteItem,
+  NavigationSuiteItemIcon,
+  NavigationSuiteItemLabel,
   Checkbox,
   DividerSubhead,
   RadioButton,
@@ -765,6 +772,66 @@ for (const scheme of SCHEMES) {
         expect(contrastRatio(cs(q(c, '.off .mk-badge')).backgroundColor, rail), 'insignia pequeña').toBeGreaterThanOrEqual(NON_TEXT)
         const large = q(c, '.on .mk-badge')
         expect(contrastRatio(cs(large).color, effectiveBackground(large)), 'número de la insignia').toBeGreaterThanOrEqual(TEXT)
+      })
+    }
+
+    test('ModalNavigationRail: botón de cerrar, iconos y etiquetas sobre surface-container y el indicador', async () => {
+      const c = await render(
+        <Themed scheme={scheme}>
+          <ModalNavigationRail open>
+            <NavigationRailHeader><ModalNavigationRailClose /></NavigationRailHeader>
+            <NavigationRailItem href="#" className="off">
+              <NavigationRailItemIcon><HomeIcon /></NavigationRailItemIcon>
+              <NavigationRailItemLabel>Inicio</NavigationRailItemLabel>
+            </NavigationRailItem>
+            <NavigationRailItem href="#" active className="on">
+              <NavigationRailItemIcon><StarIcon filled /></NavigationRailItemIcon>
+              <NavigationRailItemLabel>Favoritos</NavigationRailItemLabel>
+              <Badge label="3 nuevos">3</Badge>
+            </NavigationRailItem>
+          </ModalNavigationRail>
+        </Themed>,
+      )
+      const surface = effectiveBackground(q(c, '.mk-navigation-rail-modal'))
+      const close = q(c, '.mk-navigation-rail-modal-close')
+      expect(contrastRatio(cs(q(close, 'svg')).fill, effectiveBackground(close)), 'cerrar').toBeGreaterThanOrEqual(NON_TEXT)
+      for (const sel of ['.off', '.on']) {
+        const item = q(c, sel)
+        const bg = sel === '.on' ? effectiveBackground(q(item, ':scope > .mk-navigation-rail-item-indicator')) : surface
+        expect(contrastRatio(cs(q(item, 'svg')).fill, bg), `${sel} icono`).toBeGreaterThanOrEqual(NON_TEXT)
+        expect(contrastRatio(cs(q(item, '.mk-navigation-rail-item-label')).color, bg), `${sel} etiqueta`).toBeGreaterThanOrEqual(TEXT)
+      }
+    })
+
+    // La ventana de las pruebas (414) es compact: auto es la barra; layout="rail" fuerza el rail.
+    for (const layout of ['auto', 'rail'] as const) {
+      test(`NavigationSuite (${layout === 'auto' ? 'barra' : 'rail'}): iconos y etiquetas, activo e inactivo`, async () => {
+        const c = await render(
+          <Themed scheme={scheme}>
+            <div style={{ height: 300, display: 'flex', alignItems: 'flex-end' }}>
+              <NavigationSuite layout={layout} style={{ flex: layout === 'auto' ? '1' : undefined }}>
+                <NavigationSuiteItem href="#" className="off">
+                  <NavigationSuiteItemIcon><HomeIcon /></NavigationSuiteItemIcon>
+                  <NavigationSuiteItemLabel>Inicio</NavigationSuiteItemLabel>
+                  <Badge label="Novedades" />
+                </NavigationSuiteItem>
+                <NavigationSuiteItem href="#" active className="on">
+                  <NavigationSuiteItemIcon><StarIcon filled /></NavigationSuiteItemIcon>
+                  <NavigationSuiteItemLabel>Favoritos</NavigationSuiteItemLabel>
+                </NavigationSuiteItem>
+              </NavigationSuite>
+            </div>
+          </Themed>,
+        )
+        const nav = effectiveBackground(q(c, 'nav'))
+        for (const sel of ['.off', '.on']) {
+          const item = q(c, sel)
+          const iconBg = sel === '.on' ? effectiveBackground(q(item, ':scope > .mk-navigation-bar-item-indicator')) : nav
+          expect(contrastRatio(cs(q(item, 'svg')).fill, iconBg), `${sel} icono`).toBeGreaterThanOrEqual(NON_TEXT)
+          // La etiqueta va debajo del indicador, sobre el contenedor.
+          expect(contrastRatio(cs(q(item, '.mk-navigation-bar-item-label')).color, nav), `${sel} etiqueta`).toBeGreaterThanOrEqual(TEXT)
+        }
+        expect(contrastRatio(cs(q(c, '.off .mk-badge')).backgroundColor, nav), 'insignia').toBeGreaterThanOrEqual(NON_TEXT)
       })
     }
 

@@ -1,14 +1,5 @@
 import { useEffect, useRef, useState, type ComponentType } from 'react'
-import {
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogHeadline,
-  IconButton,
-  MenuIcon,
-  WINDOW_WIDTH,
-} from '../src/index.ts'
+import { IconButton, MenuIcon, ModalNavigationRail, WINDOW_WIDTH } from '../src/index.ts'
 import { PageNav, type NavGroup } from './PageNav.tsx'
 import paletteTokens from '../tokens/palettes.json' with { type: 'json' }
 import { ButtonPage } from './pages/ButtonPage.tsx'
@@ -29,6 +20,7 @@ import { LoadingIndicatorPage } from './pages/LoadingIndicatorPage.tsx'
 import { MenuPage } from './pages/MenuPage.tsx'
 import { NavigationBarPage } from './pages/NavigationBarPage.tsx'
 import { NavigationRailPage } from './pages/NavigationRailPage.tsx'
+import { NavigationSuitePage } from './pages/NavigationSuitePage.tsx'
 import { ProgressIndicatorPage } from './pages/ProgressIndicatorPage.tsx'
 import { RadioButtonPage } from './pages/RadioButtonPage.tsx'
 import { SearchPage } from './pages/SearchPage.tsx'
@@ -94,6 +86,7 @@ const PAGES = {
   menu: { label: 'Menu', group: 'organisms', Page: MenuPage },
   'navigation-bar': { label: 'NavigationBar', group: 'organisms', Page: NavigationBarPage },
   'navigation-rail': { label: 'NavigationRail', group: 'organisms', Page: NavigationRailPage },
+  'navigation-suite': { label: 'NavigationSuite', group: 'organisms', Page: NavigationSuitePage },
   search: { label: 'Search', group: 'organisms', Page: SearchPage },
   sheets: { label: 'Sheets', group: 'organisms', Page: SheetsPage },
   snackbar: { label: 'Snackbar', group: 'organisms', Page: SnackbarPage },
@@ -123,7 +116,7 @@ const readHash = (): PageId => {
   return isPageId(id) ? id : 'button'
 }
 
-// Desde la clase expanded (ADR-0016), la navegación es un panel lateral fijo; debajo, un diálogo.
+// Desde la clase expanded (ADR-0016), la navegación es un panel lateral fijo; debajo, el rail modal.
 // El mismo corte está como literal en rem en playground.css.
 const WIDE_QUERY = `(min-width: ${WINDOW_WIDTH.expanded / 16}rem)`
 
@@ -145,7 +138,7 @@ export function App() {
     return () => removeEventListener('hashchange', onHash)
   }, [])
 
-  // Si la ventana se ensancha con el diálogo abierto, el panel lateral lo reemplaza.
+  // Si la ventana se ensancha con el rail abierto, el panel lateral lo reemplaza.
   useEffect(() => {
     const wide = matchMedia(WIDE_QUERY)
     const onChange = () => {
@@ -164,9 +157,7 @@ export function App() {
     scrollTo(0, 0)
   }
 
-  const nav = (
-    <PageNav groups={NAV_GROUPS} current={page} filter={filter} onFilterChange={setFilter} onNavigate={go} />
-  )
+  const navProps = { groups: NAV_GROUPS, current: page, filter, onFilterChange: setFilter, onNavigate: go }
 
   return (
     <div
@@ -232,23 +223,18 @@ export function App() {
       {/* Pantallas anchas: panel lateral fijo (playground.css lo oculta debajo de 52.5rem). */}
       <aside className="pg-sidebar">
         <strong className="pg-brand">matekit</strong>
-        {nav}
+        <PageNav {...navProps} />
       </aside>
-      {/* Pantallas chicas: el mismo índice en un diálogo modal; al cerrar, el foco vuelve al botón. */}
-      <Dialog
-        className="pg-nav-dialog"
+      {/* Pantallas chicas: el mismo índice en el rail modal (ADR-0029). Al abrir, el foco va a la
+          página actual; elegir una cierra el rail y el foco vuelve al botón. */}
+      <ModalNavigationRail
+        className="pg-nav-rail"
         open={navOpen}
         onClose={() => setNavOpen(false)}
-        aria-describedby=""
+        label="Páginas"
       >
-        <DialogHeadline>Páginas</DialogHeadline>
-        <DialogContent>{nav}</DialogContent>
-        <DialogActions>
-          <Button variant="text" onClick={() => setNavOpen(false)}>
-            Cerrar
-          </Button>
-        </DialogActions>
-      </Dialog>
+        <PageNav variant="rail" {...navProps} />
+      </ModalNavigationRail>
       <main ref={mainRef} id="contenido" className="pg-main" tabIndex={-1} aria-label={PAGES[page].label}>
         <Page />
       </main>

@@ -30,7 +30,7 @@ way around.
 
 | Code | Kind | Components |
 |---|---|---|
-| [`MK_PART_OUTSIDE_PARENT`](#mk_part_outside_parent) | error | parts of Dialog, Menu, Tabs, TextField, Search, SideSheet, BottomSheet, RichTooltip and RangeSlider |
+| [`MK_PART_OUTSIDE_PARENT`](#mk_part_outside_parent) | error | parts of Dialog, Menu, Tabs, TextField, Search, SideSheet, BottomSheet, ModalNavigationRail, RichTooltip and RangeSlider |
 | [`MK_RENDER_NOT_ELEMENT`](#mk_render_not_element) | error | every component with `render` |
 | [`MK_TRIGGER_NOT_ELEMENT`](#mk_trigger_not_element) | error | Tooltip, RichTooltipTrigger, MenuTrigger |
 | [`MK_TOOLTIP_NO_TEXT`](#mk_tooltip_no_text) | error | Tooltip |
@@ -46,7 +46,7 @@ way around.
 - **Components:** the parts that read their component state from context: `DialogHeadline` and
   `DialogContent` (Dialog); `MenuTrigger`, `MenuContent` and `MenuItem` (Menu); `TabList`, `Tab` and
   `TabPanel` (Tabs); `TextFieldInput`, `TextFieldLabel` and `TextFieldSupporting` (TextField);
-  `SearchBar`, `SearchView` and `SearchSuggestion` (Search); `SideSheetTitle` and `SideSheetClose`;
+  `SearchBar`, `SearchView` and `SearchSuggestion` (Search); `SideSheetTitle` and `SideSheetClose`; `ModalNavigationRailClose`;
   `BottomSheetTitle` and `BottomSheetHandle`; `RichTooltipTrigger`, `RichTooltipContent`,
   `RichTooltipSubhead`, `RichTooltipSupporting` and `RichTooltipActions`; `RangeSliderStart` and
   `RangeSliderEnd`.
@@ -73,7 +73,7 @@ way around.
 - **Kind:** error.
 - **Components:** the ones that accept `render`: `Interactive`, `Button`, `IconButton`, `Fab`,
   `ExtendedFab`, `CardPrimaryAction`, `ListItemAction`, the chips, `NavigationBarItem`,
-  `NavigationRailItem`, `TabLink`, and the layout components `Stack`, `Group` and `TopAppBar`.
+  `NavigationRailItem`, `NavigationSuiteItem`, `TabLink`, and the layout components `Stack`, `Group` and `TopAppBar`.
 - **Details:** `received`, the `typeof` of what was passed.
 - **Cause:** `render` got the component itself (`render={Link}`), a string (`render="ul"`) or a
   function instead of an element.

@@ -576,6 +576,32 @@ entre icono y etiqueta, Label Large. Colores: indicador `secondary-container`, i
 | Rail contraído flotante | No existe (Floating solo en el expandido) | El modal contraído usa la forma del docked | matekit acepta `variant="floating"` contraído y lo dibuja como el docked; el fondo aparece al expandir. |
 | Separación entre destinos expandidos | No la anota | 0 | Compose (el kit la confirma indirectamente con el alto de 224). |
 
+### Rail modal y navegación adaptable (2026-11-27, ítem 23, ADR-0029)
+
+Archivos: `WideNavigationRail.kt` (`de12189a63`, 2026-11-11), `tokens/NavigationRailExpandedTokens.kt`
+y `NavigationRailCollapsedTokens.kt` (v41.1.19, `76990c62ac`),
+`compose/material3/material3/samples/src/main/java/androidx/compose/material3/samples/NavigationRailSamples.kt`
+(`a2bc0e4eae`, 2026-07-23), `material3/src/androidMain/res/values/strings.xml` y
+`compose/material3/material3-adaptive-navigation-suite/src/commonMain/kotlin/androidx/compose/material3/adaptive/navigationsuite/NavigationSuiteScaffold.kt`
+(`85f242ae80`, 2026-11-05). El kit no trae el rail modal.
+
+| Dato | Fuente | matekit |
+|---|---|---|
+| `ModalWideNavigationRail(hideOnCollapse = true)`: diálogo de alto completo con el rail expandido contra el borde de inicio, que entra desde fuera de la pantalla (ancla en −ancho) | `ModalWideNavigationRailImpl`, `ModalWideNavigationRailContent` (`draggableAnchors`) | `ModalNavigationRail`, `<dialog>` con `translate` desde −100 % (100 % en RTL) |
+| Deslizamiento con **DefaultSpatial** en los dos sentidos; scrim con **DefaultEffects** | `modalStateAnimationSpec`, `animateFloatAsState(alpha)` | Igual (el SideSheet usa FastEffects para salir: allí no hay fuente) |
+| Contenedor `SurfaceContainer`, forma `CornerLarge` (16) **en las cuatro esquinas** | `ModalContainerColor`, `ModalContainerShape`; `Surface(shape = shape)` | Igual |
+| `ModalContainerElevation = Level2` **no se usa**: el `Surface` del modal no recibe elevación | `ModalWideNavigationRailContent` | Sin sombra (como la barra, ver arriba) |
+| Ancho: el del rail expandido, 220 a 360 | `openModalRailMaxWidth = ExpandedRailMaxWidth`, `WideNavigationRailLayout` | El ancho fijo del rail expandido (`--mk-navigation-rail-expanded-width`), sin pasar de la ventana menos 48 (decisión propia, como el SideSheet) |
+| Zonas seguras: barras del sistema arriba, abajo y al inicio | `WideNavigationRailDefaults.windowInsets` (`Vertical + Start`) | `env(safe-area-inset-*)` en el diálogo y en el rail de `NavigationSuite` |
+| Escape (al soltar) y el scrim cierran; `paneTitle` "Navigation rail", scrim "Close rail" | `onKeyEvent`, `Scrim(contentDescription)`, `m3c_wide_navigation_rail_pane_title`, `m3c_wide_navigation_rail_close_rail` | Escape y scrim por `useModalDialog`; textos por defecto del diálogo y del botón de cerrar |
+| Elegir un destino **no cierra** solo: el ejemplo de `hideOnCollapse` llama a `state.collapse()` en el `onClick` | `DismissibleModalWideNavigationRailSample` | `closeOnSelect` (por defecto `true`); ver ADR-0029 |
+| Arrastre hacia el borde para cerrar (umbral 50 %) y atrás predictivo | `anchoredDraggable`, `positionalThreshold`, `RailPredictiveBackState` | Sin arrastre (mejora pendiente); sin atrás predictivo (del enrutador) |
+| Regla de `NavigationSuiteScaffoldDefaults.navigationSuiteType`: ancho compact → `ShortNavigationBarCompact`; si no, modo mesa o **alto compact con cualquier ancho** → `ShortNavigationBarMedium`; si no → `WideNavigationRailCollapsed`. Nunca `WideNavigationRailExpanded` | `navigationSuiteType` | `NavigationSuite layout="auto"` (sin modo mesa) |
+| El default usa `currentWindowAdaptiveInfo()` (V1): large y extra-large no cambian nada | `WindowAdaptiveInfoDefault` ("Move to V2 when adaptive dependency is updated") | Desde 1200, rail contraído |
+| `calculateFromAdaptiveInfo` (la vieja) solo elige `NavigationBar` o `NavigationRail` | `calculateFromAdaptiveInfo` (`@Suppress("DEPRECATION")`) | No se usa |
+
+Sin conflictos con el kit: el kit no tiene la variante modal ni la regla.
+
 ## Indicadores de progreso (lineal y circular)
 
 Revisión del 2026-11-25. Archivos (en `compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/`):

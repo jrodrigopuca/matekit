@@ -44,6 +44,11 @@
 @import './organisms/NavigationBar/navigation-bar.css';
 /* Después de navigation-bar.css: usa su base común de destinos y la sobrescribe por orden. */
 @import './organisms/NavigationRail/navigation-rail.css';
+/* Después de navigation-rail.css: el rail expandido adentro del diálogo ocupa todo su ancho. */
+@import './organisms/NavigationRail/modal-navigation-rail.css';
+/* Después de navigation-bar.css y navigation-rail.css: usa sus destinos y su bloque superior, y
+   cambia su disposición por la ventana. */
+@import './organisms/NavigationSuite/navigation-suite.css';
 /* Después de badge.css: ubica la insignia sobre el icono de la pestaña. */
 @import './organisms/Tabs/tabs.css';
 /* Después de icon-button.css: fija el color del icono de inicio y de las acciones. */

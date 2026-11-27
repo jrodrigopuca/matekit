@@ -76,6 +76,10 @@ const serial = process.env['MK_SERIAL'] === '1'
 // presionado) son CSS y solo se pueden comprobar con un motor de navegador.
 export default defineConfig({
   plugins: [react()],
+  // react-dom/server solo lo importa la prueba de hidratación de NavigationSuite. Sin declararlo,
+  // Vite lo descubre a mitad de la corrida (sin caché, como en el CI), recarga y deja dos copias de
+  // React ("Invalid hook call"; visto el 2026-11-27).
+  optimizeDeps: { include: ['react-dom/server'] },
   test: {
     include: ['src/**/*.test.tsx'],
     fileParallelism: !serial,

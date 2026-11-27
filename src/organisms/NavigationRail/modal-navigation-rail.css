@@ -1,0 +1,137 @@
+/* Variante modal del NavigationRail (ModalNavigationRail). ADR-0029.
+
+   El kit no la trae (solo "Navigation Rail" contraído y "Navigation Rail: Expanded" docked o
+   floating). Sale de Jetpack Compose, compose/material3/material3/src/commonMain/kotlin/androidx/
+   compose/material3/ (ver docs/research/07-jetpack-compose.md § NavigationRail):
+   - WideNavigationRail.kt (commit de12189a63, 2026-11-11), ModalWideNavigationRail con
+     hideOnCollapse = true: un diálogo de alto completo (fillMaxHeight) con el rail expandido contra
+     el borde de inicio, scrim (Scrim con ScrimTokens: Scrim al 32 %), que entra y sale
+     deslizándose desde fuera de la pantalla (ancla en −ancho) con el resorte DefaultSpatial en los
+     dos sentidos (modalState.expand()/collapse()), y el scrim aparece y se va con DefaultEffects.
+     Zonas seguras: WideNavigationRailDefaults.windowInsets = barras del sistema arriba, abajo y al
+     inicio. Escape (al soltar) y el scrim cierran.
+   - tokens/NavigationRailExpandedTokens.kt (v41.1.19, commit 76990c62ac): ModalContainerColor =
+     Surface Container, ModalContainerShape = CornerLarge (16, las cuatro esquinas: Compose lo
+     aplica como RoundedCornerShape a toda la superficie), ancho 220 a 360. ModalContainerElevation
+     = Level2 existe pero el Surface del modal no lo usa (sin tonalElevation ni shadowElevation):
+     sin sombra, como la barra.
+
+   Adentro va el <nav> del rail expandido con el CSS de navigation-rail.css (destinos de 56, 44 de
+   relleno arriba y 20 abajo, bloque superior), estirado a lo ancho del diálogo.
+
+   Ancho en ventanas angostas (decisión propia, como el SideSheet modal, ADR-0025): deja al menos 48
+   de scrim al costado para tocar y cerrar. Con el ancho del kit (220) no pasa hasta 268 px. */
+
+@layer matekit.components {
+  .mk-navigation-rail-modal {
+    --_expanded-width: clamp(220px, var(--mk-navigation-rail-expanded-width, 220px), 360px);
+    --_scrim: color-mix(in srgb, var(--md-sys-color-scrim) 32%, transparent);
+    /* Afuera, del lado del borde de inicio: a la izquierda, o a la derecha en RTL. */
+    --_hidden: -100% 0;
+
+    position: fixed;
+    inset-block: 0;
+    inset-inline: 0 auto;
+    box-sizing: border-box;
+    inline-size: min(var(--_expanded-width), 100% - 48px);
+    max-inline-size: none;
+    block-size: 100%;
+    max-block-size: none;
+    margin: 0;
+    /* Zonas seguras: toca arriba, abajo y el costado de inicio. env() es físico. */
+    padding: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+    border: none;
+    border-radius: var(--md-sys-shape-corner-large);
+    background-color: var(--md-sys-color-surface-container);
+    color: var(--md-sys-color-on-surface);
+    box-shadow: none;
+    overflow: hidden;
+    translate: var(--_hidden);
+    transition: translate var(--md-sys-motion-spring-default-spatial-duration)
+      var(--md-sys-motion-spring-default-spatial-easing);
+  }
+  .mk-navigation-rail-modal:dir(rtl) {
+    --_hidden: 100% 0;
+
+    padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) 0;
+  }
+
+  .mk-navigation-rail-modal[open] {
+    display: flex;
+    translate: none;
+  }
+
+  .mk-navigation-rail-modal::backdrop {
+    background-color: var(--_scrim);
+    transition: background-color var(--md-sys-motion-spring-default-effects-duration)
+      var(--md-sys-motion-spring-default-effects-easing);
+  }
+
+  @starting-style {
+    .mk-navigation-rail-modal[open] {
+      translate: var(--_hidden);
+    }
+    .mk-navigation-rail-modal[open]::backdrop {
+      background-color: transparent;
+    }
+  }
+
+  .mk-navigation-rail-modal[open][data-closing] {
+    translate: var(--_hidden);
+  }
+  .mk-navigation-rail-modal[data-closing]::backdrop {
+    background-color: transparent;
+  }
+
+  /* El rail expandido ocupa todo el diálogo (su ancho lo pone el diálogo, que conoce la ventana). */
+  .mk-navigation-rail-modal > .mk-navigation-rail {
+    flex: 1 1 auto;
+    width: 100%;
+    min-width: 0;
+  }
+
+  /* El botón de menú abierto (menu_open) apunta al otro lado en RTL (AutoMirrored en Compose). */
+  .mk-navigation-rail-modal-close:dir(rtl) > .mk-icon {
+    scale: -1 1;
+  }
+
+  /* Movimiento reducido: fundido en el lugar, sin deslizarse. */
+  @media (prefers-reduced-motion: reduce) {
+    .mk-navigation-rail-modal,
+    .mk-navigation-rail-modal:dir(rtl) {
+      --_hidden: none;
+
+      opacity: 0;
+      transition: opacity var(--md-sys-motion-spring-default-effects-duration)
+        var(--md-sys-motion-spring-default-effects-easing);
+    }
+    .mk-navigation-rail-modal[open] {
+      opacity: 1;
+    }
+    @starting-style {
+      .mk-navigation-rail-modal[open] {
+        opacity: 0;
+      }
+    }
+    .mk-navigation-rail-modal[open][data-closing] {
+      opacity: 0;
+    }
+  }
+
+  :root:has(.mk-navigation-rail-modal:modal) {
+    overflow: hidden;
+  }
+
+  /* --- Alto contraste (forced-colors) ---
+     Sin fondo, el diálogo se marca con un contorno; los destinos usan la base común
+     (navigation-bar.css y navigation-rail.css). */
+  @media (forced-colors: active) {
+    .mk-navigation-rail-modal {
+      outline: 1px solid CanvasText;
+    }
+    /* El contorno del rail (navigation-rail.css) repetiría el del diálogo. */
+    .mk-navigation-rail-modal > .mk-navigation-rail {
+      outline: none;
+    }
+  }
+}

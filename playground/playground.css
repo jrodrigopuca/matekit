@@ -97,15 +97,25 @@ body {
   color: var(--md-sys-color-on-surface-variant);
 }
 
-/* Diálogo de navegación (pantallas chicas): más ancho que el de 312 por defecto, y alto
-   completo para que el índice tenga lugar. */
-.pg-nav-dialog {
-  --mk-dialog-width: 22.5rem;
-  height: calc(100% - 48px);
+/* Menú de páginas en pantallas chicas: el rail modal (ModalNavigationRail), más ancho que los 220
+   del kit para que entre el filtro (hasta 360, el máximo de Compose; en 320 de ventana deja 48 de
+   scrim). El filtro va en el bloque superior, junto al botón de cerrar. */
+.pg-nav-rail {
+  --mk-navigation-rail-expanded-width: 18rem;
 }
-.pg-nav-dialog .mk-dialog-content {
-  padding-inline: var(--md-sys-space-200);
-  padding-block: var(--md-sys-space-100);
+.pg-nav-rail-header {
+  padding-bottom: var(--md-sys-space-200);
+}
+.pg-nav-rail-header .pg-nav-filter,
+.pg-nav-rail-header .mk-text-field {
+  align-self: stretch;
+  width: 100%;
+}
+/* Encabezados de grupo alineados con el texto de los destinos (20 del borde + 16 del indicador). */
+.pg-nav-rail-group > .pg-nav-group {
+  display: block;
+  padding: var(--md-sys-space-200) var(--md-sys-space-250) var(--md-sys-space-100)
+    calc(var(--md-sys-space-250) + var(--md-sys-space-200));
 }
 
 .pg-main {
@@ -748,4 +758,66 @@ body {
     border-color: GrayText;
     color: GrayText;
   }
+}
+
+/* NavigationSuite: marco de app con la receta de disposición. La suite elige con media queries; la
+   app ubica su caja con las mismas (barra abajo, rail al inicio), escritas en rem como en
+   navigation-suite.css (37.5rem = 600, 30rem = 480). */
+.pg-suite-frame {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas: 'nav content';
+  height: 32rem;
+  overflow: hidden;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-large);
+  background: var(--md-sys-color-surface);
+}
+.pg-suite-nav {
+  grid-area: nav;
+  min-height: 0;
+}
+.pg-suite-content {
+  grid-area: content;
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: var(--md-sys-typescale-title-large-size);
+}
+@media (width < 37.5rem), (height < 30rem) {
+  .pg-suite-frame[data-layout='auto'] {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+    grid-template-areas: 'content' 'nav';
+  }
+}
+.pg-suite-frame[data-layout='bar'] {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-areas: 'content' 'nav';
+}
+.pg-suite-fixed {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--md-sys-space-300);
+  align-items: flex-start;
+}
+.pg-suite-fixed > figure {
+  margin: 0;
+  flex: 1 1 18rem;
+  min-width: 0;
+}
+.pg-suite-fixed > figure:last-child {
+  flex: 0 0 auto;
+}
+.pg-suite-fixed figcaption {
+  margin-bottom: var(--md-sys-space-100);
+  color: var(--md-sys-color-on-surface-variant);
+}
+.pg-suite-rail-box {
+  display: flex;
+  height: 20rem;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-large);
 }

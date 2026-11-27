@@ -7,6 +7,7 @@
 
 import { inputChipStrings, type InputChipStrings } from '../molecules/Chip/strings.ts'
 import { bottomSheetStrings, type BottomSheetStrings } from '../organisms/BottomSheet/strings.ts'
+import { modalNavigationRailStrings, type ModalNavigationRailStrings } from '../organisms/NavigationRail/strings.ts'
 import { searchStrings, type SearchStrings } from '../organisms/Search/strings.ts'
 import { sideSheetStrings, type SideSheetStrings } from '../organisms/SideSheet/strings.ts'
 import { snackbarStrings, type SnackbarStrings } from '../organisms/Snackbar/strings.ts'
@@ -15,6 +16,7 @@ import { snackbarStrings, type SnackbarStrings } from '../organisms/Snackbar/str
 export interface MatekitStrings {
   bottomSheet: BottomSheetStrings
   inputChip: InputChipStrings
+  modalNavigationRail: ModalNavigationRailStrings
   search: SearchStrings
   sideSheet: SideSheetStrings
   snackbar: SnackbarStrings
@@ -32,6 +34,7 @@ export interface MatekitStrings {
 export const defaultStrings: MatekitStrings = {
   bottomSheet: bottomSheetStrings,
   inputChip: inputChipStrings,
+  modalNavigationRail: modalNavigationRailStrings,
   search: searchStrings,
   sideSheet: sideSheetStrings,
   snackbar: snackbarStrings,

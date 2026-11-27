@@ -49,7 +49,8 @@ src/icons/       iconos generados
 src/internal/    ayudas compartidas entre componentes, no exportadas (interactive.tsx: cx,
                  assertRenderElement, el error de render con el nombre del componente, y los
                  tipos de botón que también es enlace, ToggleButtonOrLinkProps;
-                 navigation-item.tsx: base de los destinos de NavigationBar y NavigationRail;
+                 navigation-item.tsx: base de los destinos de NavigationBar, NavigationRail y
+                 NavigationSuite (ADR-0029);
                  merge-refs.ts: mergeRefs une varias ref con la limpieza de
                  React 19, sin hooks: memorizarla al llamarla, como Dialog y Menu;
                  accessible-name.ts: AccessibleNameProps, el nombre obligatorio por label,
@@ -67,8 +68,8 @@ src/internal/    ayudas compartidas entre componentes, no exportadas (interactiv
                  settleAnimations, la espera de la salida animada de Snackbar, Tooltip, Menu, Dialog y los sheets, que no se traba si una
                  transición se cancela; modal-dialog.ts: useModalDialog, el ciclo de vida modal
                  sobre `<dialog>` (showModal, foco inicial, Escape y scrim, vuelta de Tab, salida
-                 y foco devuelto) de Dialog, BottomSheet y SideSheet modal, base del futuro
-                 NavigationRail modal, ADR-0025)
+                 y foco devuelto) de Dialog, BottomSheet, SideSheet modal y ModalNavigationRail,
+                 ADR-0025 y ADR-0029)
 src/strings/     índice de los textos por defecto de los componentes (defaultStrings y el tipo
                  MatekitStrings, públicos): reúne los strings.ts de cada carpeta (ADR-0028)
 src/styles.css   hoja única: importa tokens, átomos y componentes
@@ -303,6 +304,14 @@ No llamar al conector de Figma salvo que falte un dato imprescindible: tiene lí
     centrado en lo visible y el texto no lo rodea, igual en los tres. Firefox, al enfocar un botón que
     está fuera de lo visible (una barra escondida), desplaza el contenedor antes del `focusin` (Chrome
     no).
+  - Presentación por la ventana (NavigationSuite, comprobado el 2026-11-27): `page.viewport(w, h)`
+    cambia el iframe y las media queries de ancho y de alto (`(width < 37.5rem), (height < 30rem)`)
+    responden igual en los tres; esperar el tamaño nuevo con `expect.poll` sobre `innerWidth` e
+    `innerHeight` y devolver la ventana a 414 × 896 al terminar. Una etiqueta centrada con
+    `translate(-50%)` queda 0,08 px corrida en WebKit (redondeo de subpíxeles). Para probar el HTML
+    del servidor, `renderToString` y `hydrateRoot` en la prueba (`react-dom/server` está en
+    `optimizeDeps` de `vitest.config.ts`: si Vite lo descubre a mitad de la corrida, recarga y deja
+    dos copias de React).
 - Snackbar (comprobado el 2026-11-26): un `popover` dentro de un `<dialog>` modal abierto se puede
   usar en los tres motores (fuera del diálogo queda inerte). Un F6 real que la página no atrapa
   saca el foco del documento en Firefox: para probar que un componente no atrapa una tecla, despachar

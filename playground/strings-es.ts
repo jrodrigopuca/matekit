@@ -9,6 +9,7 @@ const plural = new Intl.PluralRules('es')
 export const es: MatekitStrings = {
   bottomSheet: { expandLabel: 'Expandir', collapseLabel: 'Contraer', closeLabel: 'Cerrar' },
   inputChip: { removeLabel: 'Quitar' },
+  modalNavigationRail: { label: 'Navegación', closeLabel: 'Cerrar la navegación' },
   search: {
     clearLabel: 'Borrar búsqueda',
     closeLabel: 'Cerrar búsqueda',
