@@ -14,6 +14,26 @@
   campo. Una sola marca en la raíz cubre la barra suelta, la de la vista a pantalla completa y la
   del TopAppBar. No hay otro estado de foco (el kit y Compose no tienen capa de foco en la barra);
   en alto contraste el anillo es un contorno en un color del sistema.
+- Actualización (2026-11-26, decidida con el autor): quitar sugerencias. La búsqueda no guarda
+  nada: avisa y la app decide, como `onRemove` del InputChip (ADR-0019). `SearchSuggestion` acepta
+  `onRemove(value)`; sin él no se puede quitar. Supr con una sugerencia activa la pide (también
+  Mayús+Supr, el atajo del omnibox de Chrome): llama a su `onRemove`, la región viva anuncia
+  "Se quitó …" enseguida (`formatRemoved` en `SearchView`; el anuncio de la cantidad nueva no lo
+  pisa durante un segundo) y, cuando el uso la saca del DOM, la activa pasa a la siguiente, a la
+  anterior si era la última o a ninguna; si el uso no la saca, la activa queda donde estaba. Con una
+  activa que no se puede quitar, Supr no hace nada: el foco visual está en la sugerencia, y borrar a
+  ciegas una letra del campo sorprendería. Sin activa, Supr edita el texto. Retroceso no quita nunca:
+  en un combobox el campo sigue siendo el lugar de edición (APG), y quien borra el texto con
+  Retroceso repetido se llevaría también el historial (ADR-0019 lo acepta en un chip, que tiene el
+  foco real). Las que se pueden quitar llevan `aria-describedby` hacia un texto oculto ("Supr para
+  quitar", `removeHint`): la descripción se lee después del nombre, con pausa, y solo en esas (una
+  instrucción en el nombre se repetiría en cada flecha). Con el puntero no hay botón dentro de la
+  opción (el patrón combobox no admite interactivos en un `option`); Compose no trae quitado (`SearchBar.kt` no
+  tiene API de recientes ni de quitar; el contenido lo arma la app) y Google lo resuelve con una pantalla aparte para
+  administrar el historial: la app ofrece una acción fuera de la lista, como "Borrar historial"
+  (receta `useRecentSearches` en el playground, con `localStorage`). Pendiente si un proyecto lo
+  pide: un pie de la vista para esa acción dentro de la vista a pantalla completa (afuera queda
+  inerte mientras está abierta).
 - Complementa: [ADR-0002](0002-api-por-composicion-con-capas-atomicas.md) (partes con nombres
   planos), [ADR-0003](0003-componentes-universales-e-interactivos.md) (qué es cliente),
   [ADR-0007](0007-menu-popover-y-anchor-positioning.md) y

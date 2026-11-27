@@ -65,6 +65,8 @@ export type SearchViewChoice = 'auto' | SearchViewMode
 
 /** Demora antes de anunciar la cantidad de sugerencias: no se repite en cada tecla. */
 const ANNOUNCE_DELAY_MS = 500
+/** Tras "Se quitó …", el anuncio de la cantidad nueva se calla este tiempo (no lo pisa). */
+const REMOVAL_QUIET_MS = 1000
 
 // Ventana medium o más ancha: `min-width` en rem (base 16), como los demás cortes (ADR-0016).
 const WIDE_WINDOW_QUERY = `(min-width: ${WINDOW_WIDTH.medium / 16}rem)`
@@ -88,6 +90,13 @@ interface OptionData {
   value: string
   textValue: string
   disabled: boolean
+  onRemove: ((value: string) => void) | undefined
+}
+
+/** El quitado pedido con Supr: la opción quitada y su vecina, la próxima activa si la quitada desaparece. */
+interface PendingRemoval {
+  removed: string
+  next: string | null
 }
 
 /** El nombre accesible del input, que la vista a pantalla completa copia en su propio campo. */
@@ -122,6 +131,11 @@ interface SearchContextValue {
   viewInputRef: RefObject<HTMLInputElement | null>
   listboxRef: RefObject<HTMLUListElement | null>
   options: RefObject<Map<string, OptionData>>
+  pendingRemoval: RefObject<PendingRemoval | null>
+  /** Lo registra SearchView: anuncia "Se quitó …" en su región viva. */
+  announceRemoval: RefObject<((text: string) => void) | null>
+  /** Id del texto oculto "Supr para quitar" (lo dibuja SearchView), descripción de las que se quitan. */
+  removeHintId: string
   setHasView: (present: boolean) => void
   setExpanded: (expanded: boolean) => void
   setBar: (settings: BarSettings) => void
@@ -287,6 +301,8 @@ export function Search({
   const viewInputRef = useRef<HTMLInputElement | null>(null)
   const listboxRef = useRef<HTMLUListElement | null>(null)
   const options = useRef(new Map<string, OptionData>())
+  const pendingRemoval = useRef<PendingRemoval | null>(null)
+  const announceRemoval = useRef<((text: string) => void) | null>(null)
 
   // Lo último de cada valor, para los manejadores (no cambian la identidad del contexto).
   const latest = useRef({ value, open, expanded, activeId, mode, hasView, onValueChange, onSubmit, onSelect })
@@ -422,6 +438,23 @@ export function Search({
           }
           return
         }
+        case 'Delete': {
+          // Con una sugerencia activa, Supr es sobre ella (el foco visual), no sobre el texto: la
+          // quita si tiene onRemove y, si no, no hace nada (no borra a ciegas una letra del campo).
+          // Sin activa, es la edición del texto de siempre. Retroceso queda siempre para el texto.
+          if (!shown || !s.activeId) return
+          e.preventDefault()
+          const data = options.current.get(s.activeId)
+          if (!data?.onRemove || data.disabled) return
+          const list = enabledOptions(listboxRef.current)
+          const i = list.findIndex((o) => o.id === s.activeId)
+          // La próxima activa: la siguiente, o la anterior si era la última (cuando el uso la saque
+          // del DOM; si no la saca, la activa queda donde estaba).
+          pendingRemoval.current = { removed: s.activeId, next: (list[i + 1] ?? list[i - 1])?.id ?? null }
+          announceRemoval.current?.(data.textValue)
+          data.onRemove(data.value)
+          return
+        }
         case 'ArrowLeft':
         case 'ArrowRight':
         case 'Home':
@@ -454,6 +487,9 @@ export function Search({
       viewInputRef,
       listboxRef,
       options,
+      pendingRemoval,
+      announceRemoval,
+      removeHintId: `${id}remove-hint`,
       setHasView,
       setExpanded,
       setBar,
@@ -653,6 +689,8 @@ function ClearButton({ label, onClear }: { label: string; onClear: () => void })
   )
 }
 
+const defaultFormatRemoved = (text: string) => `Se quitó ${text}`
+
 const defaultFormatCount = (count: number) => (count === 1 ? '1 sugerencia' : `${count} sugerencias`)
 
 export interface SearchViewProps extends HTMLAttributes<HTMLUListElement> {
@@ -666,6 +704,10 @@ export interface SearchViewProps extends HTMLAttributes<HTMLUListElement> {
   formatCount?: ((count: number) => string) | undefined
   /** Nombre del botón que cierra la vista a pantalla completa. Por defecto "Cerrar búsqueda". */
   closeLabel?: string | undefined
+  /** Anuncio al quitar una sugerencia con Supr. Por defecto "Se quitó …" con su texto. */
+  formatRemoved?: ((text: string) => string) | undefined
+  /** Descripción de las sugerencias que se pueden quitar (`onRemove`). Por defecto "Supr para quitar". */
+  removeHint?: string | undefined
   /** Referencia al `<ul role="listbox">`. */
   ref?: Ref<HTMLUListElement> | undefined
 }
@@ -692,6 +734,8 @@ export function SearchView({
   emptyLabel = 'Sin resultados',
   formatCount = defaultFormatCount,
   closeLabel = 'Cerrar búsqueda',
+  formatRemoved = defaultFormatRemoved,
+  removeHint = 'Supr para quitar',
   className,
   style,
   children,
@@ -699,7 +743,8 @@ export function SearchView({
   ...listboxProps
 }: SearchViewProps) {
   const ctx = useSearch('SearchView')
-  const { setHasView, setExpanded, setActiveId, listboxRef, barRef, viewInputRef, requestClose } = ctx
+  const { setHasView, setExpanded, setActiveId, listboxRef, barRef, viewInputRef, requestClose, pendingRemoval, announceRemoval } =
+    ctx
   const docked = ctx.mode === 'docked'
   const setListRef = useMemo(() => mergeRefs(listboxRef, ref), [listboxRef, ref])
 
@@ -719,7 +764,13 @@ export function SearchView({
     const update = () => {
       setCount(list.querySelectorAll('[role="option"]').length)
       const active = activeRef.current
-      if (active && !list.contains(document.getElementById(active))) setActiveId(null)
+      if (active && !list.contains(document.getElementById(active))) {
+        // La activa desapareció. Si fue la quitada con Supr, pasa a su vecina (si sigue en la lista).
+        const pending = pendingRemoval.current
+        const next = pending?.removed === active ? pending.next : null
+        setActiveId(next && list.contains(document.getElementById(next)) ? next : null)
+        pendingRemoval.current = null
+      }
     }
     update()
     const observer = new MutationObserver(update)
@@ -743,12 +794,32 @@ export function SearchView({
   // cada tecla); al cerrar, se vacía enseguida.
   const message = !expanded ? '' : loading ? loadingLabel : count > 0 ? formatCount(count) : empty ? emptyLabel : ''
   const [announced, setAnnounced] = useState('')
-  useEffect(() => {
-    if (message === '') {
-      setAnnounced('')
-      return
+  // Después de quitar una sugerencia se anuncia "Se quitó …" enseguida, y el cambio de cantidad que
+  // provoca (o que se cierre la lista) no lo pisa durante un segundo.
+  const quietUntil = useRef(0)
+  useLayoutEffect(() => {
+    announceRemoval.current = (text) => {
+      quietUntil.current = performance.now() + REMOVAL_QUIET_MS
+      setAnnounced(formatRemoved(text))
     }
-    const timer = setTimeout(() => setAnnounced(message), ANNOUNCE_DELAY_MS)
+    return () => {
+      announceRemoval.current = null
+    }
+  }, [announceRemoval, formatRemoved])
+  useEffect(() => {
+    const quiet = Math.max(0, quietUntil.current - performance.now())
+    if (message === '') {
+      if (quiet === 0) {
+        setAnnounced('')
+        return
+      }
+      const timer = setTimeout(() => setAnnounced(''), quiet)
+      return () => clearTimeout(timer)
+    }
+    const timer = setTimeout(() => {
+      if (performance.now() < quietUntil.current) return
+      setAnnounced(message)
+    }, ANNOUNCE_DELAY_MS)
     return () => clearTimeout(timer)
   }, [message])
 
@@ -836,6 +907,10 @@ export function SearchView({
     <>
       {loading && <LinearProgressIndicator label={loadingLabel} className="mk-search-progress" />}
       {empty && <p className="mk-search-empty">{emptyLabel}</p>}
+      {/* Descripción de las sugerencias que se pueden quitar (aria-describedby; oculta). */}
+      <span hidden id={ctx.removeHintId}>
+        {removeHint}
+      </span>
       <ul
         {...listName}
         {...listboxProps}
@@ -960,6 +1035,11 @@ export interface SearchSuggestionProps extends Omit<ListItemProps, 'value' | 'ro
   textValue?: string | undefined
   /** No se puede elegir; las flechas la saltean (`aria-disabled`). */
   disabled?: boolean | undefined
+  /**
+   * Se pidió quitarla (Supr con la sugerencia activa): recibe su `value`. La búsqueda no guarda
+   * nada: el uso la saca de su lista (y de donde la guarde). Sin `onRemove`, no se puede quitar.
+   */
+  onRemove?: ((value: string) => void) | undefined
 }
 
 /**
@@ -970,6 +1050,21 @@ export interface SearchSuggestionProps extends Omit<ListItemProps, 'value' | 'ro
  *
  * No se enfoca: la activa la marcan las flechas con `aria-activedescendant` y `aria-selected`, y se
  * elige con Enter o con un clic. Sin controles adentro (una opción no puede tener interactivos).
+ *
+ * Quitar (por ejemplo, búsquedas recientes): con `onRemove`, Supr sobre la activa la pide, se anuncia
+ * "Se quitó …" y la activa pasa a la siguiente cuando el uso la saca. La búsqueda avisa; la app
+ * guarda y borra (como `onRemove` del InputChip). Con el puntero no hay un botón en la opción: la app
+ * ofrece aparte una acción como "Borrar historial".
+ *
+ * ```tsx
+ * const { recent, add, remove } = useRecentSearches('busquedas') // del uso (localStorage, por ejemplo)
+ * <Search onSubmit={add} onSelect={add} …>
+ *   <SearchBar label="Buscar" />
+ *   <SearchView>
+ *     {recent.map((r) => <SearchSuggestion key={r} value={r} onRemove={remove} />)}
+ *   </SearchView>
+ * </Search>
+ * ```
  *
  * ```tsx
  * <SearchSuggestion value="mate cocido" />
@@ -984,10 +1079,12 @@ export function SearchSuggestion({
   value,
   textValue,
   disabled = false,
+  onRemove,
   id,
   className,
   children,
   onClick,
+  'aria-describedby': describedBy,
   ...rest
 }: SearchSuggestionProps) {
   const ctx = useSearch('SearchSuggestion')
@@ -998,11 +1095,11 @@ export function SearchSuggestion({
 
   useLayoutEffect(() => {
     const registry = options.current
-    registry.set(ownId, { value, textValue: text, disabled })
+    registry.set(ownId, { value, textValue: text, disabled, onRemove })
     return () => {
       registry.delete(ownId)
     }
-  }, [options, ownId, value, text, disabled])
+  }, [options, ownId, value, text, disabled, onRemove])
 
   const active = ctx.activeId === ownId
   return (
@@ -1012,6 +1109,7 @@ export function SearchSuggestion({
       role="option"
       aria-selected={active}
       aria-disabled={disabled || undefined}
+      aria-describedby={[describedBy, onRemove && !disabled ? ctx.removeHintId : undefined].filter(Boolean).join(' ') || undefined}
       data-active={active ? '' : undefined}
       className={cx('mk-search-suggestion', className)}
       onClick={(e) => {

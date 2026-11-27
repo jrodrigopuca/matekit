@@ -1047,3 +1047,167 @@ describe('Search: anillo de foco solo con teclado', () => {
     expect(ring(bar(c))).toBe('1')
   })
 })
+
+describe('Search: quitar sugerencias (onRemove)', () => {
+  /** Recientes que el uso guarda y quita (controlado); `keep` simula un uso que no la saca. */
+  function Recents({ initial = ['mate', 'yerba', 'bombilla'], keep = false, onRemove }: { initial?: string[]; keep?: boolean; onRemove?: (v: string) => void }) {
+    const [items, setItems] = useState(initial)
+    return (
+      <Search view="docked">
+        <SearchBar label="Buscar" />
+        <SearchView>
+          {items.map((r) => (
+            <SearchSuggestion
+              key={r}
+              value={r}
+              onRemove={(v) => {
+                onRemove?.(v)
+                if (!keep) setItems((list) => list.filter((x) => x !== v))
+              }}
+            />
+          ))}
+          <SearchSuggestion value="sin quitar" />
+        </SearchView>
+      </Search>
+    )
+  }
+  const activeText = (c: ParentNode) => document.getElementById(ad(input(c)) ?? '')?.textContent ?? null
+
+  test('Supr sobre la activa llama a su onRemove y anuncia "Se quitó …"; la activa pasa a la siguiente', async () => {
+    const onRemove = vi.fn()
+    const c = await render(<Recents onRemove={onRemove} />)
+    await userEvent.click(input(c))
+    await userEvent.keyboard('{ArrowDown}{ArrowDown}')
+    expect(activeText(c)).toBe('yerba')
+    await userEvent.keyboard('{Delete}')
+    expect(onRemove).toHaveBeenCalledTimes(1)
+    expect(onRemove).toHaveBeenCalledWith('yerba')
+    expect(status(c).textContent).toBe('Se quitó yerba')
+    await expect.poll(() => activeText(c)).toBe('bombilla')
+    expect(options(c).map((o) => o.textContent)).toEqual(['mate', 'bombilla', 'sin quitar'])
+    // El cambio de cantidad que provoca no pisa el anuncio enseguida.
+    await frames(3)
+    expect(status(c).textContent).toBe('Se quitó yerba')
+  })
+
+  test('si era la última, la activa pasa a la anterior; si no queda ninguna, a ninguna', async () => {
+    const c = await render(
+      <Search view="docked">
+        <SearchBar label="Buscar" />
+        <SearchView>
+          <RemovableList initial={['a', 'b']} />
+        </SearchView>
+      </Search>,
+    )
+    await userEvent.click(input(c))
+    await userEvent.keyboard('{ArrowUp}')
+    expect(activeText(c)).toBe('b')
+    await userEvent.keyboard('{Delete}')
+    await expect.poll(() => activeText(c)).toBe('a')
+    await userEvent.keyboard('{Delete}')
+    await expect.poll(() => options(c)).toHaveLength(0)
+    expect(ad(input(c))).toBeNull()
+  })
+
+  test('sin onRemove, Supr con la activa no hace nada: ni quita ni borra texto del campo', async () => {
+    const c = await render(<Harness initial="ma" />)
+    await userEvent.click(input(c))
+    input(c).setSelectionRange(0, 0)
+    await userEvent.keyboard('{ArrowDown}')
+    const before = ad(input(c))
+    const e = new KeyboardEvent('keydown', { key: 'Delete', bubbles: true, cancelable: true })
+    input(c).dispatchEvent(e)
+    expect(e.defaultPrevented).toBe(true)
+    await userEvent.keyboard('{Delete}')
+    expect(input(c).value).toBe('ma')
+    expect(ad(input(c))).toBe(before)
+    expect(options(c)).toHaveLength(3)
+  })
+
+  test('sin sugerencia activa, Supr edita el texto como siempre; Retroceso nunca quita', async () => {
+    const onRemove = vi.fn()
+    const c = await render(<Recents onRemove={onRemove} />)
+    await userEvent.click(input(c))
+    await userEvent.keyboard('xy{ArrowLeft}{Delete}')
+    expect(input(c).value).toBe('x')
+    expect(onRemove).not.toHaveBeenCalled()
+    await userEvent.keyboard('{Backspace}{ArrowDown}{Backspace}')
+    expect(onRemove).not.toHaveBeenCalled()
+  })
+
+  test('si el uso no la saca, la activa queda donde estaba', async () => {
+    const onRemove = vi.fn()
+    const c = await render(<Recents keep onRemove={onRemove} />)
+    await userEvent.click(input(c))
+    await userEvent.keyboard('{ArrowDown}{Delete}')
+    expect(onRemove).toHaveBeenCalledWith('mate')
+    await frames(3)
+    expect(activeText(c)).toBe('mate')
+    expect(options(c)).toHaveLength(4)
+  })
+
+  test('las que se pueden quitar tienen la descripción "Supr para quitar" (oculta); las otras no', async () => {
+    const c = await render(<Recents />)
+    await userEvent.click(input(c))
+    const [mate] = options(c)
+    const plain = options(c).at(-1) as HTMLElement
+    const hint = document.getElementById(mate?.getAttribute('aria-describedby') ?? '')
+    expect(hint?.textContent).toBe('Supr para quitar')
+    expect(hint?.hidden).toBe(true)
+    expect(plain.hasAttribute('aria-describedby')).toBe(false)
+    await expect.element(page.getByRole('option', { name: 'mate' })).toHaveAccessibleDescription('Supr para quitar')
+  })
+
+  test('mensajes localizables: formatRemoved y removeHint', async () => {
+    const c = await render(
+      <Search view="docked">
+        <SearchBar label="Search" />
+        <SearchView formatRemoved={(t) => `Removed ${t}`} removeHint="Delete to remove">
+          <RemovableList initial={['tea']} />
+        </SearchView>
+      </Search>,
+    )
+    await userEvent.click(input(c))
+    await userEvent.keyboard('{ArrowDown}')
+    expect(document.getElementById(options(c)[0]?.getAttribute('aria-describedby') ?? '')?.textContent).toBe('Delete to remove')
+    await userEvent.keyboard('{Delete}')
+    expect(status(c).textContent).toBe('Removed tea')
+  })
+
+  test('a pantalla completa, Supr quita dentro de la vista', async () => {
+    const onRemove = vi.fn()
+    const c = await render(
+      <Search view="full-screen">
+        <SearchBar label="Buscar" />
+        <SearchView>
+          <RemovableList initial={['a', 'b']} onRemove={onRemove} />
+        </SearchView>
+      </Search>,
+    )
+    await userEvent.click(input(c))
+    await userEvent.keyboard('{ArrowDown}{Delete}')
+    expect(onRemove).toHaveBeenCalledWith('a')
+    await expect.poll(() => document.getElementById(ad(viewInput(c)) ?? '')?.textContent).toBe('b')
+    expect(dialog(c).contains(status(c))).toBe(true)
+    expect(status(c).textContent).toBe('Se quitó a')
+  })
+})
+
+/** Sugerencias que se quitan (el uso las saca de su lista). */
+function RemovableList({ initial, onRemove }: { initial: string[]; onRemove?: (v: string) => void }) {
+  const [items, setItems] = useState(initial)
+  return (
+    <>
+      {items.map((r) => (
+        <SearchSuggestion
+          key={r}
+          value={r}
+          onRemove={(v) => {
+            onRemove?.(v)
+            setItems((list) => list.filter((x) => x !== v))
+          }}
+        />
+      ))}
+    </>
+  )
+}

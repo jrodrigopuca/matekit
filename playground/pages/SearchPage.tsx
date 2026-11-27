@@ -1,6 +1,7 @@
 import { useEffect, useState, type CSSProperties, type FormEvent } from 'react'
 import {
   ArrowBackIcon,
+  Button,
   IconButton,
   ListItemHeadline,
   ListItemLeading,
@@ -38,7 +39,42 @@ const FRUITS = [
   { id: 'f11', name: 'Uva', kind: 'Baya' },
   { id: 'f12', name: 'Frutilla', kind: 'Baya' },
 ]
-const RECENT = ['mate cocido', 'mandarina']
+const MAX_RECENT = 5
+
+/**
+ * Receta (no es parte de la librería): búsquedas recientes guardadas por la app. Search no guarda
+ * nada; avisa con onSubmit, onSelect y onRemove, y esto guarda en localStorage, sin duplicados
+ * (la más nueva primero), con un máximo de 5. localStorage puede no estar (ventana privada,
+ * bloqueado) o estar lleno: cada lectura y escritura va en try/catch y, si falla, la lista vive
+ * solo en memoria.
+ */
+function useRecentSearches(key: string) {
+  const [recent, setRecent] = useState<string[]>(() => {
+    try {
+      const saved: unknown = JSON.parse(localStorage.getItem(key) ?? '[]')
+      return Array.isArray(saved) ? saved.filter((x): x is string => typeof x === 'string').slice(0, MAX_RECENT) : []
+    } catch {
+      return []
+    }
+  })
+  const save = (next: string[]) => {
+    setRecent(next)
+    try {
+      localStorage.setItem(key, JSON.stringify(next))
+    } catch {
+      // Privado, bloqueado o lleno: queda en memoria.
+    }
+  }
+  return {
+    recent,
+    add: (text: string) => {
+      const t = text.trim()
+      if (t) save([t, ...recent.filter((r) => r !== t)].slice(0, MAX_RECENT))
+    },
+    remove: (text: string) => save(recent.filter((r) => r !== text)),
+    clear: () => save([]),
+  }
+}
 
 const fold = (s: string) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase()
 const filterFruits = (q: string) => FRUITS.filter((f) => fold(f.name).includes(fold(q.trim())))
@@ -88,7 +124,9 @@ export function SearchPage() {
   const local = filterFruits(q)
   const remoteState = useRemoteResults(remote ? q : '')
   const results = remote ? remoteState.results : q.trim() === '' ? [] : local
-  const recents = RECENT.filter((r) => fold(r).includes(fold(q.trim())))
+  const history = useRecentSearches('matekit-playground-busquedas')
+  const recents = history.recent.filter((r) => fold(r).includes(fold(q.trim())))
+  const nameOf = (id: string) => FRUITS.find((f) => f.id === id)?.name ?? id
 
   const [q2, setQ2] = useState('')
   const [q3, setQ3] = useState('')
@@ -130,8 +168,14 @@ export function SearchPage() {
             view={view}
             value={q}
             onValueChange={setQ}
-            onSubmit={(v) => push(`buscar "${v}"`)}
-            onSelect={(v) => push(`elegir "${v}"`)}
+            onSubmit={(v) => {
+              push(`buscar "${v}"`)
+              history.add(v)
+            }}
+            onSelect={(v) => {
+              push(`elegir "${v}"`)
+              history.add(nameOf(v))
+            }}
           >
             <SearchBar label="Buscar frutas" placeholder="Buscar frutas">
               <SearchBarLeading>
@@ -148,7 +192,14 @@ export function SearchPage() {
               {groups && recents.length > 0 && (
                 <SearchSuggestionGroup label="Recientes">
                   {recents.map((r) => (
-                    <SearchSuggestion key={r} value={r}>
+                    <SearchSuggestion
+                      key={r}
+                      value={r}
+                      onRemove={(v) => {
+                        history.remove(v)
+                        push(`quitar "${v}"`)
+                      }}
+                    >
                       <ListItemLeading><RefreshIcon /></ListItemLeading>
                       <ListItemHeadline>{r}</ListItemHeadline>
                     </SearchSuggestion>
@@ -171,6 +222,15 @@ export function SearchPage() {
             </SearchView>
           </Search>
         </div>
+        <div className="pg-controls">
+          <Button variant="text" size="sm" disabled={history.recent.length === 0} onClick={history.clear}>
+            Borrar historial
+          </Button>
+        </div>
+        <p className="pg-hint">
+          Las recientes las guarda la página (receta useRecentSearches, localStorage): se agregan al buscar
+          o elegir; Supr sobre una reciente activa la quita; "Borrar historial" las quita todas.
+        </p>
         <Log lines={log} />
       </section>
 
