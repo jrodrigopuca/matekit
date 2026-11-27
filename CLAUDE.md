@@ -58,7 +58,8 @@ src/internal/    ayudas compartidas entre componentes, no exportadas (interactiv
                  Tooltip, ADR-0007 y ADR-0021; roving-focus.ts: useRovingFocus, el foco
                  itinerante de una sola parada de Tab de ChipGroup, Tabs y Toolbar, ADR-0023 y
                  ADR-0027; nearest-scroller.ts: el contenedor que se desplaza más cercano, de las
-                 partes cliente de TopAppBar y Toolbar; settle-animations.ts: settleAnimations, la espera de la salida
+                 partes cliente de TopAppBar y Toolbar; dev.ts: isDevelopment, los avisos solo en
+                 desarrollo con `process.env.NODE_ENV` como React; settle-animations.ts: settleAnimations, la espera de la salida
                  animada de Snackbar, Tooltip, Menu, Dialog y los sheets, que no se traba si una
                  transición se cancela; modal-dialog.ts: useModalDialog, el ciclo de vida modal
                  sobre `<dialog>` (showModal, foco inicial, Escape y scrim, vuelta de Tab, salida

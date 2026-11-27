@@ -22,7 +22,8 @@
 // FAB, usar la floating dentro de ToolbarLayout; si hace falta la docked, el FAB va suelto, encima de
 // ella, como sobre una NavigationBar.
 
-import { createContext, useCallback, useMemo, useState, type FocusEvent, type HTMLAttributes, type ReactNode, type Ref } from 'react'
+import { createContext, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type FocusEvent, type HTMLAttributes, type ReactNode, type Ref } from 'react'
+import { isDevelopment } from '../../internal/dev.ts'
 import { cx } from '../../internal/interactive.tsx'
 
 /** Por qué se pide expandir o contraer: el desplazamiento (`scrollBehavior="collapse"`) o el foco de teclado. */
@@ -63,7 +64,10 @@ export interface ToolbarLayoutProps extends HTMLAttributes<HTMLDivElement> {
  * ```
  *
  * Con la barra contraída, el foco de teclado que llega al FAB la vuelve a expandir (así los botones
- * de la barra quedan a un Mayús+Tab).
+ * de la barra quedan a un Mayús+Tab). Controlado (`expanded`), eso es un pedido:
+ * `onExpandedChange(true, 'focus')`. Si la app no lo acepta, la barra sigue contraída e inerte y sus
+ * botones quedan fuera del alcance del teclado; en desarrollo se avisa por consola (`console.warn`,
+ * una vez por ToolbarLayout).
  */
 export function ToolbarLayout(props: ToolbarLayoutProps) {
   const { className, children, expanded: expandedProp, defaultExpanded = true, onExpandedChange, onFocus, ...rest } = props
@@ -81,9 +85,33 @@ export function ToolbarLayout(props: ToolbarLayoutProps) {
   )
   const context = useMemo(() => ({ expanded, requestExpanded }), [expanded, requestExpanded])
 
+  // Aviso en desarrollo: el pedido de expandir por el foco quedó sin respuesta (controlado). Se mira
+  // después de que React aplique lo que la app haga en onExpandedChange (un turno después del evento).
+  const latestExpanded = useRef(expanded)
+  useLayoutEffect(() => {
+    latestExpanded.current = expanded
+  })
+  const warned = useRef(false)
+  const warnTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  useEffect(() => () => clearTimeout(warnTimer.current), [])
+
   const handleFocus = (event: FocusEvent<HTMLDivElement>) => {
     onFocus?.(event)
-    if (!expanded && event.target.matches(':focus-visible')) requestExpanded(true, 'focus')
+    if (!expanded && event.target.matches(':focus-visible')) {
+      requestExpanded(true, 'focus')
+      if (controlled && !warned.current && isDevelopment()) {
+        clearTimeout(warnTimer.current)
+        warnTimer.current = setTimeout(() => {
+          if (latestExpanded.current || warned.current) return
+          warned.current = true
+          console.warn(
+            'ToolbarLayout: el foco de teclado llegó al FAB y pidió expandir la barra ' +
+              "(onExpandedChange(true, 'focus')), pero `expanded` sigue en false. La barra contraída es " +
+              'inerte: sus botones quedan inaccesibles por teclado. Aceptá el pedido actualizando `expanded`.',
+          )
+        }, 0)
+      }
+    }
   }
 
   return (

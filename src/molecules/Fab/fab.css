@@ -74,7 +74,10 @@
   }
 
   /* --- Tamaños (kit: alto, radio, relleno, separación, icono y texto) --- */
-  :is(.mk-fab, .mk-extended-fab)[data-size='md'] {
+  /* También el FAB acompañante de una Toolbar contraída (ToolbarLayout, ADR-0027), que crece a este
+     tamaño como el FabSizeRange de Compose; las medidas viven solo acá. */
+  :is(.mk-fab, .mk-extended-fab)[data-size='md'],
+  .mk-toolbar-layout[data-collapsed] > .mk-fab {
     --_height: 80px;
     --_padding: 26px;
     --_gap: 12px;

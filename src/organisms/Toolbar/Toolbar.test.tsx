@@ -1,4 +1,4 @@
-import { createRef, type ReactNode } from 'react'
+import { createRef, useState, type ReactNode } from 'react'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { commands, page, userEvent } from 'vitest/browser'
 import { AddIcon, BookmarkIcon, DeleteIcon, EditIcon, MoreVertIcon, ShareIcon, StarIcon } from '../../icons/icons.tsx'
@@ -744,12 +744,15 @@ describe('contraer hacia el FAB (expanded)', () => {
     const c = await render(<WithFab />)
     withMotion(() => {
       expect(style(q(c, '.mk-toolbar')).transitionProperty).toContain('clip-path')
-      expect(style(q(c, '.fab')).transitionProperty).toContain('scale')
+      expect(style(q(c, '.fab')).transitionProperty).toContain('width')
+      expect(style(q(c, '.fab')).transitionProperty).toContain('height')
+      expect(style(q(c, '.fab > .mk-icon')).transitionProperty).toContain('width')
     })
     await commands.reduceMotion(true)
     withMotion(() => {
       expect(style(q(c, '.mk-toolbar')).transitionProperty).not.toContain('clip-path')
-      expect(style(q(c, '.fab')).transitionProperty).not.toContain('scale')
+      expect(style(q(c, '.fab')).transitionProperty).not.toContain('width')
+      expect(style(q(c, '.fab > .mk-icon')).transitionProperty).not.toContain('width')
     })
   })
 })
@@ -809,5 +812,114 @@ describe('alto de la vertical: lo visible del contenedor, no la ventana', () => 
     await expect.poll(() => rect(q(c, '.lay')).height).toBeCloseTo(352, 1)
     const s = rect(q(c, '.scroller'))
     expect(rect(q(c, '.fab')).bottom).toBeLessThanOrEqual(s.bottom - 24 + 0.5)
+  })
+})
+
+describe('FAB contraído con su tamaño real (FabSizeRange de Compose)', () => {
+  function Layout({ expanded, vertical = false, fabFirst = false }: { expanded: boolean; vertical?: boolean; fabFirst?: boolean }) {
+    const fab = <Fab className="fab" label="Nuevo"><AddIcon /></Fab>
+    return (
+      <ToolbarLayout className="lay" expanded={expanded}>
+        {fabFirst && fab}
+        <Bar {...(vertical ? { orientation: 'vertical' as const } : {})} />
+        {!fabFirst && fab}
+      </ToolbarLayout>
+    )
+  }
+
+  const inside = (inner: DOMRect, outer: DOMRect) => {
+    expect(inner.left).toBeGreaterThanOrEqual(outer.left - 0.5)
+    expect(inner.right).toBeLessThanOrEqual(outer.right + 0.5)
+    expect(inner.top).toBeGreaterThanOrEqual(outer.top - 0.5)
+    expect(inner.bottom).toBeLessThanOrEqual(outer.bottom + 0.5)
+  }
+
+  for (const k of [
+    { name: 'horizontal, FAB al final', vertical: false, fabFirst: false, edge: 'right' },
+    { name: 'horizontal, FAB al principio', vertical: false, fabFirst: true, edge: 'left' },
+    { name: 'vertical, FAB abajo', vertical: true, fabFirst: false, edge: 'bottom' },
+  ] as const) {
+    test(`${k.name}: 56 con icono de 24 → 80 con icono de 28 y radio large-increased, sin moverse ni salirse`, async () => {
+      const page_ = (expanded: boolean) =>
+        k.vertical ? (
+          <div className="scroller" style={{ width: 360, height: 500, overflow: 'auto' }}>
+            <Layout expanded={expanded} vertical fabFirst={k.fabFirst} />
+            <div style={{ height: 2000 }} />
+          </div>
+        ) : (
+          <div style={{ padding: 40 }}><Layout expanded={expanded} fabFirst={k.fabFirst} /></div>
+        )
+      let c = await render(page_(true))
+      const before = { fab: rect(q(c, '.fab')), lay: rect(q(c, '.lay')) }
+      expect(before.fab.width).toBeCloseTo(56, 1)
+      expect(before.fab.height).toBeCloseTo(56, 1)
+      expect(rect(q(c, '.fab svg')).width).toBeCloseTo(24, 1)
+      inside(before.fab, before.lay)
+
+      c = await render(page_(false))
+      const fab = q(c, '.fab')
+      await expect.poll(() => rect(fab).width).toBeCloseTo(80, 1)
+      const after = { fab: rect(fab), lay: rect(q(c, '.lay')) }
+      expect(after.fab.height).toBeCloseTo(80, 1)
+      expect(rect(q(c, '.fab svg')).width).toBeCloseTo(28, 1)
+      expect(style(fab).borderTopLeftRadius).toBe(cornerPx('large-increased'))
+      // El conjunto no cambia de tamaño (no se descentra) y el FAB no se sale de su caja.
+      expect(after.lay.width).toBeCloseTo(before.lay.width, 1)
+      expect(after.lay.height).toBeCloseTo(before.lay.height, 1)
+      inside(after.fab, after.lay)
+      // El borde exterior del FAB queda quieto: crece hacia la barra.
+      expect(after.fab[k.edge]).toBeCloseTo(before.fab[k.edge], 1)
+      // Centrado en el otro eje, como antes.
+      if (k.vertical) expect(after.fab.left + after.fab.width / 2).toBeCloseTo(before.fab.left + before.fab.width / 2, 1)
+      else expect(after.fab.top + after.fab.height / 2).toBeCloseTo(before.fab.top + before.fab.height / 2, 1)
+    })
+  }
+})
+
+describe('aviso en desarrollo: ToolbarLayout controlado que ignora el pedido del foco', () => {
+  afterEach(() => vi.restoreAllMocks())
+
+  function Controlled({ accept }: { accept: boolean }) {
+    const [expanded, setExpanded] = useState(false)
+    return (
+      <ToolbarLayout expanded={expanded} onExpandedChange={(next) => accept && setExpanded(next)}>
+        <Bar />
+        <Fab className="fab" label="Nuevo"><AddIcon /></Fab>
+        <button className="otro">otro</button>
+      </ToolbarLayout>
+    )
+  }
+
+  const waitTurn = () => new Promise((r) => setTimeout(r, 30))
+
+  test('avisa una sola vez si la app no actualiza expanded', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const c = await render(<Controlled accept={false} />)
+    focusKeyboard(q(c, '.fab'))
+    await expect.poll(() => warn.mock.calls.length).toBe(1)
+    expect(String(warn.mock.calls[0]![0])).toContain('inaccesibles por teclado')
+    expect(q(c, '.mk-toolbar').inert).toBe(true)
+    focusKeyboard(q(c, '.otro'))
+    focusKeyboard(q(c, '.fab'))
+    await waitTurn()
+    expect(warn).toHaveBeenCalledTimes(1)
+  })
+
+  test('no avisa si la app acepta, ni sin controlar', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    let c = await render(<Controlled accept />)
+    focusKeyboard(q(c, '.fab'))
+    await expect.poll(() => q(c, '.mk-toolbar').inert).toBe(false)
+    await waitTurn()
+    c = await render(
+      <ToolbarLayout defaultExpanded={false}>
+        <Bar />
+        <Fab className="fab" label="Nuevo"><AddIcon /></Fab>
+      </ToolbarLayout>,
+    )
+    focusKeyboard(q(c, '.fab'))
+    await expect.poll(() => q(c, '.mk-toolbar').inert).toBe(false)
+    await waitTurn()
+    expect(warn).not.toHaveBeenCalled()
   })
 })

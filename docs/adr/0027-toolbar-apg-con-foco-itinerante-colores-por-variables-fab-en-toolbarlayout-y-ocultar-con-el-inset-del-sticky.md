@@ -69,7 +69,7 @@
     `true`) y `onExpandedChange(expanded, reason)`, como el resto de la librería, y por eso es
     cliente. Contraída, la barra se cierra hacia el FAB con un `clip-path: inset()` que pasa de
     abarcar la barra y su sombra (24 más afuera, con el radio concéntrico) a cerrarse del lado
-    opuesto al FAB, y el FAB crece de 56 a 80 con `scale` anclado en su extremo exterior; las dos
+    opuesto al FAB, y el FAB crece de 56 a 80 de verdad (ver la actualización); las dos
     cosas con FastSpatial (sin transición con movimiento reducido). El conjunto conserva su tamaño,
     así el FAB no se mueve (como Compose). Se eligió el recorte y no animar el ancho porque el ancho
     `fit-content` no se puede animar sin medir, y con el ancho cambiaría el centrado. La caja del
@@ -143,10 +143,22 @@
   - `ToolbarLayout` es para la floating; la docked no tiene FAB acompañante.
   - Antes de hidratar, la vertical se limita con `100dvh`: dentro de un panel más bajo que la ventana
     puede quedar más alta que lo visible hasta que la parte cliente mide.
-  - Contraída, la caja de la barra sigue ocupando su lugar (transparente y sin puntero); el FAB crecido
-    con `scale` sobresale 12 de la caja del conjunto.
+  - Contraída, la caja de la barra sigue ocupando su lugar (transparente y sin puntero). El conjunto
+    reserva 80 de alto (o de ancho en la vertical) para el FAB contraído, así que la barra expandida
+    queda centrada en esos 80, 8 más lejos del borde que sola (como Compose). El crecimiento exacto
+    supone el FAB `sm` al lado de la barra.
   - El foco de teclado que llega al FAB expande la barra: si la app la quería contraída (controlada),
     recibe el pedido y decide.
+- Actualización (2026-11-27): el FAB contraído crece con su tamaño real y no con `scale`: el
+  selector del conjunto contraído se suma a la regla `data-size='md'` de `fab.css` (80, radio
+  large-increased, icono de 28; las medidas viven solo ahí), con ancho, alto, radio, icono y margen
+  animados con FastSpatial (sin transición con movimiento reducido). Un margen negativo del lado de la
+  barra le descuenta lo que crece (ocupa siempre 56 en la fila): el borde exterior queda quieto, el
+  conjunto no cambia de tamaño y el FAB no se sale de su caja, que reserva 80 como el
+  `defaultMinSize(minHeight = FabSizeRange.endInclusive)` de Compose. Y `ToolbarLayout` controlado
+  avisa en desarrollo (`console.warn`, una vez por instancia) si el foco de teclado pidió expandir y la
+  app no actualizó `expanded`; desarrollo se detecta con la expresión `process.env.NODE_ENV` que
+  reemplazan los bundlers, como React (`src/internal/dev.ts`; sin bundler cuenta como desarrollo).
 - Revisit if: `interpolate-size` llega a los tres motores (el ancho de la barra se podría animar en
   lugar de recortar); aparece la consulta de dirección (`scroll-state(scrolled)`) en los tres motores (el
   ocultar podría ser CSS); el scaffold de paneles (ítem 24) necesita la barra fuera del contenedor que se

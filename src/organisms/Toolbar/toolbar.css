@@ -190,12 +190,18 @@
     z-index: 1;
     /* La caja del conjunto no tapa el contenido: con la barra contraída, su lugar queda vacío. */
     pointer-events: none;
+    /* Lugar para el FAB contraído (80, el FAB md): el conjunto no cambia de alto al contraerse y el
+       FAB crece sin salirse (Compose: defaultMinSize(minHeight = FabSizeRange.endInclusive)). La
+       barra de 64 queda centrada en esos 80. */
+    min-block-size: 80px;
   }
   .mk-toolbar-layout > * {
     pointer-events: auto;
   }
   .mk-toolbar-layout:has(> .mk-toolbar[aria-orientation='vertical']) {
     flex-direction: column;
+    min-block-size: 0;
+    min-inline-size: 80px;
   }
   .mk-toolbar-layout > .mk-toolbar.mk-toolbar[data-variant][aria-orientation] {
     /* Radio del recorte: concéntrico con el extremo redondo de la barra, --_reach más afuera. */
@@ -240,23 +246,32 @@
   .mk-toolbar-layout[data-collapsed] > .mk-toolbar.mk-toolbar[data-variant][aria-orientation='vertical']:not(:first-child) {
     clip-path: inset(calc(-1 * var(--_reach)) calc(-1 * var(--_reach)) calc(100% + var(--_reach)) calc(-1 * var(--_reach)) round var(--_clip-radius));
   }
+  /* El FAB contraído toma el tamaño md de verdad (80, radio large-increased, icono de 28: las
+     variables de fab.css, que suma este selector a su regla de data-size='md'). Un margen negativo
+     del lado de la barra le descuenta lo que crece: ocupa siempre 56 en la fila, así el conjunto no
+     cambia de ancho ni se descentra, y el FAB crece hacia la barra con su borde exterior quieto
+     (Compose ubica el FAB en width - fabWidth). En la vertical crece hacia arriba (o hacia abajo si
+     está antes de la barra) y queda centrado en los 80 de ancho. */
+  .mk-toolbar-layout > .mk-fab {
+    --_growth: 0px;
+  }
+  /* 56 es el FAB sm que va al lado de la barra (el que recomienda ToolbarLayout, como Compose). */
   .mk-toolbar-layout[data-collapsed] > .mk-fab {
-    /* 80 / 56: el FAB medium de Compose (FabMediumTokens.ContainerWidth). */
-    scale: calc(80 / 56);
-    transform-origin: right center;
+    --_growth: calc(56px - var(--_height));
   }
-  .mk-toolbar-layout[data-collapsed] > .mk-fab:dir(rtl),
-  .mk-toolbar-layout[data-collapsed] > .mk-fab:has(~ .mk-toolbar):dir(ltr) {
-    transform-origin: left center;
+  .mk-toolbar-layout > .mk-toolbar ~ .mk-fab {
+    margin-inline-start: var(--_growth); /* lint-css-allow: descuenta el crecimiento del FAB (80 - 56), no es espaciado */
   }
-  .mk-toolbar-layout[data-collapsed] > .mk-fab:has(~ .mk-toolbar):dir(rtl) {
-    transform-origin: right center;
+  .mk-toolbar-layout > .mk-fab:has(~ .mk-toolbar) {
+    margin-inline-end: var(--_growth); /* lint-css-allow: descuenta el crecimiento del FAB, no es espaciado */
   }
-  .mk-toolbar-layout[data-collapsed]:has(> .mk-toolbar[aria-orientation='vertical']) > .mk-fab {
-    transform-origin: center bottom;
+  .mk-toolbar-layout:has(> .mk-toolbar[aria-orientation='vertical']) > .mk-toolbar ~ .mk-fab {
+    margin-inline-start: 0;
+    margin-block-start: var(--_growth); /* lint-css-allow: descuenta el crecimiento del FAB, no es espaciado */
   }
-  .mk-toolbar-layout[data-collapsed]:has(> .mk-toolbar[aria-orientation='vertical']) > .mk-fab:has(~ .mk-toolbar) {
-    transform-origin: center top;
+  .mk-toolbar-layout:has(> .mk-toolbar[aria-orientation='vertical']) > .mk-fab:has(~ .mk-toolbar) {
+    margin-inline-end: 0;
+    margin-block-end: var(--_growth); /* lint-css-allow: descuenta el crecimiento del FAB, no es espaciado */
   }
 
   /* Escondida del todo: sin puntero (la vertical queda transparente en su lugar). */
@@ -281,7 +296,16 @@
     .mk-toolbar-layout > .mk-fab {
       transition:
         box-shadow var(--md-sys-motion-spring-default-effects-duration) var(--md-sys-motion-spring-default-effects-easing),
-        scale var(--md-sys-motion-spring-fast-spatial-duration) var(--md-sys-motion-spring-fast-spatial-easing);
+        width var(--md-sys-motion-spring-fast-spatial-duration) var(--md-sys-motion-spring-fast-spatial-easing),
+        height var(--md-sys-motion-spring-fast-spatial-duration) var(--md-sys-motion-spring-fast-spatial-easing),
+        min-width var(--md-sys-motion-spring-fast-spatial-duration) var(--md-sys-motion-spring-fast-spatial-easing),
+        border-radius var(--md-sys-motion-spring-fast-spatial-duration) var(--md-sys-motion-spring-fast-spatial-easing),
+        margin var(--md-sys-motion-spring-fast-spatial-duration) var(--md-sys-motion-spring-fast-spatial-easing);
+    }
+    .mk-toolbar-layout > .mk-fab > :is(svg, .mk-icon) {
+      transition:
+        width var(--md-sys-motion-spring-fast-spatial-duration) var(--md-sys-motion-spring-fast-spatial-easing),
+        height var(--md-sys-motion-spring-fast-spatial-duration) var(--md-sys-motion-spring-fast-spatial-easing);
     }
   }
 
