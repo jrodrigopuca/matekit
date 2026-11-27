@@ -376,7 +376,7 @@ describe('Search: datos, envío, carga y vacío', () => {
       </Search>,
     )
     expect(input(c).value).toBe('pe')
-    const clear = page.getByRole('button', { name: 'Borrar búsqueda' })
+    const clear = page.getByRole('button', { name: 'Clear search' })
     await userEvent.click(clear)
     expect(input(c).value).toBe('')
     expect(onValueChange).toHaveBeenCalledWith('')
@@ -415,22 +415,66 @@ describe('Search: datos, envío, carga y vacío', () => {
     expect(submit).not.toHaveBeenCalled()
   })
 
-  test('carga: barra de progreso con nombre, la lista abierta sin opciones y "Buscando…" anunciado', async () => {
+  test('carga: barra de progreso con nombre, la lista abierta sin opciones y "Searching…" anunciado', async () => {
     const c = await render(<Harness initial="zz" loading />)
     await userEvent.click(input(c))
     expect(input(c).getAttribute('aria-expanded')).toBe('true')
-    await expect.element(page.getByRole('progressbar', { name: 'Buscando…' })).toBeInTheDocument()
+    await expect.element(page.getByRole('progressbar', { name: 'Searching…' })).toBeInTheDocument()
     expect(popup(c).contains(c.querySelector('[role="progressbar"]'))).toBe(true)
-    await expect.poll(() => status(c).textContent).toBe('Buscando…')
+    await expect.poll(() => status(c).textContent).toBe('Searching…')
   })
 
-  test('vacío: "Sin resultados" visible y anunciado', async () => {
+  test('vacío: "No results" visible y anunciado', async () => {
     const c = await render(<Harness />)
     await typeInto(input(c), 'zz')
     expect(input(c).getAttribute('aria-expanded')).toBe('true')
-    expect(q(popup(c), '.mk-search-empty').textContent).toBe('Sin resultados')
+    expect(q(popup(c), '.mk-search-empty').textContent).toBe('No results')
     expect(options(c)).toHaveLength(0)
+    await expect.poll(() => status(c).textContent).toBe('No results')
+  })
+
+  // Los textos por defecto están en ./strings.ts (en inglés); una app los cambia por las props.
+  function OwnStrings({ view = 'docked', loading }: { view?: SearchViewChoice; loading?: boolean }) {
+    const [value, setValue] = useState('')
+    return (
+      <Search view={view} value={value} onValueChange={setValue}>
+        <SearchBar label="Buscar" clearLabel="Borrar búsqueda" />
+        <SearchView
+          loading={loading}
+          loadingLabel="Buscando…"
+          emptyLabel="Sin resultados"
+          formatCount={(n) => (n === 1 ? '1 sugerencia' : `${n} sugerencias`)}
+          closeLabel="Cerrar búsqueda"
+        >
+          {filter(value).map((f) => (
+            <SearchSuggestion key={f} value={f.toLowerCase()} textValue={f} />
+          ))}
+        </SearchView>
+      </Search>
+    )
+  }
+
+  test('textos propios: clearLabel, formatCount y emptyLabel', async () => {
+    const c = await render(<OwnStrings />)
+    await typeInto(input(c), 'ma')
+    await expect.element(page.getByRole('button', { name: 'Borrar búsqueda' })).toBeInTheDocument()
+    await expect.poll(() => status(c).textContent).toBe('3 sugerencias')
+    await userEvent.keyboard('zz')
+    expect(q(popup(c), '.mk-search-empty').textContent).toBe('Sin resultados')
     await expect.poll(() => status(c).textContent).toBe('Sin resultados')
+  })
+
+  test('textos propios: loadingLabel (barra y anuncio)', async () => {
+    const c = await render(<OwnStrings loading />)
+    await typeInto(input(c), 'zz')
+    await expect.element(page.getByRole('progressbar', { name: 'Buscando…' })).toBeInTheDocument()
+    await expect.poll(() => status(c).textContent).toBe('Buscando…')
+  })
+
+  test('textos propios: closeLabel en la vista a pantalla completa', async () => {
+    const c = await render(<OwnStrings view="full-screen" />)
+    await userEvent.click(input(c))
+    await expect.element(page.getByRole('button', { name: 'Cerrar búsqueda' })).toBeVisible()
   })
 
   test('sin texto ni sugerencias la lista no se abre', async () => {
@@ -448,15 +492,15 @@ describe('Search: datos, envío, carga y vacío', () => {
     expect(popup(c).contains(region)).toBe(false)
     await typeInto(input(c), 'ma')
     expect(region.textContent).toBe('')
-    await expect.poll(() => region.textContent).toBe('3 sugerencias')
+    await expect.poll(() => region.textContent).toBe('3 suggestions')
     // "mand": solo Mandarina.
     await userEvent.keyboard('nd')
     await frames(3)
     // Todavía no cambió: espera a que se deje de escribir.
-    expect(region.textContent).toBe('3 sugerencias')
-    await expect.poll(() => region.textContent).toBe('1 sugerencia')
+    expect(region.textContent).toBe('3 suggestions')
+    await expect.poll(() => region.textContent).toBe('1 suggestion')
     await userEvent.keyboard('x')
-    await expect.poll(() => region.textContent).toBe('Sin resultados')
+    await expect.poll(() => region.textContent).toBe('No results')
     // Al cerrar se vacía enseguida.
     await userEvent.keyboard('{Escape}')
     await expect.poll(() => region.textContent).toBe('')
@@ -627,7 +671,7 @@ describe('Search a pantalla completa (modal)', () => {
       const c = await render(<Harness view="full-screen" />)
       await userEvent.click(input(c))
       await Promise.allSettled(dialog(c).getAnimations().map((a) => a.finished))
-      await userEvent.click(page.getByRole('button', { name: 'Cerrar búsqueda' }))
+      await userEvent.click(page.getByRole('button', { name: 'Close search' }))
       await expect.poll(() => dialog(c).hasAttribute('data-closing')).toBe(true)
       expect(dialog(c).open).toBe(true)
       await expect.poll(() => dialog(c).open).toBe(false)
@@ -697,7 +741,7 @@ describe('Search a pantalla completa (modal)', () => {
     const c = await render(<Harness view="full-screen" initial="ma" />)
     await userEvent.click(input(c))
     expect(dialog(c).contains(status(c))).toBe(true)
-    await expect.poll(() => status(c).textContent).toBe('3 sugerencias')
+    await expect.poll(() => status(c).textContent).toBe('3 suggestions')
   })
 
   test('medidas: ocupa la ventana, Surface Container Low, barra a 12 de los lados y 4 arriba, lista a 2 con radio 12', async () => {
@@ -989,7 +1033,7 @@ describe('Search: anillo de foco solo con teclado', () => {
   test('el botón de borrar con un clic devuelve el foco al campo sin anillo', async () => {
     const c = await render(<Harness initial="ma" />)
     await userEvent.click(input(c))
-    await userEvent.click(page.getByRole('button', { name: 'Borrar búsqueda' }))
+    await userEvent.click(page.getByRole('button', { name: 'Clear search' }))
     expect(document.activeElement).toBe(input(c))
     expect(ring(bar(c))).toBe('0')
   })
@@ -1073,7 +1117,7 @@ describe('Search: quitar sugerencias (onRemove)', () => {
   }
   const activeText = (c: ParentNode) => document.getElementById(ad(input(c)) ?? '')?.textContent ?? null
 
-  test('Supr sobre la activa llama a su onRemove y anuncia "Se quitó …"; la activa pasa a la siguiente', async () => {
+  test('Supr sobre la activa llama a su onRemove y anuncia "Removed …"; la activa pasa a la siguiente', async () => {
     const onRemove = vi.fn()
     const c = await render(<Recents onRemove={onRemove} />)
     await userEvent.click(input(c))
@@ -1082,12 +1126,12 @@ describe('Search: quitar sugerencias (onRemove)', () => {
     await userEvent.keyboard('{Delete}')
     expect(onRemove).toHaveBeenCalledTimes(1)
     expect(onRemove).toHaveBeenCalledWith('yerba')
-    expect(status(c).textContent).toBe('Se quitó yerba')
+    expect(status(c).textContent).toBe('Removed yerba')
     await expect.poll(() => activeText(c)).toBe('bombilla')
     expect(options(c).map((o) => o.textContent)).toEqual(['mate', 'bombilla', 'sin quitar'])
     // El cambio de cantidad que provoca no pisa el anuncio enseguida.
     await frames(3)
-    expect(status(c).textContent).toBe('Se quitó yerba')
+    expect(status(c).textContent).toBe('Removed yerba')
   })
 
   test('si era la última, la activa pasa a la anterior; si no queda ninguna, a ninguna', async () => {
@@ -1146,32 +1190,32 @@ describe('Search: quitar sugerencias (onRemove)', () => {
     expect(options(c)).toHaveLength(4)
   })
 
-  test('las que se pueden quitar tienen la descripción "Supr para quitar" (oculta); las otras no', async () => {
+  test('las que se pueden quitar tienen la descripción "Press Delete to remove" (oculta); las otras no', async () => {
     const c = await render(<Recents />)
     await userEvent.click(input(c))
     const [mate] = options(c)
     const plain = options(c).at(-1) as HTMLElement
     const hint = document.getElementById(mate?.getAttribute('aria-describedby') ?? '')
-    expect(hint?.textContent).toBe('Supr para quitar')
+    expect(hint?.textContent).toBe('Press Delete to remove')
     expect(hint?.hidden).toBe(true)
     expect(plain.hasAttribute('aria-describedby')).toBe(false)
-    await expect.element(page.getByRole('option', { name: 'mate' })).toHaveAccessibleDescription('Supr para quitar')
+    await expect.element(page.getByRole('option', { name: 'mate' })).toHaveAccessibleDescription('Press Delete to remove')
   })
 
   test('mensajes localizables: formatRemoved y removeHint', async () => {
     const c = await render(
       <Search view="docked">
-        <SearchBar label="Search" />
-        <SearchView formatRemoved={(t) => `Removed ${t}`} removeHint="Delete to remove">
-          <RemovableList initial={['tea']} />
+        <SearchBar label="Buscar" />
+        <SearchView formatRemoved={(t) => `Se quitó ${t}`} removeHint="Supr para quitar">
+          <RemovableList initial={['té']} />
         </SearchView>
       </Search>,
     )
     await userEvent.click(input(c))
     await userEvent.keyboard('{ArrowDown}')
-    expect(document.getElementById(options(c)[0]?.getAttribute('aria-describedby') ?? '')?.textContent).toBe('Delete to remove')
+    expect(document.getElementById(options(c)[0]?.getAttribute('aria-describedby') ?? '')?.textContent).toBe('Supr para quitar')
     await userEvent.keyboard('{Delete}')
-    expect(status(c).textContent).toBe('Removed tea')
+    expect(status(c).textContent).toBe('Se quitó té')
   })
 
   test('a pantalla completa, Supr quita dentro de la vista', async () => {
@@ -1189,7 +1233,7 @@ describe('Search: quitar sugerencias (onRemove)', () => {
     expect(onRemove).toHaveBeenCalledWith('a')
     await expect.poll(() => document.getElementById(ad(viewInput(c)) ?? '')?.textContent).toBe('b')
     expect(dialog(c).contains(status(c))).toBe(true)
-    expect(status(c).textContent).toBe('Se quitó a')
+    expect(status(c).textContent).toBe('Removed a')
   })
 })
 

@@ -54,6 +54,7 @@ import { mergeRefs } from '../../internal/merge-refs.ts'
 import { useModalDialog } from '../../internal/modal-dialog.ts'
 import { settleAnimations } from '../../internal/settle-animations.ts'
 import { WINDOW_WIDTH } from '../../tokens/breakpoints.ts'
+import { searchStrings } from './strings.ts'
 
 /** Cómo se muestran las sugerencias: debajo de la barra (`docked`) o en una vista modal que ocupa la pantalla. */
 export type SearchViewMode = 'docked' | 'full-screen'
@@ -66,7 +67,7 @@ export type SearchViewChoice = 'auto' | SearchViewMode
 
 /** Demora antes de anunciar la cantidad de sugerencias: no se repite en cada tecla. */
 const ANNOUNCE_DELAY_MS = 500
-/** Tras "Se quitó …", el anuncio de la cantidad nueva se calla este tiempo (no lo pisa). */
+/** Tras `formatRemoved` ("Removed …"), el anuncio de la cantidad nueva se calla este tiempo (no lo pisa). */
 const REMOVAL_QUIET_MS = 1000
 
 // Ventana medium o más ancha: `min-width` en rem (base 16), como los demás cortes (ADR-0016).
@@ -133,9 +134,9 @@ interface SearchContextValue {
   listboxRef: RefObject<HTMLUListElement | null>
   options: RefObject<Map<string, OptionData>>
   pendingRemoval: RefObject<PendingRemoval | null>
-  /** Lo registra SearchView: anuncia "Se quitó …" en su región viva. */
+  /** Lo registra SearchView: anuncia `formatRemoved` ("Removed …") en su región viva. */
   announceRemoval: RefObject<((text: string) => void) | null>
-  /** Id del texto oculto "Supr para quitar" (lo dibuja SearchView), descripción de las que se quitan. */
+  /** Id del texto oculto `removeHint` ("Press Delete to remove"; lo dibuja SearchView), descripción de las que se quitan. */
   removeHintId: string
   setHasView: (present: boolean) => void
   setExpanded: (expanded: boolean) => void
@@ -292,7 +293,7 @@ export function Search({
   const [expanded, setExpanded] = useState(false)
   const [activeId, setActiveId] = useState<string | null>(null)
   const [hasView, setHasView] = useState(false)
-  const [bar, setBar] = useState<BarSettings>({ name: {}, placeholder: undefined, clearLabel: 'Borrar búsqueda' })
+  const [bar, setBar] = useState<BarSettings>({ name: {}, placeholder: undefined, clearLabel: searchStrings.clearLabel })
 
   const pointerGesture = usePointerGesture()
   const rootRef = useRef<HTMLElement | null>(null)
@@ -541,7 +542,7 @@ type ManagedInputProps = 'type' | 'value' | 'defaultValue' | 'children' | 'aria-
 
 export type SearchBarProps = Omit<InputHTMLAttributes<HTMLInputElement>, ManagedInputProps> &
   AccessibleNameProps & {
-    /** Nombre del botón de borrar, que aparece mientras hay texto. Por defecto "Borrar búsqueda". */
+    /** Nombre del botón de borrar, que aparece mientras hay texto. Por defecto "Clear search". */
     clearLabel?: string | undefined
     /** Las partes: `SearchBarLeading` y `SearchBarTrailing`. */
     children?: ReactNode
@@ -566,7 +567,7 @@ export function SearchBar({
   'aria-label': ariaLabel,
   'aria-labelledby': labelledBy,
   placeholder,
-  clearLabel = 'Borrar búsqueda',
+  clearLabel = searchStrings.clearLabel,
   className,
   style,
   children,
@@ -690,24 +691,20 @@ function ClearButton({ label, onClear }: { label: string; onClear: () => void })
   )
 }
 
-const defaultFormatRemoved = (text: string) => `Se quitó ${text}`
-
-const defaultFormatCount = (count: number) => (count === 1 ? '1 sugerencia' : `${count} sugerencias`)
-
 export interface SearchViewProps extends HTMLAttributes<HTMLUListElement> {
-  /** Buscando: una barra de progreso arriba de la lista y "Buscando…" en la región viva. */
+  /** Buscando: una barra de progreso arriba de la lista y `loadingLabel` en la región viva. */
   loading?: boolean | undefined
-  /** Texto de la carga (nombre de la barra de progreso y anuncio). Por defecto "Buscando…". */
+  /** Texto de la carga (nombre de la barra de progreso y anuncio). Por defecto "Searching…". */
   loadingLabel?: string | undefined
-  /** Texto sin sugerencias para un texto escrito. Por defecto "Sin resultados". */
+  /** Texto sin sugerencias para un texto escrito. Por defecto "No results". */
   emptyLabel?: string | undefined
-  /** Anuncio de la cantidad de sugerencias. Por defecto "1 sugerencia" / "N sugerencias". */
+  /** Anuncio de la cantidad de sugerencias. Por defecto "1 suggestion" / "N suggestions". */
   formatCount?: ((count: number) => string) | undefined
-  /** Nombre del botón que cierra la vista a pantalla completa. Por defecto "Cerrar búsqueda". */
+  /** Nombre del botón que cierra la vista a pantalla completa. Por defecto "Close search". */
   closeLabel?: string | undefined
-  /** Anuncio al quitar una sugerencia con Supr. Por defecto "Se quitó …" con su texto. */
+  /** Anuncio al quitar una sugerencia con Supr. Por defecto "Removed …" con su texto. */
   formatRemoved?: ((text: string) => string) | undefined
-  /** Descripción de las sugerencias que se pueden quitar (`onRemove`). Por defecto "Supr para quitar". */
+  /** Descripción de las sugerencias que se pueden quitar (`onRemove`). Por defecto "Press Delete to remove". */
   removeHint?: string | undefined
   /** Referencia al `<ul role="listbox">`. */
   ref?: Ref<HTMLUListElement> | undefined
@@ -731,12 +728,12 @@ export interface SearchViewProps extends HTMLAttributes<HTMLUListElement> {
  */
 export function SearchView({
   loading = false,
-  loadingLabel = 'Buscando…',
-  emptyLabel = 'Sin resultados',
-  formatCount = defaultFormatCount,
-  closeLabel = 'Cerrar búsqueda',
-  formatRemoved = defaultFormatRemoved,
-  removeHint = 'Supr para quitar',
+  loadingLabel = searchStrings.loadingLabel,
+  emptyLabel = searchStrings.emptyLabel,
+  formatCount = searchStrings.formatCount,
+  closeLabel = searchStrings.closeLabel,
+  formatRemoved = searchStrings.formatRemoved,
+  removeHint = searchStrings.removeHint,
   className,
   style,
   children,
@@ -795,7 +792,7 @@ export function SearchView({
   // cada tecla); al cerrar, se vacía enseguida.
   const message = !expanded ? '' : loading ? loadingLabel : count > 0 ? formatCount(count) : empty ? emptyLabel : ''
   const [announced, setAnnounced] = useState('')
-  // Después de quitar una sugerencia se anuncia "Se quitó …" enseguida, y el cambio de cantidad que
+  // Después de quitar una sugerencia se anuncia `formatRemoved` enseguida, y el cambio de cantidad que
   // provoca (o que se cierre la lista) no lo pisa durante un segundo.
   const quietUntil = useRef(0)
   useLayoutEffect(() => {
@@ -1053,7 +1050,7 @@ export interface SearchSuggestionProps extends Omit<ListItemProps, 'value' | 'ro
  * elige con Enter o con un clic. Sin controles adentro (una opción no puede tener interactivos).
  *
  * Quitar (por ejemplo, búsquedas recientes): con `onRemove`, Supr sobre la activa la pide, se anuncia
- * "Se quitó …" y la activa pasa a la siguiente cuando el uso la saca. La búsqueda avisa; la app
+ * `formatRemoved` ("Removed …") y la activa pasa a la siguiente cuando el uso la saca. La búsqueda avisa; la app
  * guarda y borra (como `onRemove` del InputChip). Con el puntero no hay un botón en la opción: la app
  * ofrece aparte una acción como "Borrar historial".
  *

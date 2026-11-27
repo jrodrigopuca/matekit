@@ -38,7 +38,7 @@ export interface SnackbarOptions {
   duration?: SnackbarDuration | undefined
   /** La acción debajo del texto, alineada al final: para textos de acción largos (kit, Compose). */
   actionOnNewLine?: boolean | undefined
-  /** Nombre del botón de cerrar. Por defecto, el `closeLabel` del host ("Cerrar"). */
+  /** Nombre del botón de cerrar. Por defecto, el `closeLabel` del host ("Close"). */
   closeLabel?: string | undefined
   /** Al abortarse, lo quita de la pantalla o de la cola; la promesa da `'cancel'`. */
   signal?: AbortSignal | undefined

@@ -8,7 +8,8 @@ Antes de decidir algo que cueste revertir, leer `docs/adr/README.md` y aplicar l
 - **No commitear ni pushear.** El autor hace los commits. Al terminar, listar los archivos
   cambiados y proponer un mensaje en Conventional Commits.
 - **Idioma:** documentación, comentarios y textos internos en español; nombres de código en inglés;
-  las salidas para quien usa la librería (mensajes de diagnóstico y su catálogo) en inglés (ADR-0028).
+  las salidas para quien usa la librería (mensajes de diagnóstico y su catálogo, y los textos por
+  defecto de los componentes) en inglés (ADR-0028).
 - **Herramientas:** pnpm (no npm), Node 24 o superior, TypeScript 7 en modo estricto.
 - **Dependencias:** no agregar ninguna sin pedirlo. Si hace falta una, versión exacta con al
   menos dos semanas de publicada.
@@ -20,7 +21,7 @@ Antes de decidir algo que cueste revertir, leer `docs/adr/README.md` y aplicar l
 | `pnpm dev` | Playground en `http://localhost:5175` (usa `src/` directamente) |
 | `pnpm typecheck` | Verificación de tipos |
 | `pnpm lint:css` | Revisa que el CSS de componentes use tokens para color, movimiento, tipografía y espaciado (este último salvo en los archivos de `SPACING_PENDING`, ADR-0016) |
-| `pnpm test` | Pruebas de tokens y diagnósticos (Node) y de componentes (Vitest en Chrome) |
+| `pnpm test` | Pruebas de tokens, diagnósticos y textos por defecto (Node) y de componentes (Vitest en Chrome) |
 | `pnpm test:browser` | Solo las pruebas de componentes, en el Chrome del sistema; `MK_BROWSERS=firefox` o `webkit` (separados por coma) los corre en esos motores, que el CI prueba en cada push |
 | `pnpm tokens` | Regenera `src/tokens/*.css`, `src/tokens/palettes/*.css` y `src/tokens/space.ts` y `breakpoints.ts` desde `tokens/*.json` (paletas: ADR-0008; espaciado y cortes de ventana: ADR-0016) |
 | `pnpm icons` / `pnpm icons:fetch` | Regenera los iconos (ver ADR-0006) |
@@ -68,6 +69,8 @@ src/internal/    ayudas compartidas entre componentes, no exportadas (interactiv
                  sobre `<dialog>` (showModal, foco inicial, Escape y scrim, vuelta de Tab, salida
                  y foco devuelto) de Dialog, BottomSheet y SideSheet modal, base del futuro
                  NavigationRail modal, ADR-0025)
+src/strings/     índice de los textos por defecto de los componentes (defaultStrings y el tipo
+                 MatekitStrings, públicos): reúne los strings.ts de cada carpeta (ADR-0028)
 src/styles.css   hoja única: importa tokens, átomos y componentes
 playground/      páginas de prueba manual, una por componente
 docs/research/   datos extraídos del kit de Figma y de Jetpack Compose
@@ -75,8 +78,8 @@ docs/diagnostics.md  catálogo de avisos y errores por código (en inglés: es s
 docs/adr/        decisiones de arquitectura
 ```
 
-Cada componente vive en su carpeta: `Nombre.tsx`, `nombre.css`, `Nombre.test.tsx`. Se
-exporta desde el `index.ts` de su capa y su CSS se importa en `src/styles.css`.
+Cada componente vive en su carpeta: `Nombre.tsx`, `nombre.css`, `Nombre.test.tsx` y, si pone textos
+propios, `strings.ts`. Se exporta desde el `index.ts` de su capa y su CSS se importa en `src/styles.css`.
 
 ## Cómo se escribe un componente
 
@@ -107,6 +110,20 @@ exporta desde el `index.ts` de su capa y su CSS se importa en `src/styles.css`.
   `tests/diagnostics.test.ts` comprueba que el catálogo y los códigos de `src/` coincidan. Las
   pruebas de los componentes comparan `code` (y si hace falta que el mensaje contenga `Fix:`), no el
   texto.
+- **Textos por defecto (actualización del ADR-0028):** todo texto visible o anunciado que el componente
+  pone por su cuenta (nombre de un botón, `aria-label`, región viva, texto oculto de una descripción,
+  vacío o carga) va en el `strings.ts` de su carpeta, en inglés, con su interfaz (`SearchStrings`) y
+  cada clave llamada como la prop que lo cambia, y se suma a `MatekitStrings` y `defaultStrings` en
+  `src/strings/index.ts`. Siempre hay una prop para cambiarlo, con el valor del `strings.ts` por
+  defecto (`closeLabel = snackbarStrings.closeLabel`) y su JSDoc dice el texto (`Por defecto "Close"`).
+  Un texto con datos es una función (``formatRemoved: (text) => `Removed ${text}` ``), y un plural,
+  una función que el idioma arma a su manera (`Intl.PluralRules` si hace falta), no una frase armada
+  en el componente (única excepción, anterior: el nombre del botón de quitar de `InputChip`, que es
+  `removeLabel` seguido de la etiqueta por `aria-labelledby`). Sin llamadas al cargar el módulo. `tests/strings.test.ts` (Node)
+  falla si queda un texto escrito a mano en `src/` fuera de los `strings.ts` (letras del español, un
+  literal en una clave o prop de texto, texto JSX, o una frase) o si un `strings.ts` no está en el
+  índice; los comentarios no cuentan. El playground pasa los textos en español desde
+  `playground/strings-es.ts`, como haría una app.
 - **Iconos:** los de `src/icons/` o cualquier SVG dentro de `<Icon>`. El componente define
   `--mk-icon-size` para el tamaño. Un estado activo o seleccionado rellena el icono con
   `filled` (todos lo aceptan). El grado -25 en tema oscuro es automático (ADR-0006): no

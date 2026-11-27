@@ -13,6 +13,7 @@ import {
   SuggestionChip,
   type ChipVariant,
 } from '../../src/index.ts'
+import { es } from '../strings-es.ts'
 
 const DIETS = [
   ['vegano', 'Vegano'],
@@ -67,7 +68,7 @@ export function ChipsPage() {
             <AssistChip variant={variant} disabled={disabled} onClick={() => setLast('Agendar')}><AddIcon />Agendar</AssistChip>
             <SuggestionChip variant={variant} disabled={disabled} onClick={() => setLast('Dale')}>Dale</SuggestionChip>
             <FilterChip variant={variant} disabled={disabled} selected={fav} onClick={() => setFav(!fav)}><StarIcon />Favoritos</FilterChip>
-            <InputChip disabled={disabled} onRemove={() => setLast('Quitar Ana (no se quita en este ejemplo)')}>
+            <InputChip removeLabel={es.inputChip.removeLabel} disabled={disabled} onRemove={() => setLast('Quitar Ana (no se quita en este ejemplo)')}>
               <ChipAvatar>AG</ChipAvatar>Ana Gómez
             </InputChip>
           </ChipGroup>
@@ -88,13 +89,13 @@ export function ChipsPage() {
             <StateRow key={v} variant={v} />
           ))}
           <span className="pg-row-head">input</span>
-          <span><InputChip onRemove={() => {}}><SettingsIcon />Ajuste</InputChip></span>
-          <span><InputChip selected onRemove={() => {}}><SettingsIcon />Ajuste</InputChip></span>
-          <span><InputChip disabled onRemove={() => {}}><SettingsIcon />Ajuste</InputChip></span>
+          <span><InputChip removeLabel={es.inputChip.removeLabel} onRemove={() => {}}><SettingsIcon />Ajuste</InputChip></span>
+          <span><InputChip removeLabel={es.inputChip.removeLabel} selected onRemove={() => {}}><SettingsIcon />Ajuste</InputChip></span>
+          <span><InputChip removeLabel={es.inputChip.removeLabel} disabled onRemove={() => {}}><SettingsIcon />Ajuste</InputChip></span>
           <span className="pg-row-head">input avatar</span>
-          <span><InputChip onRemove={() => {}}><ChipAvatar>BR</ChipAvatar>Bea</InputChip></span>
-          <span><InputChip selected onRemove={() => {}}><ChipAvatar>BR</ChipAvatar>Bea</InputChip></span>
-          <span><InputChip disabled onRemove={() => {}}><ChipAvatar>BR</ChipAvatar>Bea</InputChip></span>
+          <span><InputChip removeLabel={es.inputChip.removeLabel} onRemove={() => {}}><ChipAvatar>BR</ChipAvatar>Bea</InputChip></span>
+          <span><InputChip removeLabel={es.inputChip.removeLabel} selected onRemove={() => {}}><ChipAvatar>BR</ChipAvatar>Bea</InputChip></span>
+          <span><InputChip removeLabel={es.inputChip.removeLabel} disabled onRemove={() => {}}><ChipAvatar>BR</ChipAvatar>Bea</InputChip></span>
         </div>
       </section>
 
@@ -133,7 +134,7 @@ export function ChipsPage() {
         </form>
         <ChipGroup aria-label="Destinatarios">
           {people.map((p) => (
-            <InputChip key={p} onRemove={() => setPeople((l) => l.filter((x) => x !== p))}>
+            <InputChip removeLabel={es.inputChip.removeLabel} key={p} onRemove={() => setPeople((l) => l.filter((x) => x !== p))}>
               <ChipAvatar>{initials(p)}</ChipAvatar>
               {p}
             </InputChip>
@@ -161,7 +162,7 @@ export function ChipsPage() {
         <div style={{ maxInlineSize: 260 }}>
           <ChipGroup aria-label="Texto largo">
             <FilterChip>Restaurantes con opciones veganas cerca de casa</FilterChip>
-            <InputChip onRemove={() => {}}><StarIcon />maria.fernanda.rodriguez@example.com</InputChip>
+            <InputChip removeLabel={es.inputChip.removeLabel} onRemove={() => {}}><StarIcon />maria.fernanda.rodriguez@example.com</InputChip>
             <AssistChip variant="elevated" href="#chips"><ShareIcon />Compartir en redes</AssistChip>
           </ChipGroup>
         </div>

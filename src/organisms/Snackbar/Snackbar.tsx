@@ -8,6 +8,7 @@ import { cx } from '../../internal/interactive.tsx'
 import { Button } from '../../molecules/Button/Button.tsx'
 import { IconButton } from '../../molecules/IconButton/IconButton.tsx'
 import { CloseIcon } from '../../icons/icons.tsx'
+import { snackbarStrings } from './strings.ts'
 
 export interface SnackbarProps extends HTMLAttributes<HTMLDivElement> {
   /**
@@ -64,14 +65,14 @@ export function SnackbarAction({ className, ...rest }: SnackbarActionProps) {
 }
 
 export interface SnackbarCloseProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children' | 'aria-label'> {
-  /** Nombre accesible del botón (su `aria-label`). Por defecto "Cerrar". */
+  /** Nombre accesible del botón (su `aria-label`). Por defecto "Close". */
   label?: string | undefined
   'aria-label'?: never
   ref?: Ref<HTMLButtonElement> | undefined
 }
 
 /** El botón de cerrar: icono `close` de 24 en un círculo de 40, en un área de 48 al final. */
-export function SnackbarClose({ label = 'Cerrar', className, ...rest }: SnackbarCloseProps) {
+export function SnackbarClose({ label = snackbarStrings.closeLabel, className, ...rest }: SnackbarCloseProps) {
   return (
     <IconButton {...rest} label={label} className={cx('mk-snackbar-close', className)}>
       <CloseIcon />

@@ -24,6 +24,7 @@ import {
   SideSheetTitle,
   Switch,
 } from '../../src/index.ts'
+import { es } from '../strings-es.ts'
 
 type Case = 'short' | 'long' | 'skip' | 'controlled' | 'progress' | 'side' | 'side-back'
 
@@ -126,7 +127,7 @@ export function SheetsPage() {
         <SideSheet modal={false} open={standardOpen} onClose={() => setStandardOpen(false)} style={{ maxInlineSize: '60%' }}>
           <SideSheetHeader>
             <SideSheetTitle>Detalles</SideSheetTitle>
-            <SideSheetClose />
+            <SideSheetClose label={es.sideSheet.closeLabel} />
           </SideSheetHeader>
           <SideSheetContent>
             <Filters />
@@ -141,7 +142,7 @@ export function SheetsPage() {
       </div>
 
       <BottomSheet open={isOpen('short')} onClose={() => close('Corto: pedido de cierre')}>
-        <BottomSheetHandle />
+        <BottomSheetHandle {...es.bottomSheet} />
         <BottomSheetTitle>Acciones</BottomSheetTitle>
         <BottomSheetContent>
           <List>
@@ -166,7 +167,7 @@ export function SheetsPage() {
           skipPartiallyExpanded={c === 'skip'}
           onClose={() => close(`${CASES[c]}: pedido de cierre`)}
         >
-          <BottomSheetHandle />
+          <BottomSheetHandle {...es.bottomSheet} />
           <BottomSheetTitle>Recorrido</BottomSheetTitle>
           <BottomSheetContent>
             <List>
@@ -193,7 +194,7 @@ export function SheetsPage() {
           setSheetState(next)
         }}
       >
-        <BottomSheetHandle />
+        <BottomSheetHandle {...es.bottomSheet} />
         <BottomSheetTitle>Estado: {sheetState === 'partial' ? 'parcial' : 'expandido'}</BottomSheetTitle>
         <BottomSheetContent>
           <div className="pg-controls" style={{ padding: '0 16px' }}>
@@ -228,7 +229,7 @@ export function SheetsPage() {
         }
       `}</style>
       <BottomSheet className="pg-sheet-progress" open={isOpen('progress')} onClose={() => close('Progreso: pedido de cierre')}>
-        <BottomSheetHandle />
+        <BottomSheetHandle {...es.bottomSheet} />
         <BottomSheetTitle>Recorrido</BottomSheetTitle>
         <BottomSheetContent>
           <p className="pg-hint pg-sheet-reveal" style={{ padding: '0 16px' }}>
@@ -247,9 +248,9 @@ export function SheetsPage() {
       {(['side', 'side-back'] as const).map((c) => (
         <SideSheet key={c} open={isOpen(c)} onClose={() => close(`${CASES[c]}: pedido de cierre`)}>
           <SideSheetHeader>
-            {c === 'side-back' && <SideSheetBack onClick={() => close(`${CASES[c]}: volver`)} />}
+            {c === 'side-back' && <SideSheetBack label={es.sideSheet.backLabel} onClick={() => close(`${CASES[c]}: volver`)} />}
             <SideSheetTitle>Filtros</SideSheetTitle>
-            <SideSheetClose />
+            <SideSheetClose label={es.sideSheet.closeLabel} />
           </SideSheetHeader>
           <SideSheetContent>
             <Filters />

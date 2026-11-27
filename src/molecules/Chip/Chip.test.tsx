@@ -93,11 +93,11 @@ describe('Chips: roles y nombres', () => {
     await expect.element(page.getByRole('button', { name: 'Favoritos', pressed: true })).toBeInTheDocument()
   })
 
-  test('input: acción principal y botón "Quitar <etiqueta>"; removeLabel, aria-label y removeOnly', async () => {
+  test('input: acción principal y botón "Remove <etiqueta>"; removeLabel, aria-label y removeOnly', async () => {
     const c = await render(
       <div>
         <InputChip className="ana" onRemove={() => {}}>Ana</InputChip>
-        <InputChip className="en" removeLabel="Remove" onRemove={() => {}}>Bea</InputChip>
+        <InputChip className="en" removeLabel="Quitar" onRemove={() => {}}>Bea</InputChip>
         <InputChip className="al" aria-label="Carla Pérez" onRemove={() => {}}>Carla</InputChip>
         <InputChip className="ro" removeOnly onRemove={() => {}}>Dani</InputChip>
         <InputChip className="sel" selected onRemove={() => {}}>Eva</InputChip>
@@ -106,11 +106,11 @@ describe('Chips: roles y nombres', () => {
     expect(q(c, '.ana').tagName).toBe('SPAN')
     expect(q(c, '.ana > .mk-input-chip-primary').tagName).toBe('BUTTON')
     await expect.element(page.getByRole('button', { name: 'Ana', exact: true })).toBeInTheDocument()
-    await expect.element(page.getByRole('button', { name: 'Quitar Ana' })).toBeInTheDocument()
-    await expect.element(page.getByRole('button', { name: 'Remove Bea' })).toBeInTheDocument()
-    await expect.element(page.getByRole('button', { name: 'Quitar Carla Pérez' })).toBeInTheDocument()
+    await expect.element(page.getByRole('button', { name: 'Remove Ana' })).toBeInTheDocument()
+    await expect.element(page.getByRole('button', { name: 'Quitar Bea' })).toBeInTheDocument()
+    await expect.element(page.getByRole('button', { name: 'Remove Carla Pérez' })).toBeInTheDocument()
     expect(q(c, '.ro > .mk-input-chip-primary').tagName).toBe('SPAN')
-    await expect.element(page.getByRole('button', { name: 'Quitar Dani' })).toBeInTheDocument()
+    await expect.element(page.getByRole('button', { name: 'Remove Dani' })).toBeInTheDocument()
     expect(c.querySelectorAll('.ro button')).toHaveLength(1)
     expect(q(c, '.sel > .mk-input-chip-primary').getAttribute('aria-pressed')).toBe('true')
     expect(q(c, '.ana > .mk-input-chip-primary').hasAttribute('aria-pressed')).toBe(false)
@@ -755,7 +755,7 @@ describe('ChipGroup: disposición', () => {
     // El botón de quitar sigue entero.
     expect(rect(q(c, '.i .mk-input-chip-remove .mk-icon')).width).toBeCloseTo(18, 2)
     await expect.element(page.getByRole('button', { name: largo, exact: true }).first()).toBeInTheDocument()
-    await expect.element(page.getByRole('button', { name: `Quitar ${largo}` })).toBeInTheDocument()
+    await expect.element(page.getByRole('button', { name: `Remove ${largo}` })).toBeInTheDocument()
   })
 
   test('ChipLabel y la marca con CheckIcon propio funcionan como etiqueta', async () => {

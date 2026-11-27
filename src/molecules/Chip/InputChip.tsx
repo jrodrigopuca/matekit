@@ -5,7 +5,7 @@
 //
 // Dos acciones en un mismo chip, como el input chip de @material/web (chips/internal/
 // input-chip.ts y trailing-icons.ts): la principal (un `<button>`, o solo texto con `removeOnly`)
-// y el botón de quitar, con nombre "Quitar <etiqueta>" armado con aria-labelledby. El contenedor
+// y el botón de quitar, con nombre "Remove <etiqueta>" (por defecto) armado con aria-labelledby. El contenedor
 // (`<span>`) dibuja el chip y no es interactivo: no hay controles anidados.
 //
 // Quitar (ADR-0019): el chip avisa con `onRemove(event)` y el uso saca el elemento de su lista
@@ -32,6 +32,7 @@ import { StateLayer } from '../../atoms/StateLayer/StateLayer.tsx'
 import { CloseIcon } from '../../icons/icons.tsx'
 import { cx } from '../../internal/interactive.tsx'
 import { chipContent, chipDataAttributes } from './chip-content.tsx'
+import { inputChipStrings } from './strings.ts'
 
 export type InputChipRemoveEvent = KeyboardEvent<HTMLElement> | MouseEvent<HTMLButtonElement>
 
@@ -44,8 +45,8 @@ interface InputChipOwnProps {
    */
   onRemove: (event: InputChipRemoveEvent) => void
   /**
-   * Primera parte del nombre del botón de quitar, que sigue con la etiqueta del chip ("Quitar
-   * Ana"). Por defecto, "Quitar". Si el chip tiene `aria-label`, se usa ese en lugar de la etiqueta.
+   * Primera parte del nombre del botón de quitar, que sigue con la etiqueta del chip ("Remove
+   * Ana"). Por defecto, "Remove". Si el chip tiene `aria-label`, se usa ese en lugar de la etiqueta.
    */
   removeLabel?: string | undefined
   /** Deshabilita las dos acciones. */
@@ -125,7 +126,7 @@ export function InputChip(props: InputChipProps) {
   const {
     children,
     onRemove,
-    removeLabel = 'Quitar',
+    removeLabel = inputChipStrings.removeLabel,
     disabled = false,
     className,
     style,

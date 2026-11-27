@@ -26,6 +26,7 @@ import { mergeRefs } from '../../internal/merge-refs.ts'
 import { settleAnimations } from '../../internal/settle-animations.ts'
 import { Snackbar, SnackbarAction, SnackbarClose, SnackbarMessage } from './Snackbar.tsx'
 import { createSnackbarQueue, type SnackbarEntry, type SnackbarQueue } from './snackbar-queue.ts'
+import { snackbarStrings } from './strings.ts'
 
 const SnackbarContext = createContext<SnackbarQueue | null>(null)
 
@@ -63,7 +64,7 @@ export interface SnackbarHostProps extends Omit<HTMLAttributes<HTMLDivElement>, 
   queue?: SnackbarQueue | undefined
   /** El contenido que puede usar `useSnackbar()`. Puede ser de servidor. */
   children?: ReactNode
-  /** Nombre del botón de cerrar si el snackbar no trae `closeLabel`. Por defecto "Cerrar". */
+  /** Nombre del botón de cerrar si el snackbar no trae `closeLabel`. Por defecto "Close". */
   closeLabel?: string | undefined
   /**
    * Abajo y centrado (por defecto, Compose) o abajo al inicio, que Material admite en ventanas
@@ -102,7 +103,7 @@ const holds = (el: HTMLElement | null, node: EventTarget | Node | null) =>
 export function SnackbarHost({
   queue: given,
   children,
-  closeLabel = 'Cerrar',
+  closeLabel = snackbarStrings.closeLabel,
   align = 'center',
   ref,
   onPointerEnter,

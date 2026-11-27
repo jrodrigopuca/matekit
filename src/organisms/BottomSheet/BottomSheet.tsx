@@ -35,6 +35,7 @@ import { FocusRing } from '../../atoms/FocusRing/FocusRing.tsx'
 import { onScrim, useModalDialog, useRegisteredId } from '../../internal/modal-dialog.ts'
 import { partOutsideParent } from '../../internal/diagnostics.ts'
 import { computeTarget, DRAG_SLOP, VelocityTracker, type Anchor } from './sheet-drag.ts'
+import { bottomSheetStrings } from './strings.ts'
 
 /** Estado del sheet abierto: parcial (la mitad de la ventana) o expandido (todo su alto). */
 export type BottomSheetState = 'partial' | 'expanded'
@@ -538,11 +539,11 @@ export function BottomSheet({
 }
 
 export interface BottomSheetHandleProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children' | 'aria-label'> {
-  /** Nombre del asa cuando expande el sheet parcial. Por defecto "Expandir". */
+  /** Nombre del asa cuando expande el sheet parcial. Por defecto "Expand". */
   expandLabel?: string | undefined
-  /** Nombre del asa cuando lleva el sheet expandido al parcial. Por defecto "Contraer". */
+  /** Nombre del asa cuando lleva el sheet expandido al parcial. Por defecto "Collapse". */
   collapseLabel?: string | undefined
-  /** Nombre del asa cuando cierra (sin estado parcial). Por defecto "Cerrar". */
+  /** Nombre del asa cuando cierra (sin estado parcial). Por defecto "Close". */
   closeLabel?: string | undefined
   'aria-label'?: never
   ref?: Ref<HTMLButtonElement> | undefined
@@ -551,15 +552,15 @@ export interface BottomSheetHandleProps extends Omit<ButtonHTMLAttributes<HTMLBu
 /**
  * Asa de arrastre (drag handle): la barra de 32 × 4 arriba del sheet, que además es un botón para
  * el teclado y los lectores de pantalla. Como el asa de Compose (que hace lo mismo al tocarla):
- * con el sheet parcial lo expande ("Expandir"), expandido lo lleva al parcial ("Contraer") y, sin
- * estado parcial, lo cierra ("Cerrar"). El nombre cambia con la acción.
+ * con el sheet parcial lo expande ("Expand"), expandido lo lleva al parcial ("Collapse") y, sin
+ * estado parcial, lo cierra ("Close"). El nombre cambia con la acción.
  *
  * Va como primer hijo del `BottomSheet`: recibe el foco al abrir.
  */
 export function BottomSheetHandle({
-  expandLabel = 'Expandir',
-  collapseLabel = 'Contraer',
-  closeLabel = 'Cerrar',
+  expandLabel = bottomSheetStrings.expandLabel,
+  collapseLabel = bottomSheetStrings.collapseLabel,
+  closeLabel = bottomSheetStrings.closeLabel,
   className,
   onClick,
   ...props

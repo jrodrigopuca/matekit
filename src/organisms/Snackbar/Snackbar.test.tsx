@@ -249,7 +249,7 @@ describe('Snackbar (partes)', () => {
     expect(style(q(close, 'svg')).width).toBe('24px')
   })
 
-  test('nombres: la acción por su texto, el cerrar "Cerrar" o su label', async () => {
+  test('nombres: la acción por su texto, el cerrar "Close" o su label', async () => {
     const c = await render(
       <Snackbar>
         <SnackbarMessage>Hola</SnackbarMessage>
@@ -260,7 +260,7 @@ describe('Snackbar (partes)', () => {
     expect(button(c, 'Ver').tagName).toBe('BUTTON')
     expect(button(c, 'Descartar aviso').getAttribute('aria-label')).toBe('Descartar aviso')
     const d = await render(<Snackbar><SnackbarMessage>Hola</SnackbarMessage><SnackbarClose /></Snackbar>)
-    expect(button(d, 'Cerrar')).toBeTruthy()
+    expect(button(d, 'Close')).toBeTruthy()
   })
 
   test('props nativas y ref llegan a cada parte', async () => {
@@ -335,13 +335,13 @@ describe('SnackbarHost', () => {
   })
 
   test('estructura: popover manual con mensaje, acción con su texto y cerrar con su nombre', async () => {
-    const { queue, el } = await setup(undefined, { closeLabel: 'Close' })
+    const { queue, el } = await setup(undefined, { closeLabel: 'Cerrar' })
     expect(el.getAttribute('popover')).toBe('manual')
     void queue.show({ message: 'Foto archivada', action: 'Deshacer' })
     await until(() => shown(el), true)
     expect(q(el, '.mk-snackbar-message').textContent).toBe('Foto archivada')
     expect(button(el, 'Deshacer').getAttribute('type')).toBe('button')
-    expect(button(el, 'Close')).toBeTruthy()
+    expect(button(el, 'Cerrar')).toBeTruthy()
     queue.dismiss()
     await until(() => shown(el), false)
     void queue.show({ message: 'Otro', duration: 'indefinite', closeLabel: 'Descartar' })
@@ -365,7 +365,7 @@ describe('SnackbarHost', () => {
     await until(() => el.querySelector('.mk-snackbar-message')?.textContent, 'Segundo')
     expect(b.result).toBeUndefined()
 
-    button(el, 'Cerrar').click()
+    button(el, 'Close').click()
     await until(() => b.result, 'dismiss')
     await until(() => el.querySelector('.mk-snackbar-message')?.textContent, 'Tercero')
     await advance(SNACKBAR_DURATION_MS.short)
@@ -492,7 +492,7 @@ describe('SnackbarHost', () => {
     void queue.show({ message: 'Hola', duration: 'indefinite' })
     await until(() => shown(el), true)
     await userEvent.keyboard('{F6}')
-    expect(document.activeElement).toBe(button(el, 'Cerrar'))
+    expect(document.activeElement).toBe(button(el, 'Close'))
   })
 
   test('Escape con el foco adentro lo descarta y devuelve el foco; con el foco afuera, no', async () => {
@@ -522,7 +522,7 @@ describe('SnackbarHost', () => {
     await userEvent.tab()
     expect(document.activeElement).toBe(button(el, 'Ver'))
     await userEvent.tab()
-    expect(document.activeElement).toBe(button(el, 'Cerrar'))
+    expect(document.activeElement).toBe(button(el, 'Close'))
   })
 
   test('el foco de teclado en la acción se ve (anillo), también llegando con F6', async () => {

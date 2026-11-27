@@ -23,6 +23,10 @@ import {
   TopAppBarLeading,
   type SearchViewChoice,
 } from '../../src/index.ts'
+import { es } from '../strings-es.ts'
+
+// Los textos de SearchView en español (todos menos clearLabel, que es de SearchBar).
+const { clearLabel: _clear, ...searchViewStrings } = es.search
 
 // Datos de ejemplo: el filtrado es del uso (la búsqueda no filtra), sin tildes ni mayúsculas.
 const FRUITS = [
@@ -177,7 +181,7 @@ export function SearchPage() {
               history.add(nameOf(v))
             }}
           >
-            <SearchBar label="Buscar frutas" placeholder="Buscar frutas">
+            <SearchBar clearLabel={es.search.clearLabel} label="Buscar frutas" placeholder="Buscar frutas">
               <SearchBarLeading>
                 <IconButton label="Menú"><MenuIcon /></IconButton>
               </SearchBarLeading>
@@ -188,7 +192,7 @@ export function SearchPage() {
                 />
               </SearchBarTrailing>
             </SearchBar>
-            <SearchView loading={remote && remoteState.loading}>
+            <SearchView {...searchViewStrings} loading={remote && remoteState.loading}>
               {groups && recents.length > 0 && (
                 <SearchSuggestionGroup label="Recientes">
                   {recents.map((r) => (
@@ -246,8 +250,8 @@ export function SearchPage() {
               <IconButton label="Volver"><ArrowBackIcon /></IconButton>
             </TopAppBarLeading>
             <Search view={view} value={q2} onValueChange={setQ2} onSelect={(v) => push(`barra: elegir "${v}"`)}>
-              <SearchBar label="Buscar en la bandeja" placeholder="Buscar en la bandeja" />
-              <SearchView>
+              <SearchBar clearLabel={es.search.clearLabel} label="Buscar en la bandeja" placeholder="Buscar en la bandeja" />
+              <SearchView {...searchViewStrings}>
                 {filterFruits(q2).slice(0, q2 ? 6 : 0).map((f) => (
                   <SearchSuggestion key={f.id} value={f.name} />
                 ))}
@@ -277,7 +281,7 @@ export function SearchPage() {
           }}
         >
           <Search value={q3} onValueChange={setQ3}>
-            <SearchBar label="Buscar en el sitio" name="q" placeholder="Buscar en el sitio">
+            <SearchBar clearLabel={es.search.clearLabel} label="Buscar en el sitio" name="q" placeholder="Buscar en el sitio">
               <SearchBarLeading><SearchIcon /></SearchBarLeading>
               <SearchBarTrailing>
                 <IconButton label="Favoritos"><StarIcon /></IconButton>
@@ -288,7 +292,7 @@ export function SearchPage() {
         <p className="pg-hint">{submitted ? `Enviado: q=${submitted}` : 'Todavía no se envió.'}</p>
         <h3>Deshabilitada</h3>
         <Search defaultValue="mate">
-          <SearchBar label="Buscar (deshabilitada)" disabled>
+          <SearchBar clearLabel={es.search.clearLabel} label="Buscar (deshabilitada)" disabled>
             <SearchBarLeading><SearchIcon /></SearchBarLeading>
           </SearchBar>
         </Search>

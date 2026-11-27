@@ -5,6 +5,7 @@
 import type { HTMLAttributes, Ref } from 'react'
 import { IconButton, type IconButtonProps } from '../../molecules/IconButton/IconButton.tsx'
 import { ArrowBackIcon } from '../../icons/icons.tsx'
+import { sideSheetStrings } from './strings.ts'
 
 const cx = (base: string, extra: string | undefined) => (extra ? `${base} ${extra}` : base)
 
@@ -31,7 +32,7 @@ export function SideSheetHeader({ className, ...props }: SideSheetPartProps) {
 type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never
 
 export type SideSheetBackProps = DistributiveOmit<IconButtonProps, 'label' | 'children' | 'width'> & {
-  /** Nombre accesible del botón. Por defecto "Volver". */
+  /** Nombre accesible del botón. Por defecto "Back". */
   label?: string | undefined
 }
 
@@ -39,7 +40,7 @@ export type SideSheetBackProps = DistributiveOmit<IconButtonProps, 'label' | 'ch
  * Botón de volver de la cabecera (icon button standard angosto con `arrow_back`, que en RTL apunta
  * a la derecha). Lo que hace lo decide el `onClick`, o `href`/`render` si es un enlace.
  */
-export function SideSheetBack({ label = 'Volver', className, ...props }: SideSheetBackProps) {
+export function SideSheetBack({ label = sideSheetStrings.backLabel, className, ...props }: SideSheetBackProps) {
   return (
     <IconButton {...props} label={label} width="narrow" className={cx('mk-side-sheet-back', className)}>
       <ArrowBackIcon />

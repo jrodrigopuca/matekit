@@ -21,6 +21,7 @@ import { IconButton } from '../../molecules/IconButton/IconButton.tsx'
 import { CloseIcon } from '../../icons/icons.tsx'
 import { useModalDialog, useRegisteredId } from '../../internal/modal-dialog.ts'
 import { partOutsideParent } from '../../internal/diagnostics.ts'
+import { sideSheetStrings } from './strings.ts'
 
 interface SideSheetContextValue {
   titleId: string
@@ -190,7 +191,7 @@ export function SideSheetTitle({ id, className, ...props }: SideSheetTitleProps)
 }
 
 export interface SideSheetCloseProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children' | 'aria-label'> {
-  /** Nombre accesible del botón (su `aria-label`). Por defecto "Cerrar". */
+  /** Nombre accesible del botón (su `aria-label`). Por defecto "Close". */
   label?: string | undefined
   'aria-label'?: never
   ref?: Ref<HTMLButtonElement> | undefined
@@ -200,7 +201,7 @@ export interface SideSheetCloseProps extends Omit<ButtonHTMLAttributes<HTMLButto
  * Botón de cerrar de la cabecera (icon button standard con `close`): llama a `onClose` del
  * `SideSheet`, salvo que el `onClick` propio llame a `preventDefault()`.
  */
-export function SideSheetClose({ label = 'Cerrar', className, onClick, ...props }: SideSheetCloseProps) {
+export function SideSheetClose({ label = sideSheetStrings.closeLabel, className, onClick, ...props }: SideSheetCloseProps) {
   const ctx = useSideSheet('SideSheetClose')
   return (
     <IconButton

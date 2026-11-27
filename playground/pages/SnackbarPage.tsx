@@ -10,6 +10,7 @@ import {
   type SnackbarAlign,
   type SnackbarDuration,
 } from '../../src/index.ts'
+import { es } from '../strings-es.ts'
 
 /** Snackbar visible al cargar, desde la URL (`#snackbar?open=action`): solo para capturas. */
 function initialCase(): 'text' | 'action' | 'long' | null {
@@ -23,7 +24,7 @@ export function SnackbarPage() {
   const [align, setAlign] = useState<SnackbarAlign>('center')
   const [offset, setOffset] = useState(0)
   return (
-    <SnackbarHost align={align} style={{ '--mk-snackbar-offset': `${offset}px` } as CSSProperties}>
+    <SnackbarHost closeLabel={es.snackbar.closeLabel} align={align} style={{ '--mk-snackbar-offset': `${offset}px` } as CSSProperties}>
       <Demo align={align} setAlign={setAlign} offset={offset} setOffset={setOffset} />
     </SnackbarHost>
   )
@@ -147,7 +148,7 @@ function Demo(props: {
             <Snackbar><SnackbarMessage>Foto archivada</SnackbarMessage></Snackbar>
           </Labeled>
           <Labeled label="Texto y cerrar">
-            <Snackbar><SnackbarMessage>Foto archivada</SnackbarMessage><SnackbarClose /></Snackbar>
+            <Snackbar><SnackbarMessage>Foto archivada</SnackbarMessage><SnackbarClose label={es.snackbar.closeLabel} /></Snackbar>
           </Labeled>
           <Labeled label="Texto y acción">
             <Snackbar><SnackbarMessage>Foto archivada</SnackbarMessage><SnackbarAction>Deshacer</SnackbarAction></Snackbar>
@@ -156,14 +157,14 @@ function Demo(props: {
             <Snackbar>
               <SnackbarMessage>Foto archivada</SnackbarMessage>
               <SnackbarAction>Deshacer</SnackbarAction>
-              <SnackbarClose />
+              <SnackbarClose label={es.snackbar.closeLabel} />
             </Snackbar>
           </Labeled>
           <Labeled label="Dos líneas, acción y cerrar">
             <Snackbar style={{ maxInlineSize: 400 }}>
               <SnackbarMessage>{TWO_LINES}</SnackbarMessage>
               <SnackbarAction>Reintentar</SnackbarAction>
-              <SnackbarClose />
+              <SnackbarClose label={es.snackbar.closeLabel} />
             </Snackbar>
           </Labeled>
           <Labeled label="Acción larga debajo (actionOnNewLine)">
@@ -176,7 +177,7 @@ function Demo(props: {
             <Snackbar actionOnNewLine style={{ maxInlineSize: 400 }}>
               <SnackbarMessage>{TWO_LINES}</SnackbarMessage>
               <SnackbarAction>Reintentar ahora</SnackbarAction>
-              <SnackbarClose />
+              <SnackbarClose label={es.snackbar.closeLabel} />
             </Snackbar>
           </Labeled>
         </div>

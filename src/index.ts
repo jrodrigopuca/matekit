@@ -7,3 +7,6 @@ export { WINDOW_WIDTH, WINDOW_HEIGHT, type WindowWidthClass, type WindowHeightCl
 // Diagnósticos (ADR-0028): la clase y los códigos son públicos para que la app distinga los errores de
 // matekit (`instanceof MatekitError` o `error.code`); mkError y mkWarn siguen internos.
 export { MatekitError, type MatekitErrorCode, type MatekitWarningCode } from './internal/diagnostics.ts'
+// Textos por defecto (en inglés) de todos los componentes, como base de una traducción: la app arma
+// su `MatekitStrings` y lo pasa por las props. Sin efectos al cargar: no pesa si no se importa.
+export { defaultStrings, type MatekitStrings } from './strings/index.ts'

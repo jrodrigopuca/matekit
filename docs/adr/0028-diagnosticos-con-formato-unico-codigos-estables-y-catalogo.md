@@ -97,3 +97,21 @@
   aparece un error que la app debería poder recuperar (evaluar una jerarquía de errores o un campo
   `recoverable`); se decide traducir los textos visibles de los componentes (revisar si los
   diagnósticos siguen el mismo criterio).
+- Actualización (2026-11-27, ítem "Textos por defecto en inglés" del plan, decidido con el autor): los
+  textos visibles o anunciados por defecto de los componentes siguen el mismo criterio que los
+  diagnósticos y van en inglés (por ejemplo "Press Delete to remove", "Close", "Removed …"). Cada
+  componente los declara en el `strings.ts` de su carpeta, con una interfaz y cada clave llamada como
+  la prop que lo cambia; los textos con datos son funciones (`formatRemoved: (text) => …`,
+  `formatCount: (count) => …`), así cada idioma ordena las palabras y arma sus plurales (con
+  `Intl.PluralRules` si tiene más de dos formas; en inglés alcanza con `count === 1`). El índice
+  `src/strings/index.ts` los reúne en `defaultStrings` y el tipo `MatekitStrings`, que se **exportan**
+  desde `src/index.ts`: una app arma su traducción como un `MatekitStrings` (el tipo le avisa cuando
+  aparece un texto nuevo) y la pasa por las props, como el playground con `playground/strings-es.ts`.
+  Es API pública (cuesta revertir): renombrar una clave rompe las traducciones de las apps, por eso
+  las claves son los nombres de las props, que ya son públicos. No pesa para quien no lo importa: el
+  módulo es universal, sin llamadas al cargar (las funciones solo se ejecutan al usarse), y los
+  `strings.ts` ya los importa cada componente. `tests/strings.test.ts` comprueba que no queden textos
+  escritos a mano en `src/` fuera de los `strings.ts` y que cada uno esté en el índice. Fuera por
+  ahora: fijar los textos una vez para toda la app (contexto o configuración), que se decide al
+  preparar la publicación. Revisit if: se agrega ese mecanismo (puede leer `MatekitStrings` como
+  forma), o un texto necesita más datos que un argumento (pasar un objeto en lugar de varios).

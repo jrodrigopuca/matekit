@@ -228,13 +228,13 @@ describe('BottomSheet: apertura, cierre y accesibilidad', () => {
 })
 
 describe('BottomSheet: estados', () => {
-  test('corto: abre expandido y el asa es "Cerrar"', async () => {
+  test('corto: abre expandido y el asa es "Close"', async () => {
     const onRequest = vi.fn()
     const c = await render(<Harness initialOpen onRequest={onRequest} accept={false} />)
     expect(sheet(c).dataset['state']).toBe('expanded')
     expect(offset(c)).toBeCloseTo(0, 0)
     expect(sheet(c).getBoundingClientRect().bottom).toBeCloseTo(vh(), 0)
-    await expect.element(page.getByRole('button', { name: 'Cerrar' })).toBeVisible()
+    await expect.element(page.getByRole('button', { name: 'Close' })).toBeVisible()
     await userEvent.click(handle(c))
     expect(onRequest).toHaveBeenCalledTimes(1)
   })
@@ -243,7 +243,7 @@ describe('BottomSheet: estados', () => {
     const c = await render(<Harness initialOpen tall />)
     expect(sheet(c).dataset['state']).toBe('partial')
     expect(sheet(c).getBoundingClientRect().top).toBeCloseTo(vh() / 2, 0)
-    expect(handle(c).getAttribute('aria-label')).toBe('Expandir')
+    expect(handle(c).getAttribute('aria-label')).toBe('Expand')
     // El contenido largo sin enfocables recibe el foco inicial (como en el Dialog); el asa va antes.
     expect(document.activeElement).toBe(content(c))
     await userEvent.tab({ shift: true })
@@ -252,7 +252,7 @@ describe('BottomSheet: estados', () => {
     await expect.poll(() => sheet(c).dataset['state']).toBe('expanded')
     // Expandido: todo su alto, hasta arriba de la ventana (el contenido es más alto).
     expect(sheet(c).getBoundingClientRect().top).toBeCloseTo(0, 0)
-    expect(handle(c).getAttribute('aria-label')).toBe('Contraer')
+    expect(handle(c).getAttribute('aria-label')).toBe('Collapse')
     await userEvent.keyboard(' ')
     await expect.poll(() => sheet(c).dataset['state']).toBe('partial')
     expect(sheet(c).getBoundingClientRect().top).toBeCloseTo(vh() / 2, 0)
@@ -261,7 +261,7 @@ describe('BottomSheet: estados', () => {
   test('skipPartiallyExpanded: alto, abre expandido y el asa cierra', async () => {
     const c = await render(<Harness initialOpen tall skipPartiallyExpanded />)
     expect(sheet(c).dataset['state']).toBe('expanded')
-    expect(handle(c).getAttribute('aria-label')).toBe('Cerrar')
+    expect(handle(c).getAttribute('aria-label')).toBe('Close')
   })
 
   test('el foco en algo que el parcial deja fuera de la ventana expande el sheet', async () => {
@@ -281,6 +281,18 @@ describe('BottomSheet: estados', () => {
     )
     expect(handle(c).getAttribute('aria-label')).toBe('Más')
     expect(sheet(c).getAttribute('aria-label')).toBe('Hoja')
+    await userEvent.click(handle(c))
+    await expect.poll(() => handle(c).getAttribute('aria-label')).toBe('Menos')
+  })
+
+  test('nombre propio del asa que cierra (sin estado parcial)', async () => {
+    const c = await render(
+      <BottomSheet open aria-label="Hoja">
+        <BottomSheetHandle closeLabel="Fuera" />
+        <BottomSheetContent><p style={{ margin: 0, height: 120 }}>Corto</p></BottomSheetContent>
+      </BottomSheet>,
+    )
+    expect(handle(c).getAttribute('aria-label')).toBe('Fuera')
   })
 })
 
@@ -301,7 +313,7 @@ describe('BottomSheet: arrastre', () => {
     handle(c).click()
     await expect.poll(() => sheet(c).dataset['state']).toBe('expanded')
     // Hacia arriba desde expandido: el sheet no se mueve (no pasa de expandido) y queda ahí. Si el
-    // clic llegara al asa ("Contraer"), lo llevaría al parcial.
+    // clic llegara al asa ("Collapse"), lo llevaría al parcial.
     await commands.dragThrough('.mk-bottom-sheet-handle', [[24, 30], [24, 18], [24, 6]])
     expect(sheet(c).hasAttribute('data-dragging')).toBe(true)
     await commands.pressUp()
@@ -814,14 +826,14 @@ describe('BottomSheet: estado controlado (state, defaultState, onStateChange)', 
     expect(onStateChange).toHaveBeenLastCalledWith('expanded', 'handle')
     await frame()
     expect(sheet(c).dataset['state']).toBe('partial')
-    expect(handle(c).getAttribute('aria-label')).toBe('Expandir')
+    expect(handle(c).getAttribute('aria-label')).toBe('Expand')
   })
 
   test('state="partial" sin parcial (sheet corto): se muestra expandido y avisa "resize" una vez', async () => {
     const onStateChange = vi.fn()
     const c = await render(<Controlled initialTall={false} accept={false} onStateChange={onStateChange} />)
     expect(sheet(c).dataset['state']).toBe('expanded')
-    expect(handle(c).getAttribute('aria-label')).toBe('Cerrar')
+    expect(handle(c).getAttribute('aria-label')).toBe('Close')
     expect(onStateChange.mock.calls).toEqual([['expanded', 'resize']])
   })
 
@@ -860,7 +872,7 @@ describe('BottomSheet: estado controlado (state, defaultState, onStateChange)', 
     parent!.setTall(false)
     await expect.poll(() => sheet(c).dataset['state']).toBe('expanded')
     parent!.setTall(true)
-    await expect.poll(() => handle(c).getAttribute('aria-label')).toBe('Contraer')
+    await expect.poll(() => handle(c).getAttribute('aria-label')).toBe('Collapse')
     expect(sheet(c).dataset['state']).toBe('expanded')
     expect(onStateChange.mock.calls).toEqual([['expanded', 'resize']])
   })

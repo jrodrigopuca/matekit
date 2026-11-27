@@ -101,11 +101,11 @@ describe('SideSheet modal: apertura, cierre y accesibilidad', () => {
     const onRequest = vi.fn()
     const onBack = vi.fn()
     const c = await render(<Harness initialOpen back onRequest={onRequest} onBack={onBack} />)
-    await expect.element(page.getByRole('button', { name: 'Volver' })).toBeVisible()
+    await expect.element(page.getByRole('button', { name: 'Back' })).toBeVisible()
     q<HTMLButtonElement>(c, '.mk-side-sheet-back').click()
     expect(onBack).toHaveBeenCalledTimes(1)
     expect(onRequest).not.toHaveBeenCalled()
-    await page.getByRole('button', { name: 'Cerrar' }).click()
+    await page.getByRole('button', { name: 'Close' }).click()
     expect(onRequest).toHaveBeenCalledTimes(1)
     await userEvent.click(q(c, '.opener'))
     await expect.poll(() => (sheet(c) as HTMLDialogElement).open).toBe(true)
@@ -118,6 +118,20 @@ describe('SideSheet modal: apertura, cierre y accesibilidad', () => {
     const c = await render(<Harness initialOpen closeOnScrimClick={false} onRequest={onRequest} />)
     await userEvent.click(sheet(c), { position: { x: -40, y: 20 } })
     expect(onRequest).not.toHaveBeenCalled()
+  })
+
+  test('nombres propios: SideSheetBack y SideSheetClose con label', async () => {
+    await render(
+      <SideSheet open onClose={() => {}}>
+        <SideSheetHeader>
+          <SideSheetBack label="Volver" />
+          <SideSheetTitle>T</SideSheetTitle>
+          <SideSheetClose label="Cerrar" />
+        </SideSheetHeader>
+      </SideSheet>,
+    )
+    await expect.element(page.getByRole('button', { name: 'Volver' })).toBeVisible()
+    await expect.element(page.getByRole('button', { name: 'Cerrar' })).toBeVisible()
   })
 
   test('un onClick propio de SideSheetClose con preventDefault no cierra', async () => {
@@ -352,7 +366,7 @@ describe('SideSheet standard', () => {
   test('el botón de cerrar llama a onClose; open={false} lo oculta', async () => {
     const onClose = vi.fn()
     await render(<Standard onClose={onClose} />)
-    await page.getByRole('button', { name: 'Cerrar' }).click()
+    await page.getByRole('button', { name: 'Close' }).click()
     expect(onClose).toHaveBeenCalledTimes(1)
     const hidden = await render(<Standard open={false} />)
     expect(sheet(hidden).hidden).toBe(true)
