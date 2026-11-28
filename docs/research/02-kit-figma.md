@@ -13,7 +13,7 @@ Los identificadores sirven para volver a consultar cada página con el conector 
 | Table of contents | 55879:3580 | no |
 | Avatars | 55595:3788 | no |
 | Icons | 55594:2483 | no |
-| Examples | 55594:2480 | no |
+| Examples | 55594:2480 | sí |
 | Shape | 58548:7093 | sí |
 | Styles | 49823:12141 | sí |
 | Utilities | 55594:2484 | no |

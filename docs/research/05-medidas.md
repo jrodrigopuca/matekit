@@ -678,6 +678,51 @@ Button toggleable}` con sus estados; las variantes XR, fuera del plan).
   10/16, separación 8): sin seleccionar `Surface Container` con `On Surface Variant` (Standard);
   seleccionado `Secondary Container` con `On Secondary Container`.
 
+## Scaffold de paneles
+
+Leído del kit el 2026-11-28 (página Examples, que no tiene un componente de paneles: se midieron
+los diseños web `Examples/Messaging-Web` 56615:46667, lista y detalle sin navegación,
+`Examples/Detailed view-Web` 56615:47706 y `Examples/Library-Web` 56615:48317, un panel con
+navigation rail, todos de 905 × 680 con una barra de navegador de 68 arriba; y el conjunto
+`Examples/Layout grid` 56384:120). La lógica de cuántos paneles y de qué ancho es de Compose
+(`docs/research/11-disposicion-adaptable-compose.md` § 2); el kit da la apariencia.
+
+- Fondo de la ventana: `Surface`.
+- Panel con superficie (el detalle, o el único panel junto al rail): `Surface Container Lowest`,
+  radio 28 (`corner-extra-large`). Empieza 24 debajo del borde superior del área de la app y
+  llega hasta el borde inferior de la ventana (en el kit el contenedor es más alto que lo visible:
+  las esquinas de abajo quedan fuera, y el contenido se desplaza dentro del panel).
+- Panel de lista (Messaging): **sin superficie propia**, sobre el `Surface` del fondo, 24 del
+  borde de inicio y 24 arriba; los elementos de lista llevan su propio fondo `Surface`. Lista de
+  313 de ancho en una ventana de 905 (el ancho preferido de Compose es 360; el kit lo achica al
+  ejemplo).
+- Separación entre paneles: 24 (de 337 a 361), igual que Compose.
+- Margen del final: 15 a 19 según el ejemplo (≈ 16); con navigation rail, el panel empieza
+  pegado al rail (sin separación) y deja ≈ 16 al final.
+- La barra superior del panel va dentro de la superficie, como primer hijo (el small top app
+  bar de 64 del kit, o el medium de 112 en Library), coherente con ADR-0024.
+- `Layout grid` (la retícula de columnas anterior, no los paneles): compact 4 columnas, margen
+  16, separación 16; medium 8 columnas, margen 32 (con rail: 32 del rail), separación 16;
+  expanded 12 columnas, margen 24, separación 24 (con rail de 72: margen 32 y separación 12);
+  large 12 columnas, margen 200, separación 24 (rail de 72); extra-large 12 columnas de 72
+  centradas, separación 24 (rail de 80; expandido de 360). No se usa para los paneles: queda como
+  referencia de márgenes.
+
+Bottom sheet standard (no modal), de `BottomSheetScaffold` (`BottomSheetScaffold.kt` y
+`SheetDefaults.kt`, `080d2b3e53`, 2026-07-24) con el kit de Sheets:
+
+- Asomo (`SheetPeekHeight`) 56; ancho máximo (`SheetMaxWidth`) 640, centrado; radio 28 arriba
+  (`CornerExtraLargeTop`), `Surface Container Low`, asa de 32 × 4. Al quedar oculto la forma pasa
+  a sin radio (`DockedMinimizedContainerShape`).
+- Estados: asomado (`PartiallyExpanded`, el inicial) y expandido (alto de su contenido, sin pasar
+  el del scaffold); oculto solo si la app lo habilita (`skipHiddenState = true` por defecto).
+  Sin scrim: el contenido de atrás sigue usable. El contenido del scaffold recibe un relleno
+  inferior igual al asomo.
+- Elevación: el kit dice 3 en el standard; Compose usa `DockedStandardContainerElevation` =
+  Level 1 (y `BottomSheetDefaults.Elevation` = `DockedModalContainerElevation`, también Level 1).
+  Conflicto ya anotado en `07-jetpack-compose.md` (Sheets); por ADR-0004 manda el kit (nivel 3).
+- El scaffold de Compose también recibe `topBar` y `snackbarHost`.
+
 ## Diferencias con la especificación a revisar
 
 - El indicador con foco del campo de texto mide 3 en el kit. Confirmar en m3.material.io.

@@ -40,6 +40,7 @@ way around.
 | [`MK_TAB_UNNAMED`](#mk_tab_unnamed) | warning | Tab, TabLink |
 | [`MK_TOOLBAR_EXPAND_IGNORED`](#mk_toolbar_expand_ignored) | warning | ToolbarLayout |
 | [`MK_NAVIGATION_TOO_MANY_DESTINATIONS`](#mk_navigation_too_many_destinations) | warning | NavigationBar, NavigationRail (collapsed), NavigationSuite |
+| [`MK_PANE_NOT_IN_VARIANT`](#mk_pane_not_in_variant) | warning | PaneScaffold |
 
 ## MK_PART_OUTSIDE_PARENT
 
@@ -290,3 +291,41 @@ queue.show({ message: 'Saved', duration: 'short' })
 
 - **Related:** [ADR-0029](adr/0029-navigation-suite-con-una-sola-estructura-y-media-queries-y-navigation-rail-modal.md)
   (update of 2026-11-27) and the JSDoc of `NavigationBar`, `NavigationRail` and `NavigationSuite`.
+
+## MK_PANE_NOT_IN_VARIANT
+
+- **Kind:** warning (development only, once per pane name and variant).
+- **Components:** `PaneScaffold`.
+- **Details:** `name`, the pane name found; `variant`, the scaffold variant; `valid`, the pane names of
+  that variant.
+- **Cause:** a `Pane` has a name of the other variant (`main` or `supporting` inside the default
+  `variant="list-detail"`, or `list` or `detail` inside `variant="supporting"`). The scaffold only
+  places and shows the panes of its variant, so that pane is never visible in any window.
+- **Fix:** use a pane name of the variant (`list`, `detail`, `extra`; or `main`, `supporting`,
+  `extra`), or change `variant`.
+- **Limit:** the check runs during render on the React children (the scaffold stays universal): it
+  sees the panes passed directly, in arrays and in fragments, not the ones rendered by another
+  component of yours.
+
+```tsx
+// Warns: [matekit] PaneScaffold: has a <Pane name="supporting">, which is not a pane of variant="list-detail" … (MK_PANE_NOT_IN_VARIANT)
+<PaneScaffold current="list">
+  <Pane name="list">…</Pane>
+  <Pane name="supporting">…</Pane>
+</PaneScaffold>
+
+// Fixed: a list and its detail…
+<PaneScaffold current="list">
+  <Pane name="list">…</Pane>
+  <Pane name="detail">…</Pane>
+</PaneScaffold>
+
+// …or content with a supporting pane
+<PaneScaffold variant="supporting" current="main">
+  <Pane name="main">…</Pane>
+  <Pane name="supporting">…</Pane>
+</PaneScaffold>
+```
+
+- **Related:** [ADR-0030](adr/0030-scaffold-de-paneles-con-una-grilla-por-media-queries-paneles-montados-y-bottom-sheet-standard.md)
+  and the JSDoc of `PaneScaffold` and `Pane`.

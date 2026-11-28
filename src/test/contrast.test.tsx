@@ -5,7 +5,7 @@
 
 import type { ReactNode } from 'react'
 import { describe, expect, test } from 'vitest'
-import { userEvent } from 'vitest/browser'
+import { page, userEvent } from 'vitest/browser'
 import {
   AssistChip,
   ChipAvatar,
@@ -111,6 +111,8 @@ import {
   BottomSheetContent,
   BottomSheetHandle,
   BottomSheetTitle,
+  Pane,
+  PaneScaffold,
   SideSheet,
   SideSheetActions,
   SideSheetClose,
@@ -474,6 +476,41 @@ for (const scheme of SCHEMES) {
     })
 
     // La barra del asa es lo que identifica el control (WCAG 1.4.11): 3:1 sobre el sheet.
+    test('PaneScaffold (900 px): texto y barra de la lista sobre surface, del detalle sobre su superficie; bottom sheet standard', async () => {
+      await page.viewport(900, 800)
+      await expect.poll(() => window.innerWidth).toBe(900)
+      try {
+        const c = await render(
+          <Themed scheme={scheme}>
+            <PaneScaffold current="list" style={{ height: 500 }}>
+              <Pane name="list">
+                <TopAppBar><TopAppBarTitle level={2}>Lista</TopAppBarTitle></TopAppBar>
+                <p className="lt">Texto de la lista</p>
+              </Pane>
+              <Pane name="detail">
+                <TopAppBar><TopAppBarTitle level={2}>Detalle</TopAppBarTitle></TopAppBar>
+                <p className="dt">Texto del detalle</p>
+              </Pane>
+              <BottomSheet modal={false}>
+                <BottomSheetHandle />
+                <BottomSheetTitle>Título</BottomSheetTitle>
+                <BottomSheetContent><p>Texto del sheet</p></BottomSheetContent>
+              </BottomSheet>
+            </PaneScaffold>
+          </Themed>,
+        )
+        for (const sel of ['.lt', '.dt', '[data-pane="list"] .mk-top-app-bar-title', '[data-pane="detail"] .mk-top-app-bar-title']) {
+          expect(textContrast(q(c, sel)), sel).toBeGreaterThanOrEqual(TEXT)
+        }
+        expect(textContrast(q(c, '.mk-bottom-sheet-standard .mk-bottom-sheet-title'))).toBeGreaterThanOrEqual(TEXT)
+        const bar = getComputedStyle(q(c, '.mk-bottom-sheet-standard .mk-bottom-sheet-handle'), '::after').backgroundColor
+        expect(contrastRatio(bar, effectiveBackground(q(c, '.mk-bottom-sheet-standard')))).toBeGreaterThanOrEqual(NON_TEXT)
+      } finally {
+        await page.viewport(414, 896)
+        await expect.poll(() => window.innerWidth).toBe(414)
+      }
+    })
+
     test('BottomSheet: título y texto sobre el contenedor, y la barra del asa', async () => {
       const c = await render(
         <Themed scheme={scheme}>

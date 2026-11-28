@@ -319,6 +319,13 @@ No llamar al conector de Figma salvo que falte un dato imprescindible: tiene lí
     del servidor, `renderToString` y `hydrateRoot` en la prueba (`react-dom/server` está en
     `optimizeDeps` de `vitest.config.ts`: si Vite lo descubre a mitad de la corrida, recarga y deja
     dos copias de React).
+  - Paneles ocultos (PaneScaffold, comprobado el 2026-11-28): un contenedor que se desplaza conserva
+    lo desplazado al pasar por `display: none` en los tres motores, **salvo en WebKit si su contenido usa
+    container queries** (la `List`): vuelve a 0. Con `visibility: hidden` se conserva en los tres. Con
+    `content-visibility: hidden` en el propio contenedor, Chrome lo pierde. En un hijo con
+    `position: absolute` de una grilla, una línea `auto` (`grid-row: 1`) es el borde de la grilla, no la
+    línea siguiente: escribir las dos (`1 / 2`). El reparto de pistas `minmax(0, X)` antes que las `fr`
+    (agrandar por igual hasta el tope) da lo mismo en los tres.
 - Snackbar (comprobado el 2026-11-26): un `popover` dentro de un `<dialog>` modal abierto se puede
   usar en los tres motores (fuera del diálogo queda inerte). Un F6 real que la página no atrapa
   saca el foco del documento en Firefox: para probar que un componente no atrapa una tecla, despachar

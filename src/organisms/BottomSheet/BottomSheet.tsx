@@ -15,8 +15,6 @@
 // cancela el desplazamiento nativo. El resto de los gestos desplazan el contenido como siempre.
 
 import {
-  createContext,
-  use,
   useEffect,
   useId,
   useLayoutEffect,
@@ -33,43 +31,22 @@ import {
 } from 'react'
 import { FocusRing } from '../../atoms/FocusRing/FocusRing.tsx'
 import { onScrim, useModalDialog, useRegisteredId } from '../../internal/modal-dialog.ts'
-import { partOutsideParent } from '../../internal/diagnostics.ts'
 import { computeTarget, DRAG_SLOP, VelocityTracker, type Anchor } from '../../internal/anchored-drag.ts'
 import { bottomSheetStrings } from './strings.ts'
+import {
+  BottomSheetContext,
+  useBottomSheet,
+  type BottomSheetContextValue,
+  type BottomSheetState,
+  type BottomSheetStateChangeReason,
+} from './bottom-sheet-context.ts'
+import { StandardBottomSheet, type BottomSheetStandardProps } from './StandardBottomSheet.tsx'
 
-/** Estado del sheet abierto: parcial (la mitad de la ventana) o expandido (todo su alto). */
-export type BottomSheetState = 'partial' | 'expanded'
-
-/**
- * Por qué cambió el estado (`onStateChange`):
- * - `drag`: se soltó un arrastre y el sheet se acomoda en otro estado;
- * - `handle`: el asa (clic o teclado);
- * - `focus`: el foco llegó a algo que el parcial deja fuera de la ventana y el sheet se expande;
- * - `resize`: el parcial dejó de existir (el sheet ya no pasa la mitad de la ventana, o
- *   `skipPartiallyExpanded`) y el sheet se muestra expandido, o volvió a existir y el sheet, con
- *   `state="partial"`, vuelve al parcial.
- */
-export type BottomSheetStateChangeReason = 'drag' | 'handle' | 'focus' | 'resize'
+export type { BottomSheetState, BottomSheetStateChangeReason } from './bottom-sheet-context.ts'
+export type { BottomSheetStandardProps } from './StandardBottomSheet.tsx'
 
 /** Variable CSS con el avance del sheet: lo visible de su alto, de 0 (cerrado) a 1 (expandido). */
 const PROGRESS = '--mk-bottom-sheet-progress'
-
-interface BottomSheetContextValue {
-  titleId: string
-  setTitleId: (id: string | undefined) => void
-  state: BottomSheetState
-  hasPartial: boolean
-  requestState: (state: BottomSheetState, reason: BottomSheetStateChangeReason) => void
-  requestClose: () => void
-}
-
-const BottomSheetContext = createContext<BottomSheetContextValue | null>(null)
-
-function useBottomSheet(part: string): BottomSheetContextValue {
-  const ctx = use(BottomSheetContext)
-  if (!ctx) throw partOutsideParent(part, 'BottomSheet')
-  return ctx
-}
 
 const cx = (base: string, extra: string | undefined) => (extra ? `${base} ${extra}` : base)
 
@@ -104,7 +81,9 @@ interface Drag {
   tracker: VelocityTracker
 }
 
-export interface BottomSheetProps extends Omit<DialogHTMLAttributes<HTMLDialogElement>, 'open' | 'onClose'> {
+export interface BottomSheetModalProps extends Omit<DialogHTMLAttributes<HTMLDialogElement>, 'open' | 'onClose'> {
+  /** Modal (por defecto): un `<dialog>` sobre el contenido, con scrim y foco atrapado. */
+  modal?: true | undefined
   /** Abierto (modal) o cerrado. Es controlado: solo cambia cuando cambia `open`. */
   open?: boolean | undefined
   /**
@@ -149,7 +128,7 @@ export interface BottomSheetProps extends Omit<DialogHTMLAttributes<HTMLDialogEl
 }
 
 /**
- * Bottom sheet modal de Material 3, sobre el `<dialog>` nativo con `showModal()` como el `Dialog`
+ * Bottom sheet de Material 3. **Modal** (por defecto): sobre el `<dialog>` nativo con `showModal()` como el `Dialog`
  * (foco atrapado, página inerte, scrim, Escape, salida animada, foco devuelto al cerrar).
  *
  * ```tsx
@@ -182,9 +161,23 @@ export interface BottomSheetProps extends Omit<DialogHTMLAttributes<HTMLDialogEl
  * - Ancho máximo 640 px, centrado (`BottomSheetDefaults.SheetMaxWidth`). Mientras está abierto,
  *   la página no se desplaza.
  *
- * Las props nativas y `ref` llegan al `<dialog>`; `className` y `style` también.
+ * **Standard** (`modal={false}`, ADR-0030): el de `BottomSheetScaffold` de Compose, un `<aside>` sin
+ * scrim que convive con el contenido, asomado (56 px, `--mk-bottom-sheet-peek-height`) o expandido;
+ * va como hijo de un `PaneScaffold`, que le da relleno abajo a los paneles. Mismas partes, mismo
+ * arrastre y `state`/`defaultState`/`onStateChange`; `open` (por defecto `true`) y, con `onClose`,
+ * se puede ocultar arrastrando. Ver `BottomSheetStandardProps`.
+ *
+ * Las props nativas y `ref` llegan al `<dialog>` (o al `<aside>`); `className` y `style` también.
  */
-export function BottomSheet({
+export function BottomSheet(props: BottomSheetProps) {
+  return props.modal === false ? <StandardBottomSheet {...props} /> : <ModalBottomSheet {...props} />
+}
+
+/** Modal o standard (`modal={false}`, ADR-0030). */
+export type BottomSheetProps = BottomSheetModalProps | BottomSheetStandardProps
+
+function ModalBottomSheet({
+  modal: _modal,
   open = false,
   onClose,
   closeOnScrimClick = true,
@@ -205,7 +198,7 @@ export function BottomSheet({
   onPointerCancel,
   onFocus,
   ...props
-}: BottomSheetProps) {
+}: BottomSheetModalProps) {
   // Controlado o no, como RadioGroup (ADR-0012). `requested` es lo pedido; `state`, lo que se
   // muestra: el parcial pedido sin parcial disponible se muestra expandido.
   const controlled = stateProp !== undefined

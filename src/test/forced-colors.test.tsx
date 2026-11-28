@@ -3,7 +3,7 @@
 // forma y distinguir sus estados con esos colores.
 
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { commands, server, userEvent } from 'vitest/browser'
+import { commands, page, server, userEvent } from 'vitest/browser'
 import {
   AssistChip,
   ChipAvatar,
@@ -100,6 +100,8 @@ import {
   BottomSheetContent,
   BottomSheetHandle,
   BottomSheetTitle,
+  Pane,
+  PaneScaffold,
   SideSheet,
   SideSheetActions,
   SideSheetClose,
@@ -406,6 +408,22 @@ describe('Sheets', () => {
       </BottomSheet>,
     )
     const s = style(q(c, 'dialog'))
+    expect(s.outlineStyle).toBe('solid')
+    expect(s.outlineColor).toBe(systemColor('CanvasText'))
+    expect(getComputedStyle(q(c, '.mk-bottom-sheet-handle'), '::after').backgroundColor).toBe(systemColor('CanvasText'))
+  })
+
+  test('bottom sheet standard: contorno CanvasText y la barra del asa en CanvasText', async () => {
+    const c = await render(
+      <PaneScaffold style={{ height: 400 }}>
+        <Pane name="list" />
+        <BottomSheet modal={false}>
+          <BottomSheetHandle />
+          <BottomSheetTitle>Título</BottomSheetTitle>
+        </BottomSheet>
+      </PaneScaffold>,
+    )
+    const s = style(q(c, '.mk-bottom-sheet-standard'))
     expect(s.outlineStyle).toBe('solid')
     expect(s.outlineColor).toBe(systemColor('CanvasText'))
     expect(getComputedStyle(q(c, '.mk-bottom-sheet-handle'), '::after').backgroundColor).toBe(systemColor('CanvasText'))
@@ -1302,5 +1320,30 @@ describe('Search', () => {
       </div>,
     )
     expect(style(q(c, '.mk-search-bar')).animationName).toBe('none')
+  })
+})
+
+describe('PaneScaffold', () => {
+  afterEach(async () => {
+    await page.viewport(414, 896)
+    await expect.poll(() => window.innerWidth).toBe(414)
+  })
+
+  test('desde 600, los paneles con superficie se marcan con un contorno CanvasText; la lista y la ventana compacta no', async () => {
+    await page.viewport(900, 800)
+    await expect.poll(() => window.innerWidth).toBe(900)
+    const c = await render(
+      <PaneScaffold current="list" style={{ height: 400 }}>
+        <Pane name="list" />
+        <Pane name="detail" />
+      </PaneScaffold>,
+    )
+    const detail = style(q(c, '[data-pane="detail"]'))
+    expect(detail.outlineStyle).toBe('solid')
+    expect(detail.outlineColor).toBe(systemColor('CanvasText'))
+    expect(style(q(c, '[data-pane="list"]')).outlineStyle).toBe('none')
+    await page.viewport(414, 896)
+    await expect.poll(() => window.innerWidth).toBe(414)
+    expect(style(q(c, '[data-pane="list"]')).outlineStyle).toBe('none')
   })
 })

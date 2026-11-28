@@ -195,7 +195,7 @@ body {
   margin-bottom: 40px;
 }
 
-.pg-section h2 {
+.pg-section > h2 {
   margin: 0 0 16px;
   font-size: var(--md-sys-typescale-title-large-size);
   font-weight: 400;
@@ -831,4 +831,25 @@ body {
   color: var(--md-sys-color-on-secondary-container);
   /* Los códigos largos (MK_…) cortan en vez de ensanchar la página a 320. */
   overflow-wrap: anywhere;
+}
+
+/* PaneScaffold: un recuadro del alto de una pantalla chica (en una app real, 100dvh). */
+.pg-panes-frame {
+  height: 36rem;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-large);
+}
+.pg-panes-short {
+  height: 28rem;
+}
+.pg-panes-body {
+  padding: 0 var(--md-sys-space-200) var(--md-sys-space-200);
+}
+/* Volver (o ir al panel de apoyo) solo hace falta con un panel: desde 840 se ven los dos. */
+@media (width >= 52.5rem) {
+  .pg-panes-back,
+  .pg-panes-back-extra,
+  .pg-panes-to-supporting {
+    display: none;
+  }
 }

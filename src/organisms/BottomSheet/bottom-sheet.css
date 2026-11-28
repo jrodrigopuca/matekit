@@ -25,6 +25,15 @@
    src/internal/modal-dialog.ts y quita al terminar, como en el Dialog). Al soltar, la transición
    lleva el sheet desde donde quedó hasta el estado elegido. */
 
+/* Alto del asomo del sheet standard, registrado como <length>: StandardBottomSheet.tsx lee su valor
+   calculado (ya en px, con la zona segura sumada) para ubicar el ancla del asomo. Fuera de las capas:
+   @property no pertenece a ninguna. */
+@property --_bottom-sheet-peek {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+
 @layer matekit.components {
   .mk-bottom-sheet {
     --_scrim: color-mix(in srgb, var(--md-sys-color-scrim) 32%, transparent);
@@ -219,11 +228,96 @@
     outline: none;
   }
 
+  /* --- Standard (no modal, ADR-0030): el de BottomSheetScaffold de Compose ---
+     Kit (05-medidas.md § Scaffold de paneles y § Sheets): el mismo contenedor y asa que el modal,
+     con elevación 3 (Compose usa Level 1; gana el kit, 07-jetpack-compose.md § Sheets). Compose
+     (BottomSheetScaffold.kt y SheetDefaults.kt, commit 080d2b3e53): asomo de 56 (SheetPeekHeight),
+     ancho máximo 640 centrado, sin scrim; expandido con el alto de su contenido sin pasar el del
+     scaffold.
+     Posición: contra el borde de abajo de su bloque contenedor (en un PaneScaffold, el área de los
+     paneles, arriba de la barra de navegación), con translate: 0 expandido, el alto menos el asomo
+     asomado, --_drag al arrastrar y 100 % oculto. */
+  .mk-bottom-sheet-standard {
+    /* La zona segura de abajo: la del scaffold si está adentro de uno (0 sobre la barra), si no, la
+       del sistema. */
+    --_safe-bottom: var(--_pane-scaffold-inset-bottom, env(safe-area-inset-bottom, 0px));
+    --_bottom-sheet-peek: calc(var(--mk-bottom-sheet-peek-height, 56px) + var(--_safe-bottom));
+    --_rest: calc(100% - var(--_bottom-sheet-peek));
+    --_y: var(--_rest);
+
+    position: absolute;
+    z-index: 1;
+    inset-inline: 0;
+    inset-block-end: 0;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    inline-size: 100%;
+    max-inline-size: var(--mk-bottom-sheet-max-width, 640px);
+    max-block-size: calc(100% - env(safe-area-inset-top, 0px));
+    margin: 0 auto;
+    padding: 0 env(safe-area-inset-right, 0px) var(--_safe-bottom) env(safe-area-inset-left, 0px);
+    border-start-start-radius: var(--md-sys-shape-corner-extra-large);
+    border-start-end-radius: var(--md-sys-shape-corner-extra-large);
+    background-color: var(--md-sys-color-surface-container-low);
+    box-shadow: var(--md-sys-elevation-level3);
+    color: var(--md-sys-color-on-surface);
+    translate: 0 var(--_y);
+    transition:
+      translate var(--md-sys-motion-spring-default-spatial-duration) var(--md-sys-motion-spring-default-spatial-easing),
+      visibility 0s;
+  }
+  .mk-bottom-sheet-standard[data-state='expanded'] {
+    --_rest: 0px;
+  }
+  .mk-bottom-sheet-standard[data-dragging] {
+    --_y: var(--_drag, var(--_rest));
+    cursor: grabbing;
+    transition: none;
+    user-select: none;
+  }
+  /* Oculto: se va por abajo (FastEffects, como la salida del modal) y después queda invisible
+     (visibility al final de la transición), además de inert. Compose quita el radio al ocultar
+     (DockedMinimizedContainerShape): no se ve, así que no se anima. */
+  .mk-bottom-sheet-standard[data-closed] {
+    --_y: 100%;
+    visibility: hidden;
+    box-shadow: none;
+    transition:
+      translate var(--md-sys-motion-spring-fast-effects-duration) var(--md-sys-motion-spring-fast-effects-easing),
+      visibility 0s var(--md-sys-motion-spring-fast-effects-duration);
+  }
+  .mk-bottom-sheet-standard > :not(.mk-bottom-sheet-content) {
+    touch-action: none;
+  }
+  .mk-bottom-sheet-standard > .mk-bottom-sheet-title:first-child {
+    padding-block-start: var(--md-sys-space-300);
+  }
+
+  /* Movimiento reducido: los resortes spatial valen 0 (salta entre asomado y expandido); mostrar y
+     ocultar es un fundido en el lugar. El arrastre sigue al puntero igual. */
+  @media (prefers-reduced-motion: reduce) {
+    .mk-bottom-sheet-standard {
+      transition:
+        translate var(--md-sys-motion-spring-default-spatial-duration) var(--md-sys-motion-spring-default-spatial-easing),
+        opacity var(--md-sys-motion-spring-default-effects-duration) var(--md-sys-motion-spring-default-effects-easing),
+        visibility 0s;
+    }
+    .mk-bottom-sheet-standard[data-closed] {
+      --_y: var(--_rest);
+      opacity: 0;
+      transition:
+        opacity var(--md-sys-motion-spring-fast-effects-duration) var(--md-sys-motion-spring-fast-effects-easing),
+        visibility 0s var(--md-sys-motion-spring-fast-effects-duration);
+    }
+  }
+
   /* --- Alto contraste (forced-colors) ---
      El navegador quita el fondo: un contorno marca el borde del sheet, y la barra del asa se pinta
      con CanvasText (si no, queda del color de la página). */
   @media (forced-colors: active) {
-    .mk-bottom-sheet {
+    .mk-bottom-sheet,
+    .mk-bottom-sheet-standard {
       outline: 1px solid CanvasText;
     }
     .mk-bottom-sheet-handle::after {

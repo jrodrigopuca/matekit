@@ -32,7 +32,12 @@ export const MATEKIT_ERROR_CODES = [
 ] as const
 
 /** Códigos de aviso (solo en desarrollo), con las mismas reglas que los de error. */
-export const MATEKIT_WARNING_CODES = ['MK_TAB_UNNAMED', 'MK_TOOLBAR_EXPAND_IGNORED', 'MK_NAVIGATION_TOO_MANY_DESTINATIONS'] as const
+export const MATEKIT_WARNING_CODES = [
+  'MK_TAB_UNNAMED',
+  'MK_TOOLBAR_EXPAND_IGNORED',
+  'MK_NAVIGATION_TOO_MANY_DESTINATIONS',
+  'MK_PANE_NOT_IN_VARIANT',
+] as const
 
 /** Código de un `MatekitError`: estable, para distinguir el error con `error.code`. */
 export type MatekitErrorCode = (typeof MATEKIT_ERROR_CODES)[number]

@@ -5,7 +5,7 @@ import {
   BottomSheet,
   BottomSheetHandle,
   BottomSheetTitle,
-  type BottomSheetProps,
+  type BottomSheetModalProps,
   type BottomSheetState,
   type BottomSheetStateChangeReason,
 } from './BottomSheet.tsx'
@@ -48,7 +48,7 @@ function mixColor(role: string, percent: number): string {
 
 const ITEMS = Array.from({ length: 40 }, (_, i) => <p key={i} style={{ margin: 0, height: 48 }}>Fila {i + 1}</p>)
 
-type HarnessProps = Omit<BottomSheetProps, 'open' | 'onClose'> & {
+type HarnessProps = Omit<BottomSheetModalProps, 'open' | 'onClose'> & {
   initialOpen?: boolean
   /** Si el padre acepta los pedidos de cierre. */
   accept?: boolean
@@ -715,7 +715,7 @@ function Controlled({
   initialTall = true,
   onStateChange,
   ...props
-}: Omit<BottomSheetProps, 'state' | 'onStateChange'> & {
+}: Omit<BottomSheetModalProps, 'state' | 'onStateChange'> & {
   initial?: BottomSheetState | undefined
   accept?: boolean
   initialTall?: boolean

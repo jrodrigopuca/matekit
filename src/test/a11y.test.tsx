@@ -2,8 +2,8 @@
 // principales y en los dos temas. El contraste se mide sobre el fondo `surface` del tema.
 
 import type { ReactNode } from 'react'
-import { describe, expect, test } from 'vitest'
-import { userEvent } from 'vitest/browser'
+import { afterEach, describe, expect, test } from 'vitest'
+import { page, userEvent } from 'vitest/browser'
 import {
   AssistChip,
   ChipAvatar,
@@ -143,6 +143,8 @@ import {
   SideSheetContent,
   SideSheetHeader,
   SideSheetTitle,
+  Pane,
+  PaneScaffold,
 } from '../index.ts'
 import { a11yViolations } from './a11y.ts'
 import { render } from './render.tsx'
@@ -888,6 +890,63 @@ describe('Accesibilidad automática (axe-core)', () => {
       await expect.poll(() => c.querySelector('[role="status"]')?.textContent).toBe('Foto archivada Deshacer')
       expect(await a11yViolations(c)).toEqual([])
     })
+  }
+})
+
+// PaneScaffold: lista y detalle con barra por panel, navegación y el bottom sheet standard, en una
+// ventana compacta (un panel, la barra abajo) y en una ancha (dos paneles con superficie, el rail).
+// Va dentro de un <div> y no del <main> de Themed: el detalle es el <main>.
+describe('Accesibilidad automática (axe-core): PaneScaffold', () => {
+  afterEach(async () => {
+    if (window.innerWidth !== 414) {
+      await page.viewport(414, 896)
+      await expect.poll(() => window.innerWidth).toBe(414)
+    }
+  })
+  for (const theme of THEMES) {
+    for (const width of [414, 1000]) {
+      test(`${width} px, tema ${theme === 'light' ? 'claro' : 'oscuro'}`, async () => {
+        await page.viewport(width, 800)
+        await expect.poll(() => window.innerWidth).toBe(width)
+        const c = await render(
+          <div data-theme={theme}>
+            <PaneScaffold current="list" style={{ height: 600 }}>
+              <NavigationSuite aria-label="Principal">
+                <NavigationSuiteItem href="#a" active>
+                  <NavigationSuiteItemIcon><HomeIcon filled /></NavigationSuiteItemIcon>
+                  <NavigationSuiteItemLabel>Inicio</NavigationSuiteItemLabel>
+                </NavigationSuiteItem>
+                <NavigationSuiteItem href="#b">
+                  <NavigationSuiteItemIcon><SettingsIcon /></NavigationSuiteItemIcon>
+                  <NavigationSuiteItemLabel>Ajustes</NavigationSuiteItemLabel>
+                </NavigationSuiteItem>
+              </NavigationSuite>
+              <Pane name="list" render={<section aria-label="Mensajes" />}>
+                <TopAppBar><TopAppBarTitle level={2}>Mensajes</TopAppBarTitle></TopAppBar>
+                <List>
+                  <ListItem>
+                    <ListItemHeadline><ListItemAction href="#m1" current>Reunión del jueves</ListItemAction></ListItemHeadline>
+                  </ListItem>
+                  <ListItem>
+                    <ListItemHeadline><ListItemAction href="#m2">Fotos del viaje</ListItemAction></ListItemHeadline>
+                  </ListItem>
+                </List>
+              </Pane>
+              <Pane name="detail" render={<main />}>
+                <TopAppBar><TopAppBarTitle>Reunión del jueves</TopAppBarTitle></TopAppBar>
+                <p>Nos vemos a las diez.</p>
+              </Pane>
+              <BottomSheet modal={false}>
+                <BottomSheetHandle />
+                <BottomSheetTitle>Lugares</BottomSheetTitle>
+                <BottomSheetContent><p>Cerca de acá.</p></BottomSheetContent>
+              </BottomSheet>
+            </PaneScaffold>
+          </div>,
+        )
+        expect(await a11yViolations(c)).toEqual([])
+      })
+    }
   }
 })
 

@@ -21,6 +21,7 @@ import { MenuPage } from './pages/MenuPage.tsx'
 import { NavigationBarPage } from './pages/NavigationBarPage.tsx'
 import { NavigationRailPage } from './pages/NavigationRailPage.tsx'
 import { NavigationSuitePage } from './pages/NavigationSuitePage.tsx'
+import { PaneScaffoldPage } from './pages/PaneScaffoldPage.tsx'
 import { ProgressIndicatorPage } from './pages/ProgressIndicatorPage.tsx'
 import { RadioButtonPage } from './pages/RadioButtonPage.tsx'
 import { SearchPage } from './pages/SearchPage.tsx'
@@ -87,6 +88,7 @@ const PAGES = {
   'navigation-bar': { label: 'NavigationBar', group: 'organisms', Page: NavigationBarPage },
   'navigation-rail': { label: 'NavigationRail', group: 'organisms', Page: NavigationRailPage },
   'navigation-suite': { label: 'NavigationSuite', group: 'organisms', Page: NavigationSuitePage },
+  'pane-scaffold': { label: 'PaneScaffold', group: 'organisms', Page: PaneScaffoldPage },
   search: { label: 'Search', group: 'organisms', Page: SearchPage },
   sheets: { label: 'Sheets', group: 'organisms', Page: SheetsPage },
   snackbar: { label: 'Snackbar', group: 'organisms', Page: SnackbarPage },
