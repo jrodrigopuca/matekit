@@ -80,6 +80,9 @@ export function NavigationBarPage() {
     <>
       <section className="pg-section">
         <h2>Interactivo</h2>
+        <p className="pg-note">
+          <strong>Límite:</strong> De 3 a 5 destinos en cualquier ventana (Material). Con más, en desarrollo aparece el aviso <code>MK_NAVIGATION_TOO_MANY_DESTINATIONS</code> y los destinos se achican hasta 24 px sin desbordar; el resto va en un <code>ModalNavigationRail</code> o un <code>Menu</code>.
+        </p>
         <div className="pg-controls">
           <label className="pg-field">
             Disposición

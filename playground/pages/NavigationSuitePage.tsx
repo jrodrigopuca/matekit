@@ -53,6 +53,9 @@ export function NavigationSuitePage() {
     <>
       <section className="pg-section">
         <h2>Interactivo</h2>
+        <p className="pg-note">
+          <strong>Límite:</strong> De 3 a 5 destinos en cualquier ventana, porque en una compacta es una barra (Material); con <code>layout=&quot;rail&quot;</code>, de 3 a 7. Más allá, en desarrollo aparece el aviso <code>MK_NAVIGATION_TOO_MANY_DESTINATIONS</code>; como barra se achican hasta 24 px sin desbordar y como rail se desplaza.
+        </p>
         <div className="pg-controls">
           <label className="pg-field">
             Presentación

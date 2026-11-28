@@ -60,7 +60,10 @@
 
     display: grid;
     box-sizing: border-box;
-    min-width: 48px;
+    /* Ancho mínimo 24, no 48: en la barra los destinos se reparten el ancho (como el weight(1f) de
+       Compose) y con más de los recomendados se achican en vez de desbordar la página. 24 × 24 es el
+       área táctil mínima de WCAG 2.5.8 (nivel AA); el alto sigue siendo 48 o más. */
+    min-width: 24px;
     min-height: 48px;
     margin: 0;
     border: none;
@@ -82,8 +85,10 @@
     --_indicator-radius: var(--md-sys-shape-corner-large);
 
     flex: 1 1 0;
-    /* Indicador de 56: 16 + icono 24 + 16, centrado. */
-    grid-template-columns: minmax(0, 1fr) 16px 24px 16px minmax(0, 1fr);
+    /* Indicador de 56: 16 + icono 24 + 16, centrado. Los 16 a cada lado ceden si el destino mide
+       menos de 56 (muchos destinos en una ventana angosta): el indicador se achica hasta el icono y
+       no tapa al vecino. */
+    grid-template-columns: minmax(0, 1fr) minmax(0, 16px) 24px minmax(0, 16px) minmax(0, 1fr);
     /* Indicador de 32 (4 + 24 + 4), separación 4 y etiqueta. */
     grid-template-rows: 4px 24px 4px 4px auto;
     align-content: center;
@@ -174,7 +179,8 @@
   .mk-navigation-bar[data-layout='horizontal'] .mk-navigation-bar-item {
     /* La mitad del alto (40): Large Increased. */
     --_indicator-radius: var(--md-sys-shape-corner-large-increased);
-    grid-template-columns: minmax(0, 1fr) 16px 24px 4px minmax(0, max-content) 16px minmax(0, 1fr);
+    /* Los rellenos, la separación y la etiqueta ceden si no entran (la etiqueta se recorta). */
+    grid-template-columns: minmax(0, 1fr) minmax(0, 16px) 24px minmax(0, 4px) minmax(0, max-content) minmax(0, 16px) minmax(0, 1fr);
     grid-template-rows: 8px 24px 8px;
     padding: 0;
   }

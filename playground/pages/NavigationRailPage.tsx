@@ -137,6 +137,9 @@ export function NavigationRailPage() {
     <>
       <section className="pg-section">
         <h2>Interactivo</h2>
+        <p className="pg-note">
+          <strong>Límite:</strong> Contraído, de 3 a 7 destinos en cualquier ventana (Material); expandido y en el <code>ModalNavigationRail</code>, sin límite. Si no entran a lo alto, el rail se desplaza en vertical. Contraído con más de 7, en desarrollo aparece el aviso <code>MK_NAVIGATION_TOO_MANY_DESTINATIONS</code>.
+        </p>
         <div className="pg-controls">
           <label className="pg-check">
             <input type="checkbox" checked={o.expanded} onChange={(e) => set('expanded', e.target.checked)} />

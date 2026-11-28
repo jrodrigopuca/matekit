@@ -821,3 +821,14 @@ body {
   border: 1px solid var(--md-sys-color-outline-variant);
   border-radius: var(--md-sys-shape-corner-large);
 }
+
+/* Nota visible (por ejemplo, el límite de destinos de la navegación). */
+.pg-note {
+  margin: 0 0 var(--md-sys-space-200);
+  padding: var(--md-sys-space-150) var(--md-sys-space-200);
+  border-radius: var(--md-sys-shape-corner-medium);
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+  /* Los códigos largos (MK_…) cortan en vez de ensanchar la página a 320. */
+  overflow-wrap: anywhere;
+}

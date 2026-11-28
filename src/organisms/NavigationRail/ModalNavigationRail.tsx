@@ -145,6 +145,8 @@ export interface ModalNavigationRailProps extends Omit<DialogHTMLAttributes<HTML
  * - **Cierre:** Escape, el scrim, `ModalNavigationRailClose`, arrastrar hacia el borde (sigue al
  *   puntero; al soltar cierra si pasó la mitad del ancho o iba rápido, y si el padre no cierra
  *   vuelve) y, con `closeOnSelect` (por defecto), elegir un destino: todos llaman a `onClose`.
+ * - **Destinos:** sin límite: si no entran a lo alto, el rail se desplaza en vertical (no avisa nunca).
+ *   Es donde van los destinos que no entran en una `NavigationBar` o un rail contraído.
  * - **Medidas:** el ancho del rail expandido (220, `--mk-navigation-rail-expanded-width` hasta 360),
  *   sin pasar de la ventana menos 48 (para tocar el scrim y cerrar); `surface-container` con radio
  *   16 del lado del contenido (contra el borde, 0). Suma las zonas seguras arriba, abajo y del lado

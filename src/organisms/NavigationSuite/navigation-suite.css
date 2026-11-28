@@ -63,7 +63,7 @@
 
     flex: var(--_item-flex, none);
     inline-size: var(--_item-inline-size, 96px);
-    grid-template-columns: var(--_item-columns, minmax(0, 1fr) 16px 24px 16px minmax(0, 1fr));
+    grid-template-columns: var(--_item-columns, minmax(0, 1fr) minmax(0, 16px) 24px minmax(0, 16px) minmax(0, 1fr));
     grid-template-rows: var(--_item-rows, 4px 24px 4px 4px auto);
     padding: var(--_item-padding, var(--md-sys-space-75) 0);
   }
@@ -133,7 +133,7 @@
   @media (width >= 37.5rem) and (height < 30rem) {
     .mk-navigation-suite[data-layout='auto'] {
       --_item-radius: var(--md-sys-shape-corner-large-increased);
-      --_item-columns: minmax(0, 1fr) 16px 24px 4px minmax(0, max-content) 16px minmax(0, 1fr);
+      --_item-columns: minmax(0, 1fr) minmax(0, 16px) 24px minmax(0, 4px) minmax(0, max-content) minmax(0, 16px) minmax(0, 1fr);
       --_item-rows: 8px 24px 8px;
       --_item-padding: 0;
       --_item-indicator-columns: 2 / 7;
@@ -148,7 +148,7 @@
   @media (width >= 37.5rem) {
     .mk-navigation-suite[data-layout='bar'] {
       --_item-radius: var(--md-sys-shape-corner-large-increased);
-      --_item-columns: minmax(0, 1fr) 16px 24px 4px minmax(0, max-content) 16px minmax(0, 1fr);
+      --_item-columns: minmax(0, 1fr) minmax(0, 16px) 24px minmax(0, 4px) minmax(0, max-content) minmax(0, 16px) minmax(0, 1fr);
       --_item-rows: 8px 24px 8px;
       --_item-padding: 0;
       --_item-indicator-columns: 2 / 7;

@@ -84,10 +84,12 @@ export interface NavigationRailProps extends HTMLAttributes<HTMLElement> {
  *
  * Nombre: si la página tiene más de un `<nav>`, darle nombre con `aria-label`.
  *
- * **Destinos:** de 3 a 7 contraído (guía de Material). Contraído con más de 7, avisa en desarrollo
- * (`MK_NAVIGATION_TOO_MANY_DESTINATIONS`); expandido no, porque los destinos se desplazan. Cuenta los
- * `NavigationRailItem` hijos (también en arrays, fragmentos o envueltos de a uno, como en un
- * `Tooltip`); no ve los que dibuja otro componente.
+ * **Destinos:** contraído, **de 3 a 7** (guía de Material), en cualquier ventana; expandido, **sin
+ * límite**. Si no entran a lo alto, el rail se desplaza en vertical (los dos estados); a lo ancho nunca
+ * desborda: las etiquetas largas se recortan con puntos suspensivos. Contraído con más de 7, avisa en
+ * desarrollo (`MK_NAVIGATION_TOO_MANY_DESTINATIONS`); el arreglo es tener menos, o llevar el resto a un
+ * `ModalNavigationRail` o a un `Menu`. El aviso cuenta los `NavigationRailItem` hijos (también en
+ * arrays, fragmentos o envueltos de a uno, como en un `Tooltip`); no ve los que dibuja otro componente.
  *
  * ```tsx
  * const [expanded, setExpanded] = useState(false)

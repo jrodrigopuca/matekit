@@ -55,10 +55,14 @@ export interface NavigationBarProps extends HTMLAttributes<HTMLElement> {
  *
  * Si la página tiene más de un `<nav>`, conviene darle nombre con `aria-label`.
  *
- * De 3 a 5 destinos (guía de Material). Con más de 5, avisa en desarrollo
- * (`MK_NAVIGATION_TOO_MANY_DESTINATIONS`): menos destinos, un `ModalNavigationRail` para el resto o un
- * `Menu`. Cuenta los `NavigationBarItem` hijos (también en arrays, fragmentos o envueltos de a uno,
- * como en un `Tooltip`); no ve los que dibuja otro componente.
+ * **Destinos: de 3 a 5, en cualquier ventana** (guía de Material). Los destinos se reparten el ancho
+ * en partes iguales (como el `weight(1f)` de Compose): con pocos, cada uno es más ancho; con más de los
+ * que entran a su medida, se achican (el indicador y la etiqueta ceden, la etiqueta se recorta con
+ * puntos suspensivos y el nombre accesible queda completo) hasta 24 px de ancho, el área táctil mínima
+ * de WCAG 2.5.8, sin desbordar la página. Con más de 5, avisa en desarrollo
+ * (`MK_NAVIGATION_TOO_MANY_DESTINATIONS`); el arreglo es tener menos, o llevar el resto a un
+ * `ModalNavigationRail` o a un `Menu`. El aviso cuenta los `NavigationBarItem` hijos (también en
+ * arrays, fragmentos o envueltos de a uno, como en un `Tooltip`); no ve los que dibuja otro componente.
  *
  * ```tsx
  * <NavigationBar aria-label="Principal">

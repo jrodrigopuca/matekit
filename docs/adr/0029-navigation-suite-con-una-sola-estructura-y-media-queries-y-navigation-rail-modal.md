@@ -162,3 +162,42 @@ componente. URLs (`#id`) y foco (a la página actual al abrir, al botón al cerr
   render sobre los hijos de React (`src/internal/navigation-count.ts`: directos, arrays, fragmentos y
   envueltos de a uno, como en un `Tooltip`) para no pasar los componentes a cliente; no ve los
   destinos que dibuja otro componente, límite anotado en el JSDoc y en `docs/diagnostics.md`.
+- **Límites de destinos documentados y destinos que siempre entran** (decidido con el autor, después
+  de comparar con Material Components Android, que lanza un error con 6 en la barra y 8 en el rail
+  contraído; con Compose `NavigationBar`, que reparte con `weight(1f)` sin ancho mínimo y nunca
+  desborda; y con MUI, que desborda):
+
+  | Componente y presentación | Compacta (< 600) | Mediana (600–839) | Ancha (≥ 840) |
+  |---|---|---|---|
+  | `NavigationBar` | 5 | 5 | 5 |
+  | `NavigationSuite` (`auto` o `bar`) | 5 | 5 | 5 |
+  | `NavigationSuite layout="rail"` | 7 | 7 | 7 |
+  | `NavigationRail` contraído | 7 | 7 | 7 |
+  | `NavigationRail` expandido, `ModalNavigationRail` | sin límite (se desplaza) | ídem | ídem |
+
+  El límite no cambia con la ventana a propósito: los mismos destinos tienen que servir cuando la
+  ventana se achica. Siguen siendo avisos (`mkWarn`, solo en desarrollo): ni error ni destinos
+  ocultos. Está en el JSDoc de cada componente, en `docs/diagnostics.md`
+  (`MK_NAVIGATION_TOO_MANY_DESTINATIONS`, con la tabla), en una nota en cada página del playground y
+  en `CLAUDE.md`.
+- **La barra ya no desborda.** La auditoría medida (`src/test/navigation-fit.test.tsx`: barra
+  vertical y horizontal, rail contraído y expandido, la suite en las tres presentaciones y el rail
+  modal, con 1 a 8 destinos, a 320, 360, 600, 840 y 1300 de ancho y 400 de alto) encontró que la
+  barra (y la suite como barra) desbordaba la página con 6 destinos a 320 o 7 a 360: el destino tenía
+  48 de ancho mínimo y una grilla con pistas fijas (56 del indicador en la vertical, 60 más la
+  etiqueta en la horizontal), así que el indicador salía del destino y tapaba al vecino. Ahora los
+  rellenos del indicador y la separación son `minmax(0, …)` (ceden antes de salirse) y el mínimo del
+  destino es 24 × 48: 24 de ancho es el área táctil mínima de WCAG 2.5.8 (nivel AA, 24 × 24 px CSS);
+  el alto sigue en 48 o más. Con esto la barra reparte el ancho como Compose y entra hasta
+  ⌊ancho / 24⌋ destinos (13 a 320), muy por arriba del límite que avisa. El rail (contraído y
+  expandido) y el modal no tenían desbordes: las etiquetas largas ya se recortaban y la separación
+  era la del kit (4 contraído, 0 expandido). Con pocos destinos, la barra los reparte en partes
+  iguales, como Compose; no hay separaciones raras porque los destinos están pegados.
+- **Sin señal de "hay más" en el rail que se desplaza.** Material no la define; el rail docked no tiene
+  fondo, así que la sombra con `background-attachment: local` (que necesita un fondo que la tape) no
+  sirve, y una máscara atada a `scroll()` quedaría como mejora progresiva sin verificar en Firefox
+  estable. El caso es raro: con el límite de 7, el rail contraído entra en unos 600 px de alto (con
+  el bloque superior, unos 750); el foco con Tab desplaza hasta cada destino; y el último destino a
+  medias en el borde ya muestra que sigue. Se revisa si un uso real lo pide.
+- **Sin "Más"**: un destino "Más" que abra el resto no es un patrón de Material (es de iOS); el resto va
+  en un `ModalNavigationRail` o en un `Menu`. Descartado por ahora (plan).

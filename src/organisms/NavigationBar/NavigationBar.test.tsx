@@ -329,7 +329,9 @@ describe('NavigationBar: medidas (kit y Compose)', () => {
     expect((lb.top + lb.bottom) / 2).toBeCloseTo((ic.top + ic.bottom) / 2, 0)
   })
 
-  test('el área táctil es todo el elemento, de al menos 48 aunque haya muchos', async () => {
+  // Actualizada el 2026-11-27 (ADR-0029): antes pedía 48 de ancho aunque la barra desbordara; ahora
+  // los destinos se reparten el ancho, como Compose, con 24 como mínimo (WCAG 2.5.8) y 48 de alto.
+  test('el área táctil es todo el elemento: con muchos, se reparten el ancho sin desbordar (24 como mínimo, 48 de alto)', async () => {
     const c = await render(
       <div style={{ width: 200 }}>
         <NavigationBar>
@@ -342,9 +344,12 @@ describe('NavigationBar: medidas (kit y Compose)', () => {
         </NavigationBar>
       </div>,
     )
+    const nav = q(c, 'nav')
     for (const it of c.querySelectorAll('.mk-navigation-bar-item')) {
-      expect(rect(it).width).toBeGreaterThanOrEqual(48)
+      expect(rect(it).width).toBeCloseTo(40, 0)
+      expect(rect(it).width).toBeGreaterThanOrEqual(24)
       expect(rect(it).height).toBeGreaterThanOrEqual(48)
+      expect(rect(it).right).toBeLessThanOrEqual(rect(nav).right + 0.5)
     }
   })
 

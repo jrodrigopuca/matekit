@@ -252,6 +252,23 @@ queue.show({ message: 'Saved', duration: 'short' })
   component.
 - **Fix:** keep at most the limit; move the rest to a `ModalNavigationRail` opened from a menu button,
   or to a `Menu` of more options.
+- **Limits** (the same in every window; window classes as in `WINDOW_WIDTH`: compact below 600 px,
+  medium 600 to 839, wide 840 or more):
+
+| Component and presentation | Compact | Medium | Wide | Beyond the limit |
+|---|---|---|---|---|
+| `NavigationBar` (vertical or horizontal items) | 5 | 5 | 5 | Warns; items share the width and shrink down to 24 px each (labels truncated, full accessible name), never overflowing the page |
+| `NavigationSuite`, `layout="auto"` (a bar in compact width or compact height, a collapsed rail otherwise) | 5 | 5 | 5 | Warns; as a bar, shrinks like `NavigationBar`; as a rail, scrolls vertically |
+| `NavigationSuite`, `layout="bar"` | 5 | 5 | 5 | Warns; shrinks like `NavigationBar` |
+| `NavigationSuite`, `layout="rail"` | 7 | 7 | 7 | Warns; scrolls vertically |
+| `NavigationRail`, collapsed | 7 | 7 | 7 | Warns; scrolls vertically |
+| `NavigationRail`, expanded | no limit | no limit | no limit | Scrolls vertically; never warns |
+| `ModalNavigationRail` | no limit | no limit | no limit | Scrolls vertically; never warns |
+
+  The limit does not change with the window on purpose: the same destinations must work when the
+  window shrinks (a suite becomes a bar; an app may swap a rail for a bar). matekit never throws and
+  never hides destinations: past the limit the navigation still fits, it just gets cramped. There is
+  no built-in "More" item: it is not a Material pattern.
 - **Limit:** the count runs during render, on the React children (the components stay universal, with
   no client code): it sees the destination items passed directly, in arrays (`map`), in fragments, and
   each wrapped alone in another element (a `Tooltip`). It does not see destinations rendered by

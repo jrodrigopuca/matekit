@@ -127,6 +127,11 @@ propios, `strings.ts`. Se exporta desde el `index.ts` de su capa y su CSS se imp
   literal en una clave o prop de texto, texto JSX, o una frase) o si un `strings.ts` no está en el
   índice; los comentarios no cuentan. El playground pasa los textos en español desde
   `playground/strings-es.ts`, como haría una app.
+- **Límites de destinos de la navegación (ADR-0029):** `NavigationBar` 5; `NavigationRail` contraído 7;
+  expandido y `ModalNavigationRail`, sin límite (se desplazan); `NavigationSuite` 5 (en una ventana
+  compacta es una barra) y 7 con `layout="rail"`. Iguales en toda ventana; por arriba, aviso
+  `MK_NAVIGATION_TOO_MANY_DESTINATIONS` (nunca error ni destinos ocultos). La barra reparte el ancho y
+  achica los destinos hasta 24 px (WCAG 2.5.8) sin desbordar; `src/test/navigation-fit.test.tsx` lo mide.
 - **Iconos:** los de `src/icons/` o cualquier SVG dentro de `<Icon>`. El componente define
   `--mk-icon-size` para el tamaño. Un estado activo o seleccionado rellena el icono con
   `filled` (todos lo aceptan). El grado -25 en tema oscuro es automático (ADR-0006): no

@@ -77,9 +77,11 @@ export interface NavigationSuiteProps extends HTMLAttributes<HTMLElement> {
  * Las props nativas y `ref` llegan al `<nav>`. Si la página tiene más de un `<nav>`, darle nombre con
  * `aria-label`.
  *
- * **Destinos:** de 3 a 5, porque en una ventana compacta es una barra (guía de Material). Con más de 5,
- * avisa en desarrollo (`MK_NAVIGATION_TOO_MANY_DESTINATIONS`); con `layout="rail"`, que nunca es una
- * barra, con más de 7. Cuenta los
+ * **Destinos: de 3 a 5** en cualquier ventana, porque en una compacta (o baja) se presenta como barra
+ * (guía de Material); con `layout="rail"`, que nunca es una barra, **de 3 a 7**. Como barra, los
+ * destinos se reparten el ancho y se achican hasta 24 px sin desbordar (como `NavigationBar`); como
+ * rail, se desplaza en vertical si no entran. Por arriba del límite avisa en desarrollo
+ * (`MK_NAVIGATION_TOO_MANY_DESTINATIONS`). Cuenta los
  * `NavigationSuiteItem` hijos (también en arrays, fragmentos o envueltos de a uno, como en un
  * `Tooltip`); no ve los que dibuja otro componente.
  */
