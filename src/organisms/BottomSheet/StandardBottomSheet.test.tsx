@@ -1,4 +1,4 @@
-import { createRef, useState } from 'react'
+import { createRef, useState, type CSSProperties } from 'react'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { commands, page, userEvent } from 'vitest/browser'
 import { HomeIcon } from '../../icons/icons.tsx'
@@ -30,6 +30,10 @@ const frames = (n = 3) =>
     step(n)
   })
 
+// Asomo por defecto con título: cabecera de 36, una línea de Title Large (28) y su relleno de abajo (16).
+// Sin título, los 56 de Compose (SheetPeekHeight).
+const PEEK = 36 + 28 + 16
+
 const BASE = { width: 414, height: 896 }
 afterEach(async () => {
   if (window.innerWidth !== BASE.width || window.innerHeight !== BASE.height) {
@@ -49,9 +53,11 @@ interface HarnessProps {
   state?: BottomSheetState
   onStateChange?: (s: BottomSheetState, r: string) => void
   onClose?: () => void
+  title?: boolean
+  peek?: string
 }
 
-function Sheet({ open, closable, state, onStateChange, onClose }: Omit<HarnessProps, 'nav'>) {
+function Sheet({ open, closable, state, onStateChange, onClose, title = true, peek }: Omit<HarnessProps, 'nav'>) {
   return (
     <BottomSheet
       modal={false}
@@ -61,7 +67,7 @@ function Sheet({ open, closable, state, onStateChange, onClose }: Omit<HarnessPr
       onClose={closable ? (onClose ?? (() => {})) : undefined}
     >
       <BottomSheetHandle />
-      <BottomSheetTitle>Lugares</BottomSheetTitle>
+      {title && <BottomSheetTitle>Lugares</BottomSheetTitle>}
       <BottomSheetContent>
         {Array.from({ length: 6 }, (_, i) => (
           <p key={i} style={{ margin: 0, height: 48 }}>{`Lugar ${i + 1}`}</p>
@@ -72,9 +78,11 @@ function Sheet({ open, closable, state, onStateChange, onClose }: Omit<HarnessPr
   )
 }
 
-function Harness({ nav = false, ...props }: HarnessProps) {
+function Harness({ nav = false, peek, ...props }: HarnessProps) {
+  // La app cambia el asomo en el scaffold (o más arriba): lo heredan el sheet y el relleno de los paneles.
+  const peekStyle = peek ? ({ '--mk-bottom-sheet-peek-height': peek } as CSSProperties) : {}
   return (
-    <PaneScaffold current="list" style={{ height: 600 }}>
+    <PaneScaffold current="list" style={{ height: 600, ...peekStyle }}>
       {nav && (
         <NavigationSuite aria-label="Principal">
           <NavigationSuiteItem href="#a" active>
@@ -100,14 +108,34 @@ function visibleHeight(c: ParentNode): number {
 }
 
 describe('BottomSheet standard: estructura y medidas', () => {
-  test('un <aside> con el nombre del título, asomado por defecto: se ven 56', async () => {
+  test('un <aside> con el nombre del título, asomado por defecto: se ven la cabecera y el título', async () => {
     const c = await render(<Harness />)
     const el = sheet(c)
     expect(el.tagName).toBe('ASIDE')
     expect(page.getByRole('complementary', { name: 'Lugares' }).query()).toBe(el)
     expect(el.dataset['state']).toBe('partial')
-    expect(visibleHeight(c)).toBeCloseTo(56, 1)
+    expect(visibleHeight(c)).toBeCloseTo(PEEK, 1)
     expect(c.querySelector('dialog')).toBeNull()
+  })
+
+  test('sin título, el asomo es el de Compose (56), también en el relleno de los paneles', async () => {
+    const c = await render(<Harness title={false} />)
+    expect(visibleHeight(c)).toBeCloseTo(56, 1)
+    expect(style(q(c, '.mk-pane[data-pane="list"]')).paddingBottom).toBe('56px')
+  })
+
+  test('con título se ve su primera línea entera: el borde de abajo del título queda dentro del asomo', async () => {
+    const c = await render(<Harness />)
+    const title = rect(q(c, '.mk-bottom-sheet-title'))
+    const area = rect(q(c, '.mk-pane[data-pane="list"]'))
+    expect(title.top).toBeGreaterThan(rect(sheet(c)).top)
+    expect(title.top + 28).toBeLessThanOrEqual(area.bottom + 0.5)
+  })
+
+  test('--mk-bottom-sheet-peek-height en el scaffold cambia el asomo y el relleno de los paneles', async () => {
+    const c = await render(<Harness peek="120px" />)
+    expect(visibleHeight(c)).toBeCloseTo(120, 1)
+    expect(style(q(c, '.mk-pane[data-pane="list"]')).paddingBottom).toBe('120px')
   })
 
   test('contenedor del kit: surface-container-low, radio 28 arriba, elevación 3, asa de 32 × 4', async () => {
@@ -136,7 +164,7 @@ describe('BottomSheet standard: estructura y medidas', () => {
   test('el contenido de atrás sigue usable y los paneles reciben abajo un relleno igual al asomo', async () => {
     const c = await render(<Harness />)
     const list = q(c, '.mk-pane[data-pane="list"]')
-    expect(style(list).paddingBottom).toBe('56px')
+    expect(style(list).paddingBottom).toBe(`${PEEK}px`)
     const onClick = vi.fn()
     q(c, '.behind').addEventListener('click', onClick)
     await userEvent.click(q(c, '.behind'))
@@ -152,7 +180,7 @@ describe('BottomSheet standard: estructura y medidas', () => {
     const bar = rect(q(c, '.mk-navigation-suite'))
     const area = rect(q(c, '.mk-pane[data-pane="list"]'))
     expect(area.bottom).toBeCloseTo(bar.top, 1)
-    expect(bar.top - rect(sheet(c)).top).toBeCloseTo(56, 1)
+    expect(bar.top - rect(sheet(c)).top).toBeCloseTo(PEEK, 1)
     expect(Number(style(q(c, '.mk-navigation-suite')).zIndex)).toBeGreaterThan(Number(style(sheet(c)).zIndex))
   })
 
@@ -184,7 +212,7 @@ describe('BottomSheet standard: asa y teclado', () => {
     expect(rect(sheet(c)).bottom).toBeCloseTo(area.bottom, 1)
     handle(c).click()
     await expect.poll(() => sheet(c).dataset['state']).toBe('partial')
-    expect(visibleHeight(c)).toBeCloseTo(56, 1)
+    expect(visibleHeight(c)).toBeCloseTo(PEEK, 1)
   })
 
   test('con el teclado: Tab llega al asa y Enter expande', async () => {
@@ -239,7 +267,7 @@ describe('BottomSheet standard: arrastre', () => {
   test('sin onClose no se oculta: hacia abajo desde el asomo no pasa del asomo', async () => {
     const c = await render(<Harness />)
     await commands.dragThrough('.mk-bottom-sheet-handle', [[24, 10], [24, 22], [24, 40], [24, 50]])
-    expect(visibleHeight(c)).toBeCloseTo(56, 1)
+    expect(visibleHeight(c)).toBeCloseTo(PEEK, 1)
     await commands.pressUp()
     await frames()
     expect(sheet(c).dataset['state']).toBe('partial')
@@ -256,7 +284,9 @@ describe('BottomSheet standard: arrastre', () => {
       )
     }
     const c = await render(<Closable />)
-    await commands.dragThrough('.mk-bottom-sheet-handle', [[24, 10], [24, 22], [24, 40], [24, 52]])
+    // Más de la mitad del asomo: al soltar, el oculto es el ancla más cercana aunque la velocidad dé 0
+    // (Firefox con otros archivos en paralelo tarda más de 40 ms en soltar: con 42 de 80 volvía al asomo).
+    await commands.dragThrough('.mk-bottom-sheet-handle', [[24, 10], [24, 22], [24, 10 + Math.round(PEEK * 0.5)], [24, 10 + Math.round(PEEK * 0.8)]])
     await commands.pressUp()
     await expect.poll(() => sheet(c).hasAttribute('data-closed')).toBe(true)
     expect(sheet(c).inert).toBe(true)
@@ -294,7 +324,7 @@ describe('BottomSheet standard: movimiento', () => {
       const s = style(sheet(c))
       expect(s.opacity).toBe('0')
       const area = rect(q(c, '.mk-pane[data-pane="list"]'))
-      expect(area.bottom - rect(sheet(c)).top).toBeCloseTo(56, 1)
+      expect(area.bottom - rect(sheet(c)).top).toBeCloseTo(PEEK, 1)
     } finally {
       await commands.reduceMotion(false)
     }

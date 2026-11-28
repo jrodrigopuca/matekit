@@ -162,7 +162,8 @@ export interface BottomSheetModalProps extends Omit<DialogHTMLAttributes<HTMLDia
  *   la página no se desplaza.
  *
  * **Standard** (`modal={false}`, ADR-0030): el de `BottomSheetScaffold` de Compose, un `<aside>` sin
- * scrim que convive con el contenido, asomado (56 px, `--mk-bottom-sheet-peek-height`) o expandido;
+ * scrim que convive con el contenido, asomado (el asa y la primera línea del título, o 56 px sin
+ * título; `--mk-bottom-sheet-peek-height`) o expandido;
  * va como hijo de un `PaneScaffold`, que le da relleno abajo a los paneles. Mismas partes, mismo
  * arrastre y `state`/`defaultState`/`onStateChange`; `open` (por defecto `true`) y, con `onClose`,
  * se puede ocultar arrastrando. Ver `BottomSheetStandardProps`.

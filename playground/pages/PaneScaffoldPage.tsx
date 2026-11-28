@@ -258,9 +258,11 @@ export function PaneScaffoldPage() {
   return (
     <>
       <p className="pg-note">
-        Cuántos paneles se ven depende de la <strong>ventana</strong>, no de este recuadro: 1 debajo de{' '}
-        {px(WINDOW_WIDTH.expanded)}, 2 desde ahí y 3 desde {px(WINDOW_WIDTH.large)}. Cambiá el ancho de la
-        ventana para verlo. En la página real, el scaffold ocupa toda la pantalla (<code>100dvh</code>).
+        Cuántos paneles se ven depende del <strong>ancho del scaffold</strong> (este recuadro), con los
+        cortes de las clases de ventana: 1 debajo de {px(WINDOW_WIDTH.expanded)}, 2 desde ahí y 3 desde{' '}
+        {px(WINDOW_WIDTH.large)}. La barra lateral del playground le quita lugar: con una ventana de 840 el
+        recuadro mide unos 500 y muestra un panel. Rail o barra lo sigue decidiendo la ventana. En una app
+        real, el scaffold ocupa toda la pantalla (<code>100dvh</code>).
       </p>
 
       <section className="pg-section">

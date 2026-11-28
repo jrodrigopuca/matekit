@@ -65,8 +65,9 @@ interface Drag {
 
 export interface BottomSheetStandardProps extends Omit<HTMLAttributes<HTMLElement>, 'onClose'> {
   /**
-   * Standard (no modal): convive con el contenido, asomado (56 px a la vista, el asa y el comienzo)
-   * o expandido, sin scrim ni foco atrapado. Va como hijo de un `PaneScaffold` (o de un elemento con
+   * Standard (no modal): convive con el contenido, asomado (por defecto el asa y la primera línea
+   * del título, 80 px; sin título, 56 px; `--mk-bottom-sheet-peek-height` lo cambia) o expandido,
+   * sin scrim ni foco atrapado. Va como hijo de un `PaneScaffold` (o de un elemento con
    * `position: relative`), contra su borde de abajo.
    */
   modal: false

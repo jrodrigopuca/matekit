@@ -845,8 +845,10 @@ body {
 .pg-panes-body {
   padding: 0 var(--md-sys-space-200) var(--md-sys-space-200);
 }
-/* Volver (o ir al panel de apoyo) solo hace falta con un panel: desde 840 se ven los dos. */
-@media (width >= 52.5rem) {
+/* Volver (o ir al panel de apoyo) solo hace falta con un panel: con un scaffold desde 840 de ancho se
+   ven los dos. Por el contenedor del scaffold (mk-pane-scaffold), no por la ventana: es lo que decide
+   cuántos paneles hay. */
+@container mk-pane-scaffold (width >= 52.5rem) {
   .pg-panes-back,
   .pg-panes-back-extra,
   .pg-panes-to-supporting {

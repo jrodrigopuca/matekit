@@ -3,8 +3,10 @@
 // SupportingPaneScaffold de Compose (docs/research/11-disposicion-adaptable-compose.md § 2). API y
 // motivos: ADR-0030.
 //
-// Todo lo que cambia con la ventana es CSS (pane-scaffold.css): cuántos paneles se ven, cuáles, su
-// ancho, su superficie, los márgenes y las zonas seguras. El componente solo escribe el caso y el
+// Todo lo que cambia con el ancho es CSS (pane-scaffold.css): cuántos paneles se ven, cuáles, su
+// ancho, su superficie y los márgenes salen del ancho del propio scaffold (container queries sobre la
+// raíz, con los cortes de ventana de Compose); la ubicación del NavigationSuite (rail o barra) sigue
+// a la ventana, como la suite. Las zonas seguras también son CSS. El componente solo escribe el caso y el
 // panel actual en atributos (`data-variant`, `data-current`) y el nombre de cada panel
 // (`data-pane`); así el HTML del servidor ya es el correcto y no hay salto al hidratar.
 //
@@ -73,23 +75,29 @@ export type PaneScaffoldProps = PaneScaffoldListDetailProps | PaneScaffoldSuppor
  * </PaneScaffold>
  * ```
  *
- * - **Cuántos paneles:** 1 en ventanas compactas y medianas (menos de 840 px, `WINDOW_WIDTH.expanded`),
- *   2 desde 840 y 3 desde 1200 (`WINDOW_WIDTH.large`), con media queries: sin JavaScript, también
- *   desde un Server Component.
+ * - **Cuántos paneles:** según el ancho **del scaffold** (con el rail incluido), con los cortes de las
+ *   clases de ventana: 1 por debajo de 840 px (`WINDOW_WIDTH.expanded`), 2 desde 840 y 3 desde 1200
+ *   (`WINDOW_WIDTH.large`). A pantalla completa es la regla de Compose; dentro de una disposición más
+ *   angosta (una barra lateral de la app), cuenta el lugar que de verdad tiene. Son container queries:
+ *   sin JavaScript, también desde un Server Component. La raíz tiene `container-type: inline-size`:
+ *   en un contexto que se ajusta al contenido (un ítem flex sin ancho), darle un ancho. Lo que la app
+ *   muestre según la cantidad de paneles (un botón de volver que solo hace falta con uno) va con el
+ *   mismo contenedor: `@container mk-pane-scaffold (width >= 52.5rem) { … }`.
  * - **Cuáles:** con uno, el `current`. Con varios, el `current` y los de más prioridad (Compose: el
  *   detalle o el principal, después la lista o el de apoyo, después el extra), en el orden de inicio
  *   a fin: lista, detalle, extra; o principal, apoyo, extra. Los demás quedan montados y ocultos
  *   (también para la accesibilidad): su estado y lo desplazado se conservan.
  * - **Anchos:** el panel secundario mide 360 (412 desde 1200), el detalle o el principal se queda
  *   con el resto, 24 entre paneles; si no entran, todos se achican por igual (el reparto de Compose).
- * - **Apariencia (kit):** fondo `surface`. Desde 600 de ancho los paneles con superficie (todos menos
+ * - **Apariencia (kit):** fondo `surface`. Desde 600 de ancho del scaffold los paneles con superficie (todos menos
  *   la lista, o lo que diga `surface`) son `surface-container-lowest` con radio 28 arriba, 24 por
  *   debajo del borde superior y hasta el de abajo, con 24 al inicio (0 junto al rail) y 16 al final.
- *   En una ventana compacta los paneles van pegados a los bordes, sin superficie.
+ *   Más angosto (un teléfono, o un scaffold metido en poco lugar) los paneles van pegados a los
+ *   bordes, sin superficie.
  * - **Desplazamiento:** cada panel se desplaza por su cuenta; un `TopAppBar` como primer hijo se pega
  *   y colapsa dentro de su panel (ADR-0024).
  * - **Navegación:** un `NavigationSuite` hijo se ubica solo: el rail al inicio (los paneles se pegan
- *   a él) y la barra abajo, a todo el ancho.
+ *   a él) y la barra abajo, a todo el ancho. Rail o barra lo sigue decidiendo la ventana (ADR-0029).
  * - **Alto:** el de la ventana (`100dvh`); dentro de otra disposición, darle el alto con `style` o una
  *   clase.
  * - **Zonas seguras** (`env(safe-area-inset-*)`, con `viewport-fit=cover`): arriba de los paneles, a
@@ -107,7 +115,9 @@ export function PaneScaffold({ variant = 'list-detail', current, className, styl
     cx('mk-pane-scaffold', className),
     style,
     { ...props, 'data-variant': variant, 'data-current': shown },
-    children,
+    // La grilla va en un hijo: la raíz es el contenedor cuyo ancho deciden las container queries, y
+    // una container query no puede cambiar al propio contenedor (ADR-0030).
+    <div className="mk-pane-scaffold-grid">{children}</div>,
   )
 }
 

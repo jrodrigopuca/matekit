@@ -241,7 +241,10 @@
     /* La zona segura de abajo: la del scaffold si está adentro de uno (0 sobre la barra), si no, la
        del sistema. */
     --_safe-bottom: var(--_pane-scaffold-inset-bottom, env(safe-area-inset-bottom, 0px));
-    --_bottom-sheet-peek: calc(var(--mk-bottom-sheet-peek-height, 56px) + var(--_safe-bottom));
+    --_bottom-sheet-peek: calc(var(--mk-bottom-sheet-peek-height, var(--_peek-default)) + var(--_safe-bottom));
+    /* Asomo por defecto: 56 (SheetPeekHeight de Compose) sin título; con BottomSheetTitle, la
+       cabecera y una línea entera del título (abajo). */
+    --_peek-default: 56px;
     --_rest: calc(100% - var(--_bottom-sheet-peek));
     --_y: var(--_rest);
 
@@ -266,6 +269,17 @@
     transition:
       translate var(--md-sys-motion-spring-default-spatial-duration) var(--md-sys-motion-spring-default-spatial-easing),
       visibility 0s;
+  }
+  /* Con título, el asomo muestra la cabecera y la primera línea del título entera, con su relleno de
+     abajo (decidido con el autor el 2026-11-28): los 56 de Compose dejaban el título cortado a la
+     mitad (36 de asa + 20), y en Compose (asa con 22 arriba y abajo) se ven 8 de contenido, porque
+     espera que la app ajuste el asomo. Un título de dos líneas muestra la primera. La misma cuenta está
+     en pane-scaffold.css (el relleno de los paneles): cambiarlas juntas. */
+  .mk-bottom-sheet-standard:has(> .mk-bottom-sheet-handle:first-child + .mk-bottom-sheet-title) {
+    --_peek-default: calc(36px + var(--md-sys-typescale-title-large-line-height) + var(--md-sys-space-200));
+  }
+  .mk-bottom-sheet-standard:has(> .mk-bottom-sheet-title:first-child) {
+    --_peek-default: calc(var(--md-sys-space-300) + var(--md-sys-typescale-title-large-line-height) + var(--md-sys-space-200));
   }
   .mk-bottom-sheet-standard[data-state='expanded'] {
     --_rest: 0px;

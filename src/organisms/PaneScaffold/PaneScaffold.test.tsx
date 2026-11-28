@@ -383,6 +383,92 @@ describe('PaneScaffold: anchos (reparto de Compose) y márgenes del kit', () => 
   })
 })
 
+describe('PaneScaffold: decide por su propio ancho (container queries), no por la ventana', () => {
+  /** El scaffold dentro de un elemento de ancho fijo: lo que deja una barra lateral de la app. */
+  function Boxed({ width, ...props }: ListDetailOptions & { width: number }) {
+    return (
+      <div className="box" style={{ width }}>
+        <ListDetail {...props} />
+      </div>
+    )
+  }
+
+  test('estructura: la raíz es el contenedor (mk-pane-scaffold) y la grilla, su hijo', async () => {
+    const c = await render(<ListDetail />)
+    const root = q(c, '.mk-pane-scaffold')
+    expect(style(root).containerName).toBe('mk-pane-scaffold')
+    expect(style(root).containerType).toBe('inline-size')
+    const grid = q(root, ':scope > .mk-pane-scaffold-grid')
+    expect(style(grid).display).toBe('grid')
+    expect(pane(c, 'list').parentElement).toBe(grid)
+  })
+
+  test('ventana de 900 y scaffold de 512 (como junto a una barra lateral): un panel, pegado y sin superficie', async () => {
+    await viewport(900, 800)
+    const c = await render(<Boxed width={512} current="detail" />)
+    expect(shown(c)).toEqual(['detail'])
+    const r = rect(pane(c, 'detail'))
+    expect([r.left, r.width]).toEqual([0, 512])
+    expect(r.top - rect(q(c, '.mk-pane-scaffold')).top).toBeCloseTo(0, 1)
+    expect(style(pane(c, 'detail')).backgroundColor).toBe('rgba(0, 0, 0, 0)')
+  })
+
+  test('scaffold de 880 en una ventana de 1300: 360 + 24 + 456 (el ejemplo de Compose entre márgenes)', async () => {
+    await viewport(1300, 800)
+    const c = await render(<Boxed width={880} current="list" extra />)
+    expect(shown(c)).toEqual(['list', 'detail'])
+    expect(rect(pane(c, 'list')).width).toBeCloseTo(360, 1)
+    expect(rect(pane(c, 'detail')).left - rect(pane(c, 'list')).right).toBeCloseTo(24, 1)
+    expect(rect(pane(c, 'detail')).width).toBeCloseTo(456, 1)
+  })
+
+  test('scaffold de 1240 (1200 entre márgenes) en una ventana de 1300: tres de 384; de 1200 justos, tres de 370,67', async () => {
+    await viewport(1300, 800)
+    const c = await render(<Boxed width={1240} current="list" extra />)
+    expect(shown(c)).toEqual(['list', 'detail', 'extra'])
+    for (const name of ['list', 'detail', 'extra']) expect(rect(pane(c, name)).width).toBeCloseTo(384, 1)
+    const d = await render(<Boxed width={1200} current="list" extra />)
+    expect(shown(d)).toEqual(['list', 'detail', 'extra'])
+    for (const name of ['list', 'detail', 'extra']) expect(rect(pane(d, name)).width).toBeCloseTo((1200 - 40 - 48) / 3, 1)
+  })
+
+  test('al cambiar el ancho del scaffold (no la ventana) cambian los paneles, sin volver a renderizar, y lo desplazado se conserva', async () => {
+    await viewport(1300, 800)
+    const c = await render(<Boxed width={500} current="list" />)
+    const box = q(c, '.box')
+    const list = pane(c, 'list')
+    expect(shown(c)).toEqual(['list'])
+    list.scrollTop = 300
+    await frames()
+    box.style.width = '900px'
+    await expect.poll(() => shown(c)).toEqual(['list', 'detail'])
+    expect(style(pane(c, 'detail')).backgroundColor).toBe(roleColor('surface-container-lowest'))
+    box.style.width = '500px'
+    await expect.poll(() => shown(c)).toEqual(['list'])
+    expect(pane(c, 'list')).toBe(list)
+    expect(list.scrollTop).toBeCloseTo(300, 0)
+    // La ventana no cambió: decidió el ancho del scaffold.
+    expect(window.innerWidth).toBe(1300)
+  })
+
+  test('ventana ancha (la suite es un rail) y scaffold de 500: rail y un panel pegado, sin superficie ni desborde', async () => {
+    await viewport(900, 800)
+    const c = await render(<Boxed width={500} current="detail" nav="auto" />)
+    const root = q(c, '.mk-pane-scaffold')
+    const nav = q(c, '.mk-navigation-suite')
+    expect(style(nav).flexDirection).toBe('column')
+    expect(rect(nav).width).toBe(96)
+    expect(shown(c)).toEqual(['detail'])
+    const r = rect(pane(c, 'detail'))
+    expect(r.left).toBeCloseTo(96, 1)
+    expect(r.right).toBeCloseTo(500, 1)
+    expect(style(pane(c, 'detail')).backgroundColor).toBe('rgba(0, 0, 0, 0)')
+    const grid = q(root, '.mk-pane-scaffold-grid')
+    expect(grid.scrollWidth).toBeLessThanOrEqual(grid.clientWidth)
+    expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(window.innerWidth)
+  })
+})
+
 describe('PaneScaffold: apariencia', () => {
   test('fondo surface; desde 600 el detalle en surface-container-lowest con radio 28 solo arriba; la lista sin superficie', async () => {
     await viewport(900, 800)

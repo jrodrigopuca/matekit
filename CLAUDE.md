@@ -326,6 +326,13 @@ No llamar al conector de Figma salvo que falte un dato imprescindible: tiene lí
     `position: absolute` de una grilla, una línea `auto` (`grid-row: 1`) es el borde de la grilla, no la
     línea siguiente: escribir las dos (`1 / 2`). El reparto de pistas `minmax(0, X)` antes que las `fr`
     (agrandar por igual hasta el tope) da lo mismo en los tres.
+  - Arrastres que sueltan con `commands.pressUp()` (sheet standard, comprobado el 2026-11-28): en Firefox
+    con otros archivos en paralelo, entre el último movimiento y el soltar pasan más de 40 ms y la
+    velocidad da 0, así que decide la distancia; un arrastre que solo llega por velocidad pasa solo o en
+    Chrome y falla en la corrida completa. Llevarlo más allá de la mitad del recorrido hasta el ancla.
+    Container queries con nombre (`@container mk-pane-scaffold (…)`) y anidadas en
+    `@media (forced-colors: active)` responden igual en los tres al cambiar el ancho del contenedor sin
+    cambiar la ventana.
 - Snackbar (comprobado el 2026-11-26): un `popover` dentro de un `<dialog>` modal abierto se puede
   usar en los tres motores (fuera del diálogo queda inerte). Un F6 real que la página no atrapa
   saca el foco del documento en Firefox: para probar que un componente no atrapa una tecla, despachar

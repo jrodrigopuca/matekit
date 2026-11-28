@@ -14,41 +14,60 @@
      arriba); la lista sin superficie; 24 al inicio (pegado al rail si hay), 24 entre paneles y
      ≈ 16 al final. En los ejemplos de teléfono las pantallas van directo sobre Surface.
 
-   Técnica (ADR-0030): una grilla con una columna para el rail, una para el margen de inicio, las
-   de los paneles visibles y una para el margen del final; la barra de navegación es una segunda
-   fila a todo el ancho. Las columnas de los paneles cambian con la ventana y el panel actual
-   (variables en la raíz). El reparto de Compose sale del algoritmo de la grilla: cada panel tiene
+   Técnica (ADR-0030): la raíz es un contenedor con nombre (mk-pane-scaffold / inline-size) y su
+   hijo .mk-pane-scaffold-grid, la grilla: una columna para el rail, una para el margen de inicio,
+   las de los paneles visibles y una para el margen del final; la barra de navegación es una segunda
+   fila a todo el ancho. Las columnas de los paneles cambian con el ancho del scaffold (container
+   queries, no la ventana: dentro de una disposición más angosta cuenta el lugar real) y el panel
+   actual (variables en la grilla). Lo que sigue a la elección de rail o barra del NavigationSuite
+   queda en media queries de la ventana, como la suite (ADR-0029). El reparto de Compose sale del algoritmo de la grilla: cada panel tiene
    una pista minmax(0, preferido) y el de más prioridad, además, una minmax(0, 1fr); la grilla
    agranda primero por igual las pistas con tope (hasta el preferido; si no alcanzan, quedan
    iguales: los preferidos son iguales, así que "en proporción" es "por igual") y lo que sobra va a
    la fr. Con flex no se podía poner la barra abajo a todo el ancho sin otro elemento.
 
-   Cortes en rem (en @media no hay variables, ADR-0016): 37.5rem = 600 (WINDOW_WIDTH.medium),
+   Cortes en rem (en @media y @container no hay variables, ADR-0016): 37.5rem = 600 (WINDOW_WIDTH.medium),
    52.5rem = 840 (expanded), 75rem = 1200 (large); 30rem = 480 de alto (WINDOW_HEIGHT.medium), el
    que usa NavigationSuite para elegir la barra. */
 
 @layer matekit.components {
+  /* La raíz es el contenedor (su ancho decide); la grilla es su hijo: una container query no puede
+     cambiar al propio contenedor, y las columnas son de la grilla. */
   .mk-pane-scaffold {
-    /* Ancho preferido de un panel (Compose: DefaultPreferredWidth). */
-    --_pref: 360px;
-    --_track: minmax(0, var(--_pref));
-    --_gap: var(--md-sys-space-300);
-    /* Zonas seguras (muesca, barras del sistema con viewport-fit=cover), leídas una vez: el resto
-       usa estas variables (las pruebas las reemplazan para simular una muesca). env() es físico;
-       los costados pasan a inicio y fin según la dirección. */
+    /* Zonas seguras (muesca, barras del sistema con viewport-fit=cover), leídas una vez y acá, en la
+       raíz: el resto usa estas variables (las pruebas las reemplazan con `style` para simular una
+       muesca). env() es físico; los costados pasan a inicio y fin según la dirección. */
     --_inset-top: env(safe-area-inset-top, 0px);
     --_inset-right: env(safe-area-inset-right, 0px);
     --_inset-bottom: env(safe-area-inset-bottom, 0px);
     --_inset-left: env(safe-area-inset-left, 0px);
+
+    container: mk-pane-scaffold / inline-size;
+    box-sizing: border-box;
+    block-size: 100dvh;
+    min-inline-size: 0;
+    margin: 0;
+    padding: 0;
+    /* El sheet standard asomado y cualquier panel corrido no salen de la pantalla. */
+    overflow: clip;
+    background-color: var(--md-sys-color-surface);
+    color: var(--md-sys-color-on-surface);
+  }
+
+  .mk-pane-scaffold-grid {
+    /* Ancho preferido de un panel (Compose: DefaultPreferredWidth). */
+    --_pref: 360px;
+    --_track: minmax(0, var(--_pref));
+    --_gap: var(--md-sys-space-300);
     --_inset-start: var(--_inset-left);
     --_inset-end: var(--_inset-right);
-    /* Ventana compacta: los paneles tocan los bordes; solo las zonas seguras. */
+    /* Scaffold angosto (< 600): los paneles tocan los bordes; solo las zonas seguras. */
     --_lead: var(--_inset-start);
     --_trail: var(--_inset-end);
     --_top: var(--_inset-top);
     --_bottom: var(--_inset-bottom);
-    /* Qué panel se ve (`visibility`), cada uno con su variable. La raíz las fija todas: un scaffold
-       dentro de un panel no hereda las del de afuera. */
+    /* Qué panel se ve (`visibility`), cada uno con su variable. La grilla las fija todas: un
+       scaffold dentro de un panel no hereda las del de afuera. */
     --_show-list: hidden;
     --_fade-list: 0;
     --_hit-list: none;
@@ -90,60 +109,53 @@
     display: grid;
     grid-template-columns: [nav-start] auto [nav-end] var(--_lead) var(--_panes) var(--_trail);
     grid-template-rows: minmax(0, 1fr) auto;
-    box-sizing: border-box;
-    block-size: 100dvh;
-    min-inline-size: 0;
-    margin: 0;
-    padding: 0;
-    /* El sheet standard asomado y cualquier panel corrido no salen de la pantalla. */
-    overflow: clip;
-    background-color: var(--md-sys-color-surface);
-    color: var(--md-sys-color-on-surface);
+    block-size: 100%;
   }
-  .mk-pane-scaffold:dir(rtl) {
+  .mk-pane-scaffold-grid:dir(rtl) {
     --_inset-start: var(--_inset-right);
     --_inset-end: var(--_inset-left);
   }
 
   /* --- El panel actual se ve siempre --- */
-  .mk-pane-scaffold[data-current='list'] {
+  .mk-pane-scaffold[data-current='list'] > .mk-pane-scaffold-grid {
     --_show-list: visible;
     --_fade-list: 1;
     --_hit-list: auto;
   }
-  .mk-pane-scaffold[data-current='detail'] {
+  .mk-pane-scaffold[data-current='detail'] > .mk-pane-scaffold-grid {
     --_show-detail: visible;
     --_fade-detail: 1;
     --_hit-detail: auto;
   }
-  .mk-pane-scaffold[data-current='extra'] {
+  .mk-pane-scaffold[data-current='extra'] > .mk-pane-scaffold-grid {
     --_show-extra: visible;
     --_fade-extra: 1;
     --_hit-extra: auto;
   }
-  .mk-pane-scaffold[data-current='main'] {
+  .mk-pane-scaffold[data-current='main'] > .mk-pane-scaffold-grid {
     --_show-main: visible;
     --_fade-main: 1;
     --_hit-main: auto;
   }
-  .mk-pane-scaffold[data-current='supporting'] {
+  .mk-pane-scaffold[data-current='supporting'] > .mk-pane-scaffold-grid {
     --_show-supporting: visible;
     --_fade-supporting: 1;
     --_hit-supporting: auto;
   }
 
-  /* --- Desde 600 (medium): márgenes del kit; los paneles con superficie se redondean --- */
-  @media (width >= 37.5rem) {
-    .mk-pane-scaffold {
+  /* --- Desde 600 de ancho del scaffold (medium): márgenes del kit; los paneles con superficie se
+     redondean --- */
+  @container mk-pane-scaffold (width >= 37.5rem) {
+    .mk-pane-scaffold-grid {
       --_lead: calc(var(--md-sys-space-300) + var(--_inset-start));
       --_trail: calc(var(--md-sys-space-200) + var(--_inset-end));
       --_top: calc(var(--md-sys-space-300) + var(--_inset-top));
     }
   }
 
-  /* --- Dos paneles (840 a 1199): el actual y el de más prioridad que quede --- */
-  @media (52.5rem <= width < 75rem) {
-    .mk-pane-scaffold[data-variant='list-detail'] {
+  /* --- Dos paneles (scaffold de 840 a 1199): el actual y el de más prioridad que quede --- */
+  @container mk-pane-scaffold (52.5rem <= width < 75rem) {
+    .mk-pane-scaffold[data-variant='list-detail'] > .mk-pane-scaffold-grid {
       --_show-list: visible;
       --_fade-list: 1;
       --_hit-list: auto;
@@ -153,13 +165,13 @@
       --_panes: var(--_list-detail);
     }
     /* El extra actual va con el detalle (prioridad 10); la lista (5) no entra. */
-    .mk-pane-scaffold[data-variant='list-detail'][data-current='extra']:has(> .mk-pane[data-pane='extra']) {
+    .mk-pane-scaffold[data-variant='list-detail'][data-current='extra'] > .mk-pane-scaffold-grid:has(> .mk-pane[data-pane='extra']) {
       --_show-list: hidden;
       --_fade-list: 0;
       --_hit-list: none;
       --_panes: var(--_detail-extra);
     }
-    .mk-pane-scaffold[data-variant='supporting'] {
+    .mk-pane-scaffold[data-variant='supporting'] > .mk-pane-scaffold-grid {
       --_show-main: visible;
       --_fade-main: 1;
       --_hit-main: auto;
@@ -168,7 +180,7 @@
       --_hit-supporting: auto;
       --_panes: var(--_main-supporting);
     }
-    .mk-pane-scaffold[data-variant='supporting'][data-current='extra']:has(> .mk-pane[data-pane='extra']) {
+    .mk-pane-scaffold[data-variant='supporting'][data-current='extra'] > .mk-pane-scaffold-grid:has(> .mk-pane[data-pane='extra']) {
       --_show-supporting: hidden;
       --_fade-supporting: 0;
       --_hit-supporting: none;
@@ -176,12 +188,12 @@
     }
   }
 
-  /* --- Tres paneles (desde 1200): todos; preferido de 412 (DefaultPreferredWidthXL) --- */
-  @media (width >= 75rem) {
-    .mk-pane-scaffold {
+  /* --- Tres paneles (scaffold desde 1200): todos; preferido de 412 (DefaultPreferredWidthXL) --- */
+  @container mk-pane-scaffold (width >= 75rem) {
+    .mk-pane-scaffold-grid {
       --_pref: 412px;
     }
-    .mk-pane-scaffold[data-variant='list-detail'] {
+    .mk-pane-scaffold[data-variant='list-detail'] > .mk-pane-scaffold-grid {
       --_show-list: visible;
       --_fade-list: 1;
       --_hit-list: auto;
@@ -190,13 +202,13 @@
       --_hit-detail: auto;
       --_panes: var(--_list-detail);
     }
-    .mk-pane-scaffold[data-variant='list-detail']:has(> .mk-pane[data-pane='extra']) {
+    .mk-pane-scaffold[data-variant='list-detail'] > .mk-pane-scaffold-grid:has(> .mk-pane[data-pane='extra']) {
       --_show-extra: visible;
       --_fade-extra: 1;
       --_hit-extra: auto;
       --_panes: var(--_list-detail-extra);
     }
-    .mk-pane-scaffold[data-variant='supporting'] {
+    .mk-pane-scaffold[data-variant='supporting'] > .mk-pane-scaffold-grid {
       --_show-main: visible;
       --_fade-main: 1;
       --_hit-main: auto;
@@ -205,7 +217,7 @@
       --_hit-supporting: auto;
       --_panes: var(--_main-supporting);
     }
-    .mk-pane-scaffold[data-variant='supporting']:has(> .mk-pane[data-pane='extra']) {
+    .mk-pane-scaffold[data-variant='supporting'] > .mk-pane-scaffold-grid:has(> .mk-pane[data-pane='extra']) {
       --_show-extra: visible;
       --_fade-extra: 1;
       --_hit-extra: auto;
@@ -215,37 +227,37 @@
 
   /* --- NavigationSuite como hija: el rail al inicio y la barra abajo, con las mismas media queries
      que la suite (navigation-suite.css). Encima del sheet standard, que se esconde por debajo. --- */
-  .mk-pane-scaffold > .mk-navigation-suite {
+  .mk-pane-scaffold-grid > .mk-navigation-suite {
     position: relative;
     z-index: 2;
     grid-column: nav;
     grid-row: 1 / -1;
   }
-  .mk-pane-scaffold > .mk-navigation-suite[data-layout='bar'] {
+  .mk-pane-scaffold-grid > .mk-navigation-suite[data-layout='bar'] {
     grid-column: 1 / -1;
     grid-row: 2;
   }
   @media (width < 37.5rem), (height < 30rem) {
-    .mk-pane-scaffold > .mk-navigation-suite[data-layout='auto'] {
+    .mk-pane-scaffold-grid > .mk-navigation-suite[data-layout='auto'] {
       grid-column: 1 / -1;
       grid-row: 2;
     }
   }
   /* Junto al rail, los paneles se pegan a él (kit), y el rail ya toma la zona segura del costado. */
-  .mk-pane-scaffold:has(> .mk-navigation-suite[data-layout='rail']) {
+  .mk-pane-scaffold-grid:has(> .mk-navigation-suite[data-layout='rail']) {
     --_lead: 0px;
   }
   @media (width >= 37.5rem) and (height >= 30rem) {
-    .mk-pane-scaffold:has(> .mk-navigation-suite[data-layout='auto']) {
+    .mk-pane-scaffold-grid:has(> .mk-navigation-suite[data-layout='auto']) {
       --_lead: 0px;
     }
   }
   /* Sobre la barra, los paneles no tocan el borde de abajo: la zona segura es de la barra. */
-  .mk-pane-scaffold:has(> .mk-navigation-suite[data-layout='bar']) {
+  .mk-pane-scaffold-grid:has(> .mk-navigation-suite[data-layout='bar']) {
     --_bottom: 0px;
   }
   @media (width < 37.5rem), (height < 30rem) {
-    .mk-pane-scaffold:has(> .mk-navigation-suite[data-layout='auto']) {
+    .mk-pane-scaffold-grid:has(> .mk-navigation-suite[data-layout='auto']) {
       --_bottom: 0px;
     }
   }
@@ -253,17 +265,31 @@
   /* --- Bottom sheet standard como hijo (BottomSheet modal={false}, bottom-sheet.css): contra el
      borde de abajo del área de los paneles (fuera del rail, arriba de la barra), centrado. Los
      paneles reciben abajo un relleno igual al asomo, para que lo último no quede tapado. --- */
-  .mk-pane-scaffold {
+  .mk-pane-scaffold-grid {
     --_pane-scaffold-inset-bottom: var(--_bottom);
   }
-  .mk-pane-scaffold > .mk-bottom-sheet-standard {
+  .mk-pane-scaffold-grid > .mk-bottom-sheet-standard {
     /* Las dos líneas escritas: en un hijo con position: absolute, una línea `auto` es el borde de la
        grilla (con grid-row: 1 el sheet llegaba hasta abajo, detrás de la barra). */
     grid-column: nav-end / -1;
     grid-row: 1 / 2;
   }
-  .mk-pane-scaffold:has(> .mk-bottom-sheet-standard:not([data-closed])) {
+  .mk-pane-scaffold-grid:has(> .mk-bottom-sheet-standard:not([data-closed])) {
     --_sheet-peek: var(--mk-bottom-sheet-peek-height, 56px);
+  }
+  /* Con título, el asomo por defecto del sheet es la cabecera y una línea del título: la misma cuenta
+     que bottom-sheet.css (cambiarlas juntas). */
+  .mk-pane-scaffold-grid:has(> .mk-bottom-sheet-standard:not([data-closed]) > .mk-bottom-sheet-handle:first-child + .mk-bottom-sheet-title) {
+    --_sheet-peek: var(
+      --mk-bottom-sheet-peek-height,
+      calc(36px + var(--md-sys-typescale-title-large-line-height) + var(--md-sys-space-200))
+    );
+  }
+  .mk-pane-scaffold-grid:has(> .mk-bottom-sheet-standard:not([data-closed]) > .mk-bottom-sheet-title:first-child) {
+    --_sheet-peek: var(
+      --mk-bottom-sheet-peek-height,
+      calc(var(--md-sys-space-300) + var(--md-sys-typescale-title-large-line-height) + var(--md-sys-space-200))
+    );
   }
 
   /* --- Paneles ---
@@ -323,7 +349,7 @@
     grid-column: supporting;
   }
 
-  @media (width >= 37.5rem) {
+  @container mk-pane-scaffold (width >= 37.5rem) {
     .mk-pane[data-surface] {
       border-start-start-radius: var(--md-sys-shape-corner-extra-large);
       border-start-end-radius: var(--md-sys-shape-corner-extra-large);
@@ -337,12 +363,14 @@
   }
 
   /* --- Alto contraste (forced-colors) ---
-     El navegador quita los fondos: un contorno marca los paneles con superficie (desde 600, donde
-     se ven como tarjetas). */
-  @media (forced-colors: active) and (width >= 37.5rem) {
-    .mk-pane[data-surface] {
-      outline: 1px solid CanvasText;
-      outline-offset: -1px;
+     El navegador quita los fondos: un contorno marca los paneles con superficie (scaffold desde 600,
+     donde se ven como tarjetas). */
+  @media (forced-colors: active) {
+    @container mk-pane-scaffold (width >= 37.5rem) {
+      .mk-pane[data-surface] {
+        outline: 1px solid CanvasText;
+        outline-offset: -1px;
+      }
     }
   }
 }
